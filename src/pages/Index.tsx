@@ -15,8 +15,10 @@ const Index = () => {
           <HeroSlider />
         </div>
 
-        {/* Categories Section */}
-        <CategoryGrid />
+        {/* Categories Section - Sticky under hero */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b">
+          <CategoryGrid />
+        </div>
 
         {/* Quick Actions Banner */}
         <div className="px-4 mt-8">

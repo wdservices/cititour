@@ -9,6 +9,7 @@ import {
   Heart 
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   {
@@ -16,63 +17,72 @@ const categories = [
     title: "Events",
     icon: Calendar,
     description: "Live shows, concerts & more",
-    color: "from-blue-500 to-purple-600"
+    color: "from-blue-500 to-purple-600",
+    path: "/events"
   },
   {
     id: 2,
     title: "Hotels",
     icon: Building,
     description: "Luxury stays & accommodations",
-    color: "from-green-500 to-blue-500"
+    color: "from-green-500 to-blue-500",
+    path: "/hotels"
   },
   {
     id: 3,
     title: "Restaurants",
     icon: UtensilsCrossed,
     description: "Fine dining & local cuisine",
-    color: "from-orange-500 to-red-500"
+    color: "from-orange-500 to-red-500",
+    path: "/restaurants"
   },
   {
     id: 4,
     title: "Fun Places",
     icon: MapPin,
     description: "Entertainment & activities",
-    color: "from-pink-500 to-purple-500"
+    color: "from-pink-500 to-purple-500",
+    path: "/fun-places"
   },
   {
     id: 5,
     title: "Shopping",
     icon: ShoppingBag,
     description: "Malls, boutiques & markets",
-    color: "from-teal-500 to-green-500"
+    color: "from-teal-500 to-green-500",
+    path: "/shopping"
   },
   {
     id: 6,
     title: "Airbnb",
     icon: Home,
     description: "Unique stays & rentals",
-    color: "from-indigo-500 to-blue-500"
+    color: "from-indigo-500 to-blue-500",
+    path: "/airbnb"
   },
   {
     id: 7,
     title: "Attractions",
     icon: Camera,
     description: "Must-see spots & landmarks",
-    color: "from-yellow-500 to-orange-500"
+    color: "from-yellow-500 to-orange-500",
+    path: "/attractions"
   },
   {
     id: 8,
     title: "Lifestyle",
     icon: Heart,
     description: "Wellness, spa & fitness",
-    color: "from-rose-500 to-pink-500"
+    color: "from-rose-500 to-pink-500",
+    path: "/lifestyle"
   }
 ];
 
 const CategoryGrid = () => {
+  const navigate = useNavigate();
+  
   const handleCategoryClick = (category: typeof categories[0]) => {
-    // Navigate to category listing page
-    console.log(`Navigate to ${category.title} listings`);
+    navigate(category.path);
   };
 
   return (

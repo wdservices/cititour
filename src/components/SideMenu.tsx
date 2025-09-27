@@ -10,11 +10,13 @@ import {
   Settings, 
   HelpCircle,
   LogOut,
-  X
+  X,
+  Ticket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SheetClose } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
@@ -31,6 +33,7 @@ const menuItems = [
       { icon: Building2, title: "Business Listing", description: "List your business" },
       { icon: Megaphone, title: "Run Ads", description: "Promote your business" },
       { icon: Home, title: "House Listings", description: "Airbnb & rentals" },
+      { icon: Ticket, title: "Event Tickets", description: "Sell event tickets" },
     ]
   },
   {
@@ -45,8 +48,14 @@ const menuItems = [
 ];
 
 const SideMenu = () => {
+  const navigate = useNavigate();
+  
   const handleMenuItemClick = (title: string) => {
-    console.log(`Navigate to ${title}`);
+    if (title === "Event Tickets") {
+      navigate("/event-tickets");
+    } else {
+      console.log(`Navigate to ${title}`);
+    }
   };
 
   return (
