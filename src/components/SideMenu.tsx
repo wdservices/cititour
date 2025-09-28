@@ -51,8 +51,23 @@ const SideMenu = () => {
   const navigate = useNavigate();
   
   const handleMenuItemClick = (title: string) => {
-    if (title === "Event Tickets") {
-      navigate("/event-tickets");
+    const routeMap: { [key: string]: string } = {
+      "Profile": "/profile",
+      "Favourites": "/favourites", 
+      "Events & Deals": "/events-deals",
+      "Business Listing": "/business-listing",
+      "Run Ads": "/run-ads",
+      "House Listings": "/house-listings",
+      "Event Tickets": "/event-tickets",
+      "Share App": "/share-app",
+      "Feedback": "/feedback",
+      "Settings & Privacy": "/settings",
+      "Contact Support": "/contact-support"
+    };
+    
+    const route = routeMap[title];
+    if (route) {
+      navigate(route);
     } else {
       console.log(`Navigate to ${title}`);
     }

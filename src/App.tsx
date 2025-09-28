@@ -15,6 +15,16 @@ import AttractionsPage from "./pages/AttractionsPage";
 import LifestylePage from "./pages/LifestylePage";
 import EventTicketsPage from "./pages/EventTicketsPage";
 import DetailPage from "./pages/DetailPage";
+import BusinessListingPage from "./pages/BusinessListingPage";
+import RunAdsPage from "./pages/RunAdsPage";
+import HouseListingsPage from "./pages/HouseListingsPage";
+import ProfilePage from "./pages/ProfilePage";
+import FavouritesPage from "./pages/FavouritesPage";
+import EventsDealsPage from "./pages/EventsDealsPage";
+import ShareAppPage from "./pages/ShareAppPage";
+import FeedbackPage from "./pages/FeedbackPage";
+import SettingsPage from "./pages/SettingsPage";
+import ContactSupportPage from "./pages/ContactSupportPage";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +45,16 @@ const App = () => (
           <Route path="/attractions" element={<AttractionsPage />} />
           <Route path="/lifestyle" element={<LifestylePage />} />
           <Route path="/event-tickets" element={<EventTicketsPage />} />
+          <Route path="/business-listing" element={<BusinessListingPage />} />
+          <Route path="/run-ads" element={<RunAdsPage />} />
+          <Route path="/house-listings" element={<HouseListingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/favourites" element={<FavouritesPage />} />
+          <Route path="/events-deals" element={<EventsDealsPage />} />
+          <Route path="/share-app" element={<ShareAppPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/contact-support" element={<ContactSupportPage />} />
           <Route path="/events/:id" element={<DetailPage />} />
           <Route path="/hotels/:id" element={<DetailPage />} />
           <Route path="/restaurants/:id" element={<DetailPage />} />
