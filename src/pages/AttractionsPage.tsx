@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import attractionMuseum from "@/assets/attraction-museum.jpg";
+import attractionGarden from "@/assets/attraction-garden.jpg";
 
 const attractionsData = [
   {
     id: "1",
     title: "Garden City Museum",
     description: "Discover the rich history and culture of Garden City through interactive exhibits, artifacts, and guided tours.",
-    image: "/placeholder.svg",
+    image: attractionMuseum,
     category: "Museum",
     rating: 4.7,
     price: "$12-18",
@@ -21,7 +23,7 @@ const attractionsData = [
     id: "2",
     title: "Botanical Gardens",
     description: "Stunning botanical gardens featuring rare plants, themed sections, and peaceful walking trails. Perfect for nature lovers.",
-    image: "/placeholder.svg",
+    image: attractionGarden,
     category: "Nature",
     rating: 4.9,
     price: "$8-15",

@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import hotelLuxury from "@/assets/hotel-luxury.jpg";
+import hotelBoutique from "@/assets/hotel-boutique.jpg";
+import hotelBudget from "@/assets/hotel-budget.jpg";
+import hotelResort from "@/assets/hotel-resort.jpg";
 
 // Mock data for hotels
 const hotelsData = [
@@ -9,7 +13,7 @@ const hotelsData = [
     id: "1",
     title: "Garden City Grand Hotel",
     description: "Luxury 5-star hotel in the heart of Garden City. Featuring world-class amenities, spa services, and fine dining restaurants.",
-    image: "/placeholder.svg",
+    image: hotelLuxury,
     category: "5-Star",
     rating: 4.9,
     price: "$200-400/night",
@@ -22,7 +26,7 @@ const hotelsData = [
     id: "2",
     title: "Boutique Garden Inn",
     description: "Charming boutique hotel with personalized service and unique design. Perfect for romantic getaways and business travelers.",
-    image: "/placeholder.svg",
+    image: hotelBoutique,
     category: "Boutique",
     rating: 4.7,
     price: "$120-250/night",
@@ -35,7 +39,7 @@ const hotelsData = [
     id: "3",
     title: "Budget Stay Garden",
     description: "Comfortable and affordable accommodation for budget-conscious travelers. Clean rooms, friendly staff, and great location.",
-    image: "/placeholder.svg",
+    image: hotelBudget,
     category: "Budget",
     rating: 4.3,
     price: "$50-80/night",
@@ -48,7 +52,7 @@ const hotelsData = [
     id: "4",
     title: "Garden Resort & Spa",
     description: "Luxury resort with full-service spa, multiple pools, golf course, and beachfront access. All-inclusive packages available.",
-    image: "/placeholder.svg",
+    image: hotelResort,
     category: "Resort",
     rating: 4.8,
     price: "$300-600/night",

@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import shoppingMall from "@/assets/shopping-mall.jpg";
+import shoppingMarket from "@/assets/shopping-market.jpg";
 
 const shoppingData = [
   {
     id: "1",
     title: "Garden City Mall",
     description: "Premier shopping destination with over 200 stores, restaurants, and entertainment venues. Fashion, electronics, and more.",
-    image: "/placeholder.svg",
+    image: shoppingMall,
     category: "Shopping Mall",
     rating: 4.6,
     price: "Varies",
@@ -21,7 +23,7 @@ const shoppingData = [
     id: "2",
     title: "Local Craft Market",
     description: "Artisan market featuring local crafts, handmade goods, and unique souvenirs. Supporting local artisans and creators.",
-    image: "/placeholder.svg",
+    image: shoppingMarket,
     category: "Market",
     rating: 4.8,
     price: "$5-100",

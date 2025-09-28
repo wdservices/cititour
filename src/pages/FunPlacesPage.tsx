@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import funAdventure from "@/assets/fun-adventure.jpg";
+import funArcade from "@/assets/fun-arcade.jpg";
 
 const funPlacesData = [
   {
     id: "1",
     title: "Adventure Park",
     description: "Thrilling outdoor activities including zip-lining, rock climbing, and obstacle courses. Perfect for adventure seekers and families.",
-    image: "/placeholder.svg",
+    image: funAdventure,
     category: "Adventure",
     rating: 4.7,
     price: "$30-50",
@@ -21,7 +23,7 @@ const funPlacesData = [
     id: "2",
     title: "Garden City Arcade",
     description: "Modern gaming arcade with classic and latest games. Virtual reality experiences, tournaments, and party packages available.",
-    image: "/placeholder.svg",
+    image: funArcade,
     category: "Gaming",
     rating: 4.5,
     price: "$15-25",

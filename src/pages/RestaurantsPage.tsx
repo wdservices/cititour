@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import restaurantFine from "@/assets/restaurant-fine.jpg";
+import restaurantStreet from "@/assets/restaurant-street.jpg";
+import restaurantRooftop from "@/assets/restaurant-rooftop.jpg";
+import restaurantCafe from "@/assets/restaurant-cafe.jpg";
 
 // Mock data for restaurants
 const restaurantsData = [
@@ -9,7 +13,7 @@ const restaurantsData = [
     id: "1",
     title: "Garden Bistro",
     description: "Fine dining restaurant specializing in modern European cuisine. Fresh ingredients, innovative dishes, and excellent wine selection.",
-    image: "/placeholder.svg",
+    image: restaurantFine,
     category: "Fine Dining",
     rating: 4.8,
     price: "$40-80",
@@ -22,7 +26,7 @@ const restaurantsData = [
     id: "2",
     title: "Street Food Paradise",
     description: "Authentic local street food in a modern setting. Try our famous Garden City specialties and traditional comfort foods.",
-    image: "/placeholder.svg", 
+    image: restaurantStreet,
     category: "Street Food",
     rating: 4.6,
     price: "$10-25",
@@ -35,7 +39,7 @@ const restaurantsData = [
     id: "3",
     title: "Rooftop Lounge & Grill",
     description: "Stunning rooftop dining experience with panoramic city views. Perfect for romantic dinners and special celebrations.",
-    image: "/placeholder.svg",
+    image: restaurantRooftop,
     category: "Rooftop",
     rating: 4.9,
     price: "$50-100",
@@ -48,7 +52,7 @@ const restaurantsData = [
     id: "4",
     title: "Garden Café",
     description: "Cozy café serving artisan coffee, fresh pastries, and light meals. Perfect spot for meetings, studying, or casual dining.",
-    image: "/placeholder.svg",
+    image: restaurantCafe,
     category: "Café", 
     rating: 4.5,
     price: "$5-20",

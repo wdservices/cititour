@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import lifestyleSpa from "@/assets/lifestyle-spa.jpg";
+import lifestyleGym from "@/assets/lifestyle-gym.jpg";
 
 const lifestyleData = [
   {
     id: "1",
     title: "Zen Wellness Spa",
     description: "Luxury spa offering massage therapy, facial treatments, and wellness programs. Relax and rejuvenate in our serene environment.",
-    image: "/placeholder.svg",
+    image: lifestyleSpa,
     category: "Spa",
     rating: 4.8,
     price: "$60-200",
@@ -21,7 +23,7 @@ const lifestyleData = [
     id: "2",
     title: "FitLife Gym & Studio",
     description: "State-of-the-art fitness center with personal training, group classes, and modern equipment. Achieve your fitness goals.",
-    image: "/placeholder.svg",
+    image: lifestyleGym,
     category: "Fitness",
     rating: 4.6,
     price: "$30-80/month",

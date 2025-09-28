@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import airbnbApartment from "@/assets/airbnb-apartment.jpg";
+import airbnbHouse from "@/assets/airbnb-house.jpg";
 
 const airbnbData = [
   {
     id: "1",
     title: "Cozy Downtown Loft",
     description: "Modern loft apartment in the heart of Garden City. Fully furnished with city views, high-speed WiFi, and premium amenities.",
-    image: "/placeholder.svg",
+    image: airbnbApartment,
     category: "Apartment",
     rating: 4.9,
     price: "$80-120/night",
@@ -21,7 +23,7 @@ const airbnbData = [
     id: "2",
     title: "Garden Villa Retreat",
     description: "Spacious villa with private garden and pool. Perfect for families and groups looking for a peaceful getaway.",
-    image: "/placeholder.svg",
+    image: airbnbHouse,
     category: "Villa",
     rating: 4.8,
     price: "$150-250/night",

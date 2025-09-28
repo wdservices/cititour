@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import eventMusic from "@/assets/event-music.jpg";
+import eventArt from "@/assets/event-art.jpg";
+import eventFood from "@/assets/event-food.jpg";
+import eventTech from "@/assets/event-tech.jpg";
 
 // Mock data for events
 const eventsData = [
@@ -9,7 +13,7 @@ const eventsData = [
     id: "1",
     title: "Garden City Music Festival",
     description: "Annual music festival featuring local and international artists. Experience live performances, food trucks, and amazing atmosphere.",
-    image: "/placeholder.svg",
+    image: eventMusic,
     category: "Music",
     rating: 4.8,
     price: "$25-50",
@@ -22,7 +26,7 @@ const eventsData = [
     id: "2", 
     title: "Art Gallery Exhibition",
     description: "Contemporary art exhibition showcasing works by emerging local artists. Interactive displays and guided tours available.",
-    image: "/placeholder.svg",
+    image: eventArt,
     category: "Art",
     rating: 4.6,
     price: "$15",
@@ -35,7 +39,7 @@ const eventsData = [
     id: "3",
     title: "Food & Wine Festival", 
     description: "Culinary celebration featuring the best restaurants in Garden City. Wine tastings, cooking demonstrations, and live entertainment.",
-    image: "/placeholder.svg",
+    image: eventFood,
     category: "Food",
     rating: 4.9,
     price: "$30-75",
@@ -48,7 +52,7 @@ const eventsData = [
     id: "4",
     title: "Tech Conference 2024",
     description: "Leading technology conference bringing together innovators, entrepreneurs, and tech enthusiasts. Keynotes and networking sessions.",
-    image: "/placeholder.svg", 
+    image: eventTech, 
     category: "Technology",
     rating: 4.7,
     price: "$100-200",
