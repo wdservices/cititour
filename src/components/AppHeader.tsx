@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Menu, Search, Bell, User } from "lucide-react";
+import { Menu, Search, Bell, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+import { useTheme } from "@/contexts/ThemeContext";
 import SideMenu from "./SideMenu";
 
 const AppHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-soft">
@@ -25,7 +28,7 @@ const AppHeader = () => {
           </Sheet>
 
           <div className="flex flex-col">
-            <h1 className="font-bold text-lg text-primary">Garden City</h1>
+            <h1 className="font-bold text-lg text-primary">TourPH</h1>
             <p className="text-xs text-muted-foreground">Explore</p>
           </div>
         </div>
@@ -39,7 +42,7 @@ const AppHeader = () => {
               placeholder="Search restaurants, events, hotels..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 bg-muted/50 border-0 focus:bg-background transition-colors"
+              className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
             />
           </div>
         </div>
@@ -51,6 +54,15 @@ const AppHeader = () => {
             <Search className="h-5 w-5" />
           </Button>
 
+          {/* Theme Toggle */}
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === 'dark' ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
@@ -59,12 +71,7 @@ const AppHeader = () => {
             </div>
           </Button>
 
-          {/* Profile */}
-          <Button variant="ghost" size="icon" className="relative">
-            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-primary-foreground" />
-            </div>
-          </Button>
+
         </div>
       </div>
 
@@ -77,7 +84,7 @@ const AppHeader = () => {
             placeholder="Search anything..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 bg-muted/50 border-0"
+            className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
           />
         </div>
       </div>

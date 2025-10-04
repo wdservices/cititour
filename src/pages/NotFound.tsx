@@ -23,7 +23,7 @@ const NotFound = () => {
           Page Not Found
         </h1>
         <p className="text-muted-foreground mb-8 leading-relaxed">
-          Oops! The page you're looking for doesn't exist. Let's get you back to exploring Garden City.
+          Oops! The page you're looking for doesn't exist. Let's get you back to exploring the Philippines.
         </p>
 
         {/* Action Buttons */}

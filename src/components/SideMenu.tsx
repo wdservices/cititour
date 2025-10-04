@@ -11,18 +11,23 @@ import {
   HelpCircle,
   LogOut,
   X,
-  Ticket
+  Ticket,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SheetClose } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   {
     section: "Personal",
     items: [
       { icon: User, title: "Profile", description: "Manage your account" },
+      { icon: Wallet, title: "Wallet", description: "Manage your funds" },
       { icon: Heart, title: "Favourites", description: "Your saved places" },
       { icon: Calendar, title: "Events & Deals", description: "Special offers" },
     ]
@@ -39,7 +44,7 @@ const menuItems = [
   {
     section: "Support",
     items: [
-      { icon: Share, title: "Share App", description: "Invite friends" },
+      { icon: Share, title: "Share TourPH", description: "Invite friends" },
       { icon: MessageSquare, title: "Feedback", description: "Help us improve" },
       { icon: Settings, title: "Settings & Privacy", description: "Account settings" },
       { icon: HelpCircle, title: "Contact Support", description: "Get help" },
@@ -49,10 +54,12 @@ const menuItems = [
 
 const SideMenu = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
   const handleMenuItemClick = (title: string) => {
     const routeMap: { [key: string]: string } = {
       "Profile": "/profile",
+      "Wallet": "/wallet",
       "Favourites": "/favourites", 
       "Events & Deals": "/events-deals",
       "Business Listing": "/business-listing",
@@ -73,21 +80,56 @@ const SideMenu = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  // Get user display name and email
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
+  const userAvatar = user?.photoURL || '';
+  
+  // Get initials for fallback avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-6 bg-gradient-primary">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-            <User className="h-6 w-6 text-white" />
-          </div>
-          <div className="text-white">
-            <h3 className="font-semibold">Welcome!</h3>
-            <p className="text-sm opacity-90">Garden City Explorer</p>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Avatar className="h-12 w-12 border-2 border-white/30">
+            <AvatarImage src={userAvatar} alt={displayName} />
+            <AvatarFallback className="bg-white/20 text-white font-semibold">
+              {getInitials(displayName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-white flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold truncate">{displayName}</h3>
+              {user?.emailVerified && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-100 text-xs">
+                  Verified
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm opacity-90 truncate">{userEmail}</p>
+            <p className="text-xs opacity-75">TourPH Explorer</p>
           </div>
         </div>
         <SheetClose asChild>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 shrink-0">
             <X className="h-5 w-5" />
           </Button>
         </SheetClose>
@@ -146,11 +188,18 @@ const SideMenu = () => {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
-          onClick={() => handleMenuItemClick("Logout")}
+          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
           <span>Logout</span>
         </Button>
+        
+        {/* Company Branding */}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-muted-foreground/60">
+            By Bluewaves Technologies
+          </p>
+        </div>
       </div>
     </div>
   );

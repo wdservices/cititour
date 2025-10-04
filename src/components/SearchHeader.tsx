@@ -41,7 +41,7 @@ const SearchHeader = ({
               placeholder={placeholder}
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
             />
           </div>
           <Button variant="outline" size="icon">

@@ -92,7 +92,7 @@ const CategoryGrid = () => {
           Explore Categories
         </h2>
         <p className="text-muted-foreground">
-          Discover the best of Garden City
+          Discover the best of the Philippines
         </p>
       </div>
 

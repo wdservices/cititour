@@ -98,7 +98,7 @@ const FeedbackPage = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Feedback</h1>
-              <p className="text-white/90">Help us improve Garden City Explore</p>
+              <p className="text-white/90">Help us improve TourPH</p>
             </div>
           </div>
         </div>

@@ -59,7 +59,7 @@ const BusinessListingPage = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Business Listing</h1>
-              <p className="text-white/90">List your business on Garden City Explore</p>
+              <p className="text-white/90">List your business on TourPH</p>
             </div>
           </div>
         </div>

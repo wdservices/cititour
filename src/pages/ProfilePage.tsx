@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Camera, Edit, MapPin, Phone, Mail, Calendar, Shield, Bell } from "lucide-react";
+import { ArrowLeft, User, Camera, Edit, MapPin, Phone, Mail, Calendar, Shield, Bell, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,13 +15,58 @@ import { Switch } from "@/components/ui/switch";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+
+  // Get user information from Firebase auth
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
+  const userAvatar = user?.photoURL || '';
+  const isEmailVerified = user?.emailVerified || false;
+  const creationTime = user?.metadata?.creationTime;
+  const lastSignInTime = user?.metadata?.lastSignInTime;
+  const providerId = user?.providerData?.[0]?.providerId || 'email';
+  
+  // Get initials for fallback avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Unknown';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Get provider display name
+  const getProviderName = (providerId: string) => {
+    switch (providerId) {
+      case 'google.com':
+        return 'Google';
+      case 'facebook.com':
+        return 'Facebook';
+      case 'password':
+      case 'email':
+        return 'Email/Password';
+      default:
+        return 'Unknown';
+    }
+  };
 
   const userStats = [
     { label: "Places Visited", value: "47", icon: MapPin },
     { label: "Reviews Written", value: "23", icon: "📝" },
     { label: "Photos Shared", value: "156", icon: "📸" },
-    { label: "Member Since", value: "2023", icon: Calendar }
+    { label: "Member Since", value: creationTime ? new Date(creationTime).getFullYear().toString() : "2024", icon: Calendar }
   ];
 
   return (
@@ -40,8 +86,10 @@ const ProfilePage = () => {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-20 w-20 border-4 border-white/30">
-                <AvatarImage src="/placeholder-avatar.jpg" />
-                <AvatarFallback className="bg-white/20 text-white text-2xl">JD</AvatarFallback>
+                <AvatarImage src={userAvatar} alt={displayName} />
+                <AvatarFallback className="bg-white/20 text-white text-2xl">
+                  {getInitials(displayName)}
+                </AvatarFallback>
               </Avatar>
               <Button 
                 size="icon" 
@@ -53,11 +101,19 @@ const ProfilePage = () => {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold">John Doe</h1>
+                <h1 className="text-2xl font-bold">{displayName}</h1>
+                {isEmailVerified && (
+                  <Badge className="bg-green-500 hover:bg-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                )}
                 <Badge className="bg-yellow-500">Gold Member</Badge>
               </div>
-              <p className="text-white/90 mb-2">Garden City Explorer</p>
-              <p className="text-sm text-white/80">Member since January 2023</p>
+              <p className="text-white/90 mb-2">{userEmail}</p>
+              <p className="text-sm text-white/80">
+                Member since {formatDate(creationTime)} • Signed in via {getProviderName(providerId)}
+              </p>
             </div>
             <Button 
               variant="secondary" 
@@ -108,7 +164,7 @@ const ProfilePage = () => {
                     <Label htmlFor="firstName">First Name</Label>
                     <Input 
                       id="firstName" 
-                      defaultValue="John" 
+                      defaultValue={displayName.split(' ')[0] || ''} 
                       disabled={!isEditing}
                     />
                   </div>
@@ -116,7 +172,7 @@ const ProfilePage = () => {
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input 
                       id="lastName" 
-                      defaultValue="Doe" 
+                      defaultValue={displayName.split(' ').slice(1).join(' ') || ''} 
                       disabled={!isEditing}
                     />
                   </div>
@@ -124,10 +180,28 @@ const ProfilePage = () => {
 
                 <div>
                   <Label htmlFor="email">Email Address</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      id="email" 
+                      defaultValue={userEmail} 
+                      disabled={true}
+                      className="flex-1"
+                    />
+                    {isEmailVerified && (
+                      <Badge variant="outline" className="text-green-600 border-green-600">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="provider">Sign-in Method</Label>
                   <Input 
-                    id="email" 
-                    defaultValue="john.doe@example.com" 
-                    disabled={!isEditing}
+                    id="provider" 
+                    defaultValue={getProviderName(providerId)} 
+                    disabled={true}
                   />
                 </div>
 
@@ -171,6 +245,75 @@ const ProfilePage = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Account Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Information</CardTitle>
+                <CardDescription>
+                  Your account details and authentication information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Account Created</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{formatDate(creationTime)}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Last Sign In</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{formatDate(lastSignInTime)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>User ID</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-mono text-muted-foreground truncate">
+                        {user?.uid || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Email Status</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <Badge variant={isEmailVerified ? "default" : "secondary"} className="text-xs">
+                        {isEmailVerified ? "Verified" : "Unverified"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <Label>Authentication Provider</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{getProviderName(providerId)}</span>
+                    {providerId === 'google.com' && (
+                      <Badge variant="outline" className="text-xs">
+                        Google Account
+                      </Badge>
+                    )}
+                    {providerId === 'facebook.com' && (
+                      <Badge variant="outline" className="text-xs">
+                        Facebook Account
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Preferences Tab */}
@@ -179,7 +322,7 @@ const ProfilePage = () => {
               <CardHeader>
                 <CardTitle>App Preferences</CardTitle>
                 <CardDescription>
-                  Customize your Garden City Explore experience
+                  Customize your TourPH experience
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -338,7 +481,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Email Updates</Label>
-                    <p className="text-sm text-muted-foreground">Weekly updates about Garden City</p>
+                    <p className="text-sm text-muted-foreground">Weekly updates about the Philippines</p>
                   </div>
                   <Switch />
                 </div>
