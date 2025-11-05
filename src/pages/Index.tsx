@@ -1,93 +1,101 @@
 import { useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
-import HeroSlider from "@/components/HeroSlider";
-import CategoryGrid from "@/components/CategoryGrid";
+import AnimatedRegionTitle from "@/components/AnimatedRegionTitle";
+import { motion } from "framer-motion";
+import { Sparkles, MapPin, Calendar, UtensilsCrossed, ShoppingBag } from "lucide-react";
+import { useRegion } from "@/contexts/RegionContext";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <AppHeader />
 
-      {/* Main Content */}
-      <main className="pb-6">
-        {/* Hero Section */}
-        <div className="px-4 pt-4">
-          <HeroSlider />
-        </div>
+      <main className="pb-12">
+        {/* Lively Hero */}
+        <section className="relative overflow-hidden">
+          {/* Animated background blobs */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-24 -left-24 w-[28rem] h-[28rem] bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute top-32 -right-28 w-[22rem] h-[22rem] bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute bottom-0 left-1/3 w-[18rem] h-[18rem] bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-2000" />
+          </div>
 
-        {/* Categories Section - Sticky under hero */}
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b">
-          <CategoryGrid />
-        </div>
+          <div className="px-4 pt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center"
+            >
+              <div className="flex justify-center mb-6">
+                <div className="w-14 h-14 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-hero">
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+              </div>
 
-        {/* Quick Actions Banner */}
-        <div className="px-4 mt-8">
-          <div className="bg-gradient-primary rounded-2xl p-6 text-white shadow-soft">
-            <div className="text-center">
-              <h3 className="text-xl font-bold mb-2">
-                Ready to Explore?
-              </h3>
-              <p className="text-primary-foreground/90 mb-4">
-                Discover amazing places, book tickets, and enjoy exclusive deals
-              </p>
-              <div className="flex gap-3 justify-center">
-                <button 
-                  onClick={() => navigate('/events')}
-                  className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm transition-colors"
+              <AnimatedRegionTitle />
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="mt-4 text-lg md:text-xl text-muted-foreground"
+              >
+                Discover, book and enjoy the best experiences around you
+              </motion.p>
+
+              {/* Floating interactive icons */}
+              <div className="relative mt-10 h-24">
+                <motion.div
+                  className="absolute left-1/4"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 3 }}
                 >
-                  Browse Events
+                  <MapPin className="w-8 h-8 text-purple-600" />
+                </motion.div>
+                <motion.div
+                  className="absolute left-1/2"
+                  animate={{ y: [0, -12, 0] }}
+                  transition={{ repeat: Infinity, duration: 3.2 }}
+                >
+                  <Calendar className="w-8 h-8 text-blue-600" />
+                </motion.div>
+                <motion.div
+                  className="absolute left-[68%]"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 2.8 }}
+                >
+                  <UtensilsCrossed className="w-8 h-8 text-indigo-600" />
+                </motion.div>
+                <motion.div
+                  className="absolute left-[85%]"
+                  animate={{ y: [0, -14, 0] }}
+                  transition={{ repeat: Infinity, duration: 3.4 }}
+                >
+                  <ShoppingBag className="w-8 h-8 text-pink-600" />
+                </motion.div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="mt-8 flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/events')}
+                  className="px-5 py-3 rounded-xl bg-gradient-primary text-white font-medium shadow-soft hover:opacity-90 transition"
+                >
+                  Explore Events
                 </button>
-                <button 
+                <button
                   onClick={() => navigate('/hotels')}
-                  className="bg-white text-primary hover:bg-white/90 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                  className="px-5 py-3 rounded-xl border border-primary text-primary hover:bg-primary/5 font-medium transition"
                 >
                   Find Hotels
                 </button>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-
-        {/* Featured Section */}
-        <div className="px-4 mt-8">
-          <div className="mb-4">
-            <h3 className="text-xl font-bold text-foreground">
-              Trending Now
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              Popular destinations this week
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gradient-card rounded-xl p-4 border shadow-card animate-fade-in">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">🎭</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Live Concert Series</h4>
-                  <p className="text-sm text-muted-foreground">This weekend at Central Park</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-card rounded-xl p-4 border shadow-card animate-fade-in" style={{animationDelay: '0.1s'}}>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">🍴</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">New Restaurant Opening</h4>
-                  <p className="text-sm text-muted-foreground">Grand opening with 20% off</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
       </main>
     </div>
   );

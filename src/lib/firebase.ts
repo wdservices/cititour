@@ -11,6 +11,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   User
 } from 'firebase/auth';
 
@@ -53,7 +54,14 @@ export const signInWithGoogle = async () => {
     return await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
     // If popup is blocked or CORS issues, fallback to redirect
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+    const msg = String(error?.message || '');
+    const shouldRedirect = (
+      error.code === 'auth/popup-blocked' ||
+      error.code === 'auth/cancelled-popup-request' ||
+      error.code === 'auth/network-request-failed' ||
+      /Failed to fetch/i.test(msg)
+    );
+    if (shouldRedirect) {
       return signInWithRedirect(auth, googleProvider);
     }
     throw error;
@@ -65,7 +73,14 @@ export const signInWithFacebook = async () => {
     return await signInWithPopup(auth, facebookProvider);
   } catch (error: any) {
     // If popup is blocked or CORS issues, fallback to redirect
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+    const msg = String(error?.message || '');
+    const shouldRedirect = (
+      error.code === 'auth/popup-blocked' ||
+      error.code === 'auth/cancelled-popup-request' ||
+      error.code === 'auth/network-request-failed' ||
+      /Failed to fetch/i.test(msg)
+    );
+    if (shouldRedirect) {
       return signInWithRedirect(auth, facebookProvider);
     }
     throw error;
@@ -91,6 +106,10 @@ export const logOut = () => {
 
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+export const resetPassword = (email: string) => {
+  return sendPasswordResetEmail(auth, email);
 };
 
 export default app;

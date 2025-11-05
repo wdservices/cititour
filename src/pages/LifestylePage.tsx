@@ -1,44 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
-import lifestyleSpa from "@/assets/lifestyle-spa.jpg";
-import lifestyleGym from "@/assets/lifestyle-gym.jpg";
 
-const lifestyleData = [
-  {
-    id: "1",
-    title: "Zen Wellness Spa",
-    description: "Luxury spa offering massage therapy, facial treatments, and wellness programs. Relax and rejuvenate in our serene environment.",
-    image: lifestyleSpa,
-    category: "Spa",
-    rating: 4.8,
-    price: "$60-200",
-    location: "Garden City Wellness District",
-    phone: "+1234567890",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "2",
-    title: "FitLife Gym & Studio",
-    description: "State-of-the-art fitness center with personal training, group classes, and modern equipment. Achieve your fitness goals.",
-    image: lifestyleGym,
-    category: "Fitness",
-    rating: 4.6,
-    price: "$30-80/month",
-    location: "Business District",
-    phone: "+1234567891",
-    website: "https://example.com",
-    isOpen: true
-  }
-];
+interface LifestylePlace {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  rating: number;
+  price: string;
+  location: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+}
 
 const LifestylePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [places, setPlaces] = useState<LifestylePlace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
-  const filteredPlaces = lifestyleData.filter(place =>
+
+  useEffect(() => {
+    const fetchLifestylePlaces = async () => {
+      try {
+        const q = query(collection(db, "businesses"), where("category", "==", "Lifestyle"));
+        const querySnapshot = await getDocs(q);
+        const placesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as LifestylePlace[];
+        setPlaces(placesData);
+      } catch (err) {
+        setError("Failed to fetch lifestyle places.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLifestylePlaces();
+  }, []);
+
+  const filteredPlaces = places.filter(place =>
     place.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     place.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     place.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,20 +67,26 @@ const LifestylePage = () => {
       />
       
       <div className="px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlaces.map((place) => (
-            <ListingCard
-              key={place.id}
-              {...place}
-              onClick={() => handlePlaceClick(place.id)}
-            />
-          ))}
-        </div>
-        
-        {filteredPlaces.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No lifestyle places found matching your search.</p>
-          </div>
+        {loading && <p className="text-center">Loading lifestyle places...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPlaces.map((place) => (
+                <ListingCard
+                  key={place.id}
+                  {...place}
+                  onClick={() => handlePlaceClick(place.id)}
+                />
+              ))}
+            </div>
+            
+            {filteredPlaces.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No lifestyle places found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -7,7 +7,8 @@ import {
   signInWithEmail, 
   signUpWithEmail, 
   logOut,
-  handleRedirectResult 
+  handleRedirectResult,
+  resetPassword as firebaseResetPassword
 } from '@/lib/firebase';
 
 interface User {
@@ -25,6 +26,7 @@ interface AuthContextType {
   signUpWithEmailPassword: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -110,6 +112,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const resetPassword = async (email: string): Promise<void> => {
+    try {
+      await firebaseResetPassword(email);
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      throw new Error(error.message || 'Failed to send reset email.');
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await logOut();
@@ -127,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUpWithEmailPassword,
     loginWithGoogle,
     loginWithFacebook,
+    resetPassword,
     logout,
   };
 

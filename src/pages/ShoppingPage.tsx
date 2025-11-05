@@ -1,44 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
-import shoppingMall from "@/assets/shopping-mall.jpg";
-import shoppingMarket from "@/assets/shopping-market.jpg";
 
-const shoppingData = [
-  {
-    id: "1",
-    title: "Garden City Mall",
-    description: "Premier shopping destination with over 200 stores, restaurants, and entertainment venues. Fashion, electronics, and more.",
-    image: shoppingMall,
-    category: "Shopping Mall",
-    rating: 4.6,
-    price: "Varies",
-    location: "Downtown Garden City",
-    phone: "+1234567890",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "2",
-    title: "Local Craft Market",
-    description: "Artisan market featuring local crafts, handmade goods, and unique souvenirs. Supporting local artisans and creators.",
-    image: shoppingMarket,
-    category: "Market",
-    rating: 4.8,
-    price: "$5-100",
-    location: "Old Town Square",
-    phone: "+1234567891",
-    website: "https://example.com",
-    isOpen: true
-  }
-];
+interface ShoppingPlace {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  rating: number;
+  price: string;
+  location: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+}
 
 const ShoppingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [places, setPlaces] = useState<ShoppingPlace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
-  const filteredPlaces = shoppingData.filter(place =>
+
+  useEffect(() => {
+    const fetchShoppingPlaces = async () => {
+      try {
+        const q = query(collection(db, "businesses"), where("category", "==", "Shopping"));
+        const querySnapshot = await getDocs(q);
+        const placesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as ShoppingPlace[];
+        setPlaces(placesData);
+      } catch (err) {
+        setError("Failed to fetch shopping places.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShoppingPlaces();
+  }, []);
+
+  const filteredPlaces = places.filter(place =>
     place.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     place.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     place.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,20 +67,26 @@ const ShoppingPage = () => {
       />
       
       <div className="px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlaces.map((place) => (
-            <ListingCard
-              key={place.id}
-              {...place}
-              onClick={() => handlePlaceClick(place.id)}
-            />
-          ))}
-        </div>
-        
-        {filteredPlaces.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No shopping places found matching your search.</p>
-          </div>
+        {loading && <p className="text-center">Loading shopping places...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPlaces.map((place) => (
+                <ListingCard
+                  key={place.id}
+                  {...place}
+                  onClick={() => handlePlaceClick(place.id)}
+                />
+              ))}
+            </div>
+            
+            {filteredPlaces.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No shopping places found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

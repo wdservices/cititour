@@ -126,11 +126,6 @@ const SideMenu = () => {
             <p className="text-xs opacity-75">TourPH Explorer</p>
           </div>
         </div>
-        <SheetClose asChild>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 shrink-0">
-            <X className="h-5 w-5" />
-          </Button>
-        </SheetClose>
       </div>
 
       {/* Menu Content */}

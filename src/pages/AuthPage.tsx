@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRegion } from '@/contexts/RegionContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AuthPageProps {
   onAuthenticated: () => void;
@@ -14,15 +16,20 @@ interface AuthPageProps {
 const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isWorking, setIsWorking] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
   });
 
-  const { loginWithEmail, signUpWithEmailPassword, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { loginWithEmail, signUpWithEmailPassword, loginWithGoogle, loginWithFacebook, resetPassword, isAuthenticated, isLoading } = useAuth();
+  const { brandName, locationName } = useRegion();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const forceLogin = searchParams.get('force') === 'true';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -33,7 +40,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsWorking(true);
 
     try {
       if (isSignUp) {
@@ -42,32 +49,48 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           title: "Account Created!",
           description: "Your account has been created successfully.",
         });
+        onAuthenticated?.();
+        navigate('/explore');
       } else {
         await loginWithEmail(formData.email, formData.password);
         toast({
           title: "Welcome Back!",
           description: "You have successfully signed in.",
         });
+        onAuthenticated?.();
+        navigate('/explore');
       }
     } catch (error: any) {
-      toast({
-        title: "Authentication Failed",
-        description: error.message || "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      const code = String(error?.code || '');
+      if (isSignUp && code === 'auth/email-already-in-use') {
+        toast({
+          title: "Email already in use",
+          description: "Please sign in or use Forgot Password to reset.",
+          variant: "destructive",
+        });
+        setIsSignUp(false);
+      } else {
+        toast({
+          title: "Authentication Failed",
+          description: error.message || "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      setIsWorking(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsWorking(true);
     try {
       await loginWithGoogle();
       toast({
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
+      onAuthenticated?.();
+      navigate('/explore');
     } catch (error: any) {
       toast({
         title: "Google Sign-In Failed",
@@ -75,18 +98,20 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsWorking(false);
     }
   };
 
   const handleFacebookSignIn = async () => {
-    setIsLoading(true);
+    setIsWorking(true);
     try {
       await loginWithFacebook();
       toast({
         title: "Welcome!",
         description: "You have successfully signed in with Facebook.",
       });
+      onAuthenticated?.();
+      navigate('/explore');
     } catch (error: any) {
       toast({
         title: "Facebook Sign-In Failed",
@@ -94,7 +119,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsWorking(false);
     }
   };
 
@@ -102,6 +127,41 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     setIsSignUp(!isSignUp);
     setFormData({ name: '', email: '', password: '' });
   };
+
+  const handleResetPassword = async () => {
+    if (!formData.email) {
+      toast({
+        title: "Enter your email",
+        description: "Please fill in your email to reset your password.",
+      });
+      return;
+    }
+    setIsWorking(true);
+    try {
+      await resetPassword(formData.email);
+      toast({
+        title: "Reset email sent",
+        description: "Check your inbox for the password reset link.",
+      });
+    } catch (error: any) {
+      const code = String(error?.code || '');
+      const description =
+        code === 'auth/user-not-found'
+          ? 'No account found for this email. Try Sign Up.'
+          : error.message || 'Could not send reset email. Please try again.';
+      toast({ title: 'Reset failed', description, variant: 'destructive' });
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
+  // If user becomes authenticated (including redirect flows), send them to the app
+  // Respect forceLogin param to allow viewing the login screen even when authenticated
+  useEffect(() => {
+    if (!forceLogin && !isLoading && isAuthenticated) {
+      navigate('/explore', { replace: true });
+    }
+  }, [forceLogin, isAuthenticated, isLoading, navigate]);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -161,9 +221,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                   <Sparkles className="w-8 h-8 text-white" />
                 </motion.div>
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Welcome to TourPH
+              <h1 className="text-3xl font-bold text-white mb-1">
+                Welcome to CityTour
               </h1>
+              <p className="text-white/80 mb-2">
+                <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm">{brandName}</span>
+              </p>
               <p className="text-white/70">
                 {isSignUp ? 'Create your account to get started' : 'Sign in to continue your journey'}
               </p>
@@ -253,20 +316,31 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {!isSignUp && (
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={handleResetPassword}
+                        className="mt-2 text-purple-300 hover:text-purple-200 font-semibold transition-colors underline underline-offset-4"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}
                 <motion.div
-                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                  whileHover={{ scale: isWorking ? 1 : 1.02 }}
+                  whileTap={{ scale: isWorking ? 1 : 0.98 }}
                 >
                   <Button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isWorking}
                     className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <span className="flex items-center justify-center">
-                      {isLoading ? (
+                      {isWorking ? (
                         <>
                           <motion.div
                             animate={{ rotate: 360 }}
@@ -326,7 +400,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleGoogleSignIn}
-                  disabled={isLoading}
+                  disabled={isWorking}
                   className="w-full inline-flex justify-center py-3 px-4 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="text-sm font-medium">Google</span>
@@ -335,7 +409,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleFacebookSignIn}
-                  disabled={isLoading}
+                  disabled={isWorking}
                   className="w-full inline-flex justify-center py-3 px-4 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="text-sm font-medium">Facebook</span>

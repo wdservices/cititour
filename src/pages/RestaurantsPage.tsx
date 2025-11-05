@@ -1,73 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
-import restaurantFine from "@/assets/restaurant-fine.jpg";
-import restaurantStreet from "@/assets/restaurant-street.jpg";
-import restaurantRooftop from "@/assets/restaurant-rooftop.jpg";
-import restaurantCafe from "@/assets/restaurant-cafe.jpg";
 
-// Mock data for restaurants
-const restaurantsData = [
-  {
-    id: "1",
-    title: "Garden Bistro",
-    description: "Fine dining restaurant specializing in modern European cuisine. Fresh ingredients, innovative dishes, and excellent wine selection.",
-    image: restaurantFine,
-    category: "Fine Dining",
-    rating: 4.8,
-    price: "$40-80",
-    location: "Garden City Center",
-    phone: "+1234567890",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "2",
-    title: "Street Food Paradise",
-    description: "Authentic local street food in a modern setting. Try our famous Garden City specialties and traditional comfort foods.",
-    image: restaurantStreet,
-    category: "Street Food",
-    rating: 4.6,
-    price: "$10-25",
-    location: "Food District",
-    phone: "+1234567891",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "3",
-    title: "Rooftop Lounge & Grill",
-    description: "Stunning rooftop dining experience with panoramic city views. Perfect for romantic dinners and special celebrations.",
-    image: restaurantRooftop,
-    category: "Rooftop",
-    rating: 4.9,
-    price: "$50-100",
-    location: "Downtown Skyline",
-    phone: "+1234567892",
-    website: "https://example.com", 
-    isOpen: false
-  },
-  {
-    id: "4",
-    title: "Garden Café",
-    description: "Cozy café serving artisan coffee, fresh pastries, and light meals. Perfect spot for meetings, studying, or casual dining.",
-    image: restaurantCafe,
-    category: "Café", 
-    rating: 4.5,
-    price: "$5-20",
-    location: "University District",
-    phone: "+1234567893",
-    website: "https://example.com",
-    isOpen: true
-  }
-];
+interface Restaurant {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  rating: number;
+  price: string;
+  location: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+}
 
 const RestaurantsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
-  const filteredRestaurants = restaurantsData.filter(restaurant =>
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const q = query(collection(db, "businesses"), where("category", "==", "Restaurant"));
+        const querySnapshot = await getDocs(q);
+        const restaurantsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Restaurant[];
+        setRestaurants(restaurantsData);
+      } catch (err) {
+        setError("Failed to fetch restaurants.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
+
+  const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     restaurant.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     restaurant.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -87,20 +67,26 @@ const RestaurantsPage = () => {
       />
       
       <div className="px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRestaurants.map((restaurant) => (
-            <ListingCard
-              key={restaurant.id}
-              {...restaurant}
-              onClick={() => handleRestaurantClick(restaurant.id)}
-            />
-          ))}
-        </div>
-        
-        {filteredRestaurants.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No restaurants found matching your search.</p>
-          </div>
+        {loading && <p className="text-center">Loading restaurants...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRestaurants.map((restaurant) => (
+                <ListingCard
+                  key={restaurant.id}
+                  {...restaurant}
+                  onClick={() => handleRestaurantClick(restaurant.id)}
+                />
+              ))}
+            </div>
+            
+            {filteredRestaurants.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No restaurants found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

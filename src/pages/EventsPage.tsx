@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
 import eventMusic from "@/assets/event-music.jpg";
@@ -63,11 +65,49 @@ const eventsData = [
   }
 ];
 
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  rating: number;
+  price: string;
+  location: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+}
+
 const EventsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
-  const filteredEvents = eventsData.filter(event =>
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const q = query(collection(db, "businesses"), where("category", "==", "Event"));
+        const querySnapshot = await getDocs(q);
+        const eventsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Event[];
+        setEvents(eventsData);
+      } catch (err) {
+        setError("Failed to fetch events.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -87,20 +127,26 @@ const EventsPage = () => {
       />
       
       <div className="px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <ListingCard
-              key={event.id}
-              {...event}
-              onClick={() => handleEventClick(event.id)}
-            />
-          ))}
-        </div>
-        
-        {filteredEvents.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No events found matching your search.</p>
-          </div>
+        {loading && <p className="text-center">Loading events...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredEvents.map((event) => (
+                <ListingCard
+                  key={event.id}
+                  {...event}
+                  onClick={() => handleEventClick(event.id)}
+                />
+              ))}
+            </div>
+            
+            {filteredEvents.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No events found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

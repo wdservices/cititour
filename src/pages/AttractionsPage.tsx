@@ -1,44 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
-import attractionMuseum from "@/assets/attraction-museum.jpg";
-import attractionGarden from "@/assets/attraction-garden.jpg";
 
-const attractionsData = [
-  {
-    id: "1",
-    title: "Garden City Museum",
-    description: "Discover the rich history and culture of Garden City through interactive exhibits, artifacts, and guided tours.",
-    image: attractionMuseum,
-    category: "Museum",
-    rating: 4.7,
-    price: "$12-18",
-    location: "Cultural District",
-    phone: "+1234567890",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "2",
-    title: "Botanical Gardens",
-    description: "Stunning botanical gardens featuring rare plants, themed sections, and peaceful walking trails. Perfect for nature lovers.",
-    image: attractionGarden,
-    category: "Nature",
-    rating: 4.9,
-    price: "$8-15",
-    location: "Garden City Park",
-    phone: "+1234567891",
-    website: "https://example.com",
-    isOpen: true
-  }
-];
+interface Attraction {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  rating: number;
+  price: string;
+  location: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+}
 
 const AttractionsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
-  const filteredAttractions = attractionsData.filter(attraction =>
+
+  useEffect(() => {
+    const fetchAttractions = async () => {
+      try {
+        const q = query(collection(db, "businesses"), where("category", "==", "Attraction"));
+        const querySnapshot = await getDocs(q);
+        const attractionsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Attraction[];
+        setAttractions(attractionsData);
+      } catch (err) {
+        setError("Failed to fetch attractions.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttractions();
+  }, []);
+
+  const filteredAttractions = attractions.filter(attraction =>
     attraction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     attraction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     attraction.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,20 +67,26 @@ const AttractionsPage = () => {
       />
       
       <div className="px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAttractions.map((attraction) => (
-            <ListingCard
-              key={attraction.id}
-              {...attraction}
-              onClick={() => handleAttractionClick(attraction.id)}
-            />
-          ))}
-        </div>
-        
-        {filteredAttractions.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No attractions found matching your search.</p>
-          </div>
+        {loading && <p className="text-center">Loading attractions...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAttractions.map((attraction) => (
+                <ListingCard
+                  key={attraction.id}
+                  {...attraction}
+                  onClick={() => handleAttractionClick(attraction.id)}
+                />
+              ))}
+            </div>
+            
+            {filteredAttractions.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No attractions found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
