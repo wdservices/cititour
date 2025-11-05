@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import { useTheme } from "@/contexts/ThemeContext";
+import { useRegion } from "@/contexts/RegionContext";
 import SideMenu from "./SideMenu";
 
 const AppHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { theme, toggleTheme } = useTheme();
+  const { brandName } = useRegion();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-soft">
@@ -28,7 +30,7 @@ const AppHeader = () => {
           </Sheet>
 
           <div className="flex flex-col">
-            <h1 className="font-bold text-lg text-primary">TourPH</h1>
+            <h1 className="font-bold text-lg text-primary">{brandName}</h1>
             <p className="text-xs text-muted-foreground">Explore</p>
           </div>
         </div>

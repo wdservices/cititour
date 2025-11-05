@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { auth, db } from '../lib/firebase'
+import { 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged, 
+  User as FirebaseUser 
+} from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 
 interface User {
-  id: string
-  email: string
-  name: string
+  uid: string
+  email: string | null
+  displayName: string | null
   role: 'admin' | 'super_admin'
 }
 
@@ -22,50 +30,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored auth token on app load
-    const token = localStorage.getItem('admin_token')
-    const userData = localStorage.getItem('admin_user')
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData))
-      } catch (error) {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_user')
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const adminDocRef = doc(db, "admin_users", firebaseUser.uid);
+        const adminDocSnap = await getDoc(adminDocRef);
+
+        if (adminDocSnap.exists()) {
+          const adminData = adminDocSnap.data();
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            role: adminData.role // Assuming 'role' field exists in admin_users document
+          });
+        } else {
+          // Not an admin user, log them out or handle appropriately
+          await signOut(auth);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-    }
-    setLoading(false)
-  }, [])
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // For demo purposes, using hardcoded admin credentials
-      // In production, this would make an API call to your backend
-      if (email === 'admin@tourph.com' && password === 'admin123') {
-        const adminUser: User = {
-          id: '1',
-          email: 'admin@tourph.com',
-          name: 'Admin User',
-          role: 'admin'
-        }
-        
-        setUser(adminUser)
-        localStorage.setItem('admin_token', 'demo_token_123')
-        localStorage.setItem('admin_user', JSON.stringify(adminUser))
-        return true
-      }
-      return false
-    } catch (error) {
-      console.error('Login error:', error)
-      return false
-    }
-  }
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_user')
-  }
+      const adminDocRef = doc(db, "admin_users", firebaseUser.uid);
+      const adminDocSnap = await getDoc(adminDocRef);
+
+      if (adminDocSnap.exists()) {
+        const adminData = adminDocSnap.data();
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          role: adminData.role
+        });
+        setLoading(false);
+        return true;
+      } else {
+        // Not an admin user
+        await signOut(auth);
+        setUser(null);
+        setLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
 
   const value = {
     user,

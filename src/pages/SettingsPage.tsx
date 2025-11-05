@@ -11,11 +11,13 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRegion } from "@/contexts/RegionContext";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const { region, brandName, setRegion } = useRegion();
 
   const accountStats = [
     { label: "Account Created", value: "Jan 2023" },
@@ -138,6 +140,36 @@ const SettingsPage = () => {
                 <Button className="bg-gradient-primary hover:opacity-90">
                   Save Changes
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Region & Branding */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smartphone className="h-5 w-5" />
+                  Region & Branding
+                </CardTitle>
+                <CardDescription>Choose your region to personalize listings and branding</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Current Brand</Label>
+                  <p className="text-sm text-muted-foreground">{brandName}</p>
+                </div>
+                <div>
+                  <Label>Region</Label>
+                  <Select value={region} onValueChange={(val) => setRegion(val as any)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PH">Rivers (PH)</SelectItem>
+                      <SelectItem value="LAG">Lagos (LAG)</SelectItem>
+                      <SelectItem value="ABJ">Abuja (ABJ)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
 
