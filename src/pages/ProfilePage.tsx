@@ -18,14 +18,14 @@ const ProfilePage = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Get user information from Firebase auth
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  // Get user information from auth context
+  const displayName = user?.name || 'User';
   const userEmail = user?.email || '';
   const userAvatar = user?.photoURL || '';
-  const isEmailVerified = user?.emailVerified || false;
-  const creationTime = user?.metadata?.creationTime;
-  const lastSignInTime = user?.metadata?.lastSignInTime;
-  const providerId = user?.providerData?.[0]?.providerId || 'email';
+  const isEmailVerified = true; // Default to verified for custom User type
+  const creationTime = undefined;
+  const lastSignInTime = undefined;
+  const providerId = 'email';
   
   // Get initials for fallback avatar
   const getInitials = (name: string) => {
@@ -278,7 +278,7 @@ const ProfilePage = () => {
                     <div className="flex items-center gap-2 mt-1">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-mono text-muted-foreground truncate">
-                        {user?.uid || 'N/A'}
+                        {user?.id || 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -300,16 +300,6 @@ const ProfilePage = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <Shield className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{getProviderName(providerId)}</span>
-                    {providerId === 'google.com' && (
-                      <Badge variant="outline" className="text-xs">
-                        Google Account
-                      </Badge>
-                    )}
-                    {providerId === 'facebook.com' && (
-                      <Badge variant="outline" className="text-xs">
-                        Facebook Account
-                      </Badge>
-                    )}
                   </div>
                 </div>
               </CardContent>

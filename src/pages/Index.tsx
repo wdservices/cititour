@@ -1,8 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import HeroSlider from "@/components/HeroSlider";
 import CategoryGrid from "@/components/CategoryGrid";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -31,10 +34,16 @@ const Index = () => {
                 Discover amazing places, book tickets, and enjoy exclusive deals
               </p>
               <div className="flex gap-3 justify-center">
-                <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm transition-colors">
+                <button 
+                  onClick={() => navigate('/events')}
+                  className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm transition-colors"
+                >
                   Browse Events
                 </button>
-                <button className="bg-white text-primary hover:bg-white/90 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                <button 
+                  onClick={() => navigate('/hotels')}
+                  className="bg-white text-primary hover:bg-white/90 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                >
                   Find Hotels
                 </button>
               </div>

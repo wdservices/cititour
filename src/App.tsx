@@ -2,12 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
 import { RegionProvider } from "./contexts/RegionContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthPage from "./pages/AuthPage";
+import LandingPage from "./pages/LandingPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EventsPage from "./pages/EventsPage";
@@ -37,6 +38,7 @@ const queryClient = new QueryClient();
 // Protected Routes Component
 const ProtectedRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -47,12 +49,13 @@ const ProtectedRoutes = () => {
   }
 
   if (!isAuthenticated) {
-    return <AuthPage onAuthenticated={() => {}} />;
+    navigate('/auth');
+    return null;
   }
 
   return (
     <Routes>
-      <Route path="/" element={<Index />} />
+      <Route path="/explore" element={<Index />} />
       <Route path="/events" element={<EventsPage />} />
       <Route path="/hotels" element={<HotelsPage />} />
       <Route path="/restaurants" element={<RestaurantsPage />} />
@@ -97,7 +100,11 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter future={{ v7_relativeSplatPath: true }}>
-                <ProtectedRoutes />
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/auth" element={<AuthPage onAuthenticated={() => {}} />} />
+                  <Route path="/*" element={<ProtectedRoutes />} />
+                </Routes>
               </BrowserRouter>
             </TooltipProvider>
           </ThemeProvider>

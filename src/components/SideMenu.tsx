@@ -90,7 +90,7 @@ const SideMenu = () => {
   };
 
   // Get user display name and email
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const displayName = user?.name || 'User';
   const userEmail = user?.email || '';
   const userAvatar = user?.photoURL || '';
   
@@ -118,11 +118,9 @@ const SideMenu = () => {
           <div className="text-white flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold truncate">{displayName}</h3>
-              {user?.emailVerified && (
-                <Badge variant="secondary" className="bg-green-500/20 text-green-100 text-xs">
-                  Verified
-                </Badge>
-              )}
+              <Badge variant="secondary" className="bg-green-500/20 text-green-100 text-xs">
+                Active
+              </Badge>
             </div>
             <p className="text-sm opacity-90 truncate">{userEmail}</p>
             <p className="text-xs opacity-75">TourPH Explorer</p>
