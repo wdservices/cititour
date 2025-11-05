@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useRegion } from "@/contexts/RegionContext";
 
 const categories = [
   {
@@ -80,6 +81,7 @@ const categories = [
 
 const CategoryGrid = () => {
   const navigate = useNavigate();
+  const { locationName } = useRegion();
   
   const handleCategoryClick = (category: typeof categories[0]) => {
     navigate(category.path);
@@ -92,11 +94,11 @@ const CategoryGrid = () => {
           Explore Categories
         </h2>
         <p className="text-muted-foreground">
-          Discover the best of the Philippines
+          Discover the best of {locationName}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {categories.map((category, index) => {
           const Icon = category.icon;
           

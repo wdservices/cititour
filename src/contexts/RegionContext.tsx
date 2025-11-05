@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-type RegionCode = 'PH' | 'LAG' | 'ABJ'
+type RegionCode = 'PH' | 'LAG' | 'ABJ' | 'KAN'
 
 interface RegionContextType {
   region: RegionCode
   brandName: string
+  locationName: string
   setRegion: (code: RegionCode) => void
   detectRegion: () => Promise<void>
 }
@@ -22,9 +23,25 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
         return 'TourLAG'
       case 'ABJ':
         return 'TourABJ'
+      case 'KAN':
+        return 'TourKAN'
       case 'PH':
       default:
         return 'TourPH'
+    }
+  }, [region])
+
+  const locationName = useMemo(() => {
+    switch (region) {
+      case 'LAG':
+        return 'Lagos'
+      case 'ABJ':
+        return 'Abuja'
+      case 'KAN':
+        return 'Kano'
+      case 'PH':
+      default:
+        return 'Port Harcourt'
     }
   }, [region])
 
@@ -38,7 +55,10 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
             const { latitude, longitude } = pos.coords
             // Simple heuristic mapping; replace with reverse geocoding for production
             // Lagos approx: 6.5244, 3.3792 | Abuja approx: 9.0765, 7.3986 | Port Harcourt approx: 4.8156, 7.0498
-            if (latitude > 8.5 && longitude > 7.0) {
+            // Kano approx: 12.0022, 8.5920
+            if (latitude > 11 && longitude > 7.5 && longitude < 9.5) {
+              setRegion('KAN')
+            } else if (latitude > 8.5 && longitude > 7.0) {
               setRegion('ABJ')
             } else if (latitude > 6.0 && longitude > 3.0 && longitude < 4.5) {
               setRegion('LAG')
@@ -73,6 +93,7 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
   const value: RegionContextType = {
     region,
     brandName,
+    locationName,
     setRegion,
     detectRegion,
   }

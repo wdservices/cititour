@@ -167,6 +167,7 @@ const SettingsPage = () => {
                       <SelectItem value="PH">Rivers (PH)</SelectItem>
                       <SelectItem value="LAG">Lagos (LAG)</SelectItem>
                       <SelectItem value="ABJ">Abuja (ABJ)</SelectItem>
+                      <SelectItem value="KAN">Kano (KAN)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
