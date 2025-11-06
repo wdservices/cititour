@@ -113,18 +113,18 @@ const CategoryGrid = () => {
               }}
               onClick={() => handleCategoryClick(category)}
             >
-              <div className="p-6 text-center">
+              <div className="p-4 sm:p-6 text-center">
                 {/* Icon with Gradient Background */}
                 <div className={`
-                  w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center
+                  w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center
                   bg-gradient-to-br ${category.color} shadow-soft
                   group-hover:scale-110 transition-transform duration-300
                 `}>
-                  <Icon className="h-8 w-8 text-white" />
+                  <Icon className="h-7 w-7 sm:h-8 sm:h-8 text-white" />
                 </div>
 
                 {/* Category Title */}
-                <h3 className="font-semibold text-foreground mb-1 text-lg">
+                <h3 className="font-semibold text-foreground mb-1 text-base sm:text-lg">
                   {category.title}
                 </h3>
 

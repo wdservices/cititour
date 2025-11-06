@@ -26,6 +26,7 @@ const menuItems = [
   {
     section: "Personal",
     items: [
+      { icon: Home, title: "Explore", description: "Find new places" },
       { icon: User, title: "Profile", description: "Manage your account" },
       { icon: Wallet, title: "Wallet", description: "Manage your funds" },
       { icon: Heart, title: "Favourites", description: "Your saved places" },
@@ -52,12 +53,17 @@ const menuItems = [
   }
 ];
 
-const SideMenu = () => {
+interface SideMenuProps {
+  onMenuItemClick: () => void;
+}
+
+const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
   const handleMenuItemClick = (title: string) => {
     const routeMap: { [key: string]: string } = {
+      "Explore": "/explore",
       "Profile": "/profile",
       "Wallet": "/wallet",
       "Favourites": "/favourites", 
@@ -75,9 +81,8 @@ const SideMenu = () => {
     const route = routeMap[title];
     if (route) {
       navigate(route);
-    } else {
-      console.log(`Navigate to ${title}`);
     }
+    onMenuItemClick();
   };
 
   const handleLogout = async () => {

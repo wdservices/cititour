@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Camera, Edit, MapPin, Phone, Mail, Calendar, Shield, Bell, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,14 +12,27 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { getUserProfile, updateUserProfile } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { useRegion } from "@/contexts/RegionContext";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
+  const { locationName } = useRegion();
+
+  // Editable profile fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
 
   // Get user information from auth context
-  const displayName = user?.name || 'User';
+  const nameParts = (user?.name || "").split(" ");
+  const displayName = `${firstName || nameParts[0] || "User"} ${lastName || nameParts.slice(1).join(" ") || ""}`.trim();
   const userEmail = user?.email || '';
   const userAvatar = user?.photoURL || '';
   const isEmailVerified = true; // Default to verified for custom User type
@@ -69,11 +82,62 @@ const ProfilePage = () => {
     { label: "Member Since", value: creationTime ? new Date(creationTime).getFullYear().toString() : "2024", icon: Calendar }
   ];
 
+  // Load profile from Firestore
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.id) return;
+      try {
+        const data = await getUserProfile(user.id);
+        if (data) {
+          setFirstName(String(data.firstName || ""));
+          setLastName(String(data.lastName || ""));
+          setPhone(String(data.phoneNumber || ""));
+          setLocation(String(data.location || ""));
+          setBio(String(data.bio || ""));
+        } else {
+          // Prefill from auth when no profile doc yet
+          const name = user.name || "";
+          const parts = name.split(" ");
+          setFirstName(parts[0] || "");
+          setLastName(parts.slice(1).join(" ") || "");
+        }
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    };
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+    try {
+      await updateUserProfile(user.id, {
+        firstName,
+        lastName,
+        displayName: `${firstName} ${lastName}`.trim(),
+        email: user.email,
+        photoURL: user.photoURL,
+        phoneNumber: phone,
+        location,
+        bio,
+      });
+      toast({ title: "Profile updated", description: "Your changes have been saved." });
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error("Profile save failed:", err);
+      toast({
+        title: "Failed to save",
+        description: String(err?.message || "Please try again."),
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-gradient-primary text-white py-8">
-        <div className="px-4">
+        <div className="px-4 max-w-4xl mx-auto relative">
           <Button 
             variant="ghost" 
             className="text-white hover:bg-white/20 mb-4"
@@ -108,22 +172,22 @@ const ProfilePage = () => {
                     Verified
                   </Badge>
                 )}
-                <Badge className="bg-yellow-500">Gold Member</Badge>
               </div>
               <p className="text-white/90 mb-2">{userEmail}</p>
-              <p className="text-sm text-white/80">
-                Member since {formatDate(creationTime)} • Signed in via {getProviderName(providerId)}
-              </p>
+              {/* Removed Member Since / Provider line for a cleaner header */}
             </div>
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? "Cancel" : "Edit"}
-            </Button>
           </div>
+
+          {/* Edit button positioned inside the header box */}
+          <Button 
+            variant="secondary" 
+            size="sm"
+            className="absolute top-4 right-4"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            {isEditing ? "Cancel" : "Edit"}
+          </Button>
         </div>
       </div>
 
@@ -162,17 +226,19 @@ const ProfilePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input 
-                      id="firstName" 
-                      defaultValue={displayName.split(' ')[0] || ''} 
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input 
-                      id="lastName" 
-                      defaultValue={displayName.split(' ').slice(1).join(' ') || ''} 
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
@@ -207,27 +273,30 @@ const ProfilePage = () => {
 
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
-                    defaultValue="+1 (555) 123-4567" 
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="location">Location</Label>
-                  <Input 
-                    id="location" 
-                    defaultValue="Garden City, NY" 
+                  <Input
+                    id="location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="bio">Bio</Label>
-                  <Textarea 
-                    id="bio" 
-                    defaultValue="Love exploring new places and discovering hidden gems in Garden City. Food enthusiast and travel blogger."
+                  <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
                     disabled={!isEditing}
                     rows={3}
                   />
@@ -235,7 +304,7 @@ const ProfilePage = () => {
 
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={() => setIsEditing(false)}>
+                    <Button onClick={handleSave}>
                       Save Changes
                     </Button>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>
@@ -471,7 +540,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Email Updates</Label>
-                    <p className="text-sm text-muted-foreground">Weekly updates about the Philippines</p>
+                    <p className="text-sm text-muted-foreground">Weekly updates for {locationName}</p>
                   </div>
                   <Switch />
                 </div>

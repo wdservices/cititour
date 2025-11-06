@@ -1,5 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/lib/firebase";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+  increment
+} from "firebase/firestore";
 
 export interface Transaction {
   id: string;
@@ -22,8 +34,8 @@ interface WalletContextType {
   balance: number;
   transactions: Transaction[];
   isLoading: boolean;
-  addFunds: (amount: number, paymentMethod: PaymentMethod) => Promise<boolean>;
-  withdrawFunds: (amount: number, withdrawalMethod: PaymentMethod) => Promise<boolean>;
+  addFunds: (amount: number) => Promise<boolean>;
+  withdrawFunds: (amount: number, withdrawalMethod: PaymentMethod, recipientCode?: string) => Promise<boolean>;
   deductFunds: (amount: number, description: string) => Promise<boolean>;
   getTransactionHistory: () => Transaction[];
   refreshBalance: () => void;
@@ -44,84 +56,48 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const [balance, setBalance] = useState(1250.75);
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: "1",
-      type: "credit",
-      amount: 500,
-      description: "Wallet Top-up",
-      date: "2024-01-15",
-      method: "Credit Card",
-      status: "completed"
-    },
-    {
-      id: "2",
-      type: "debit",
-      amount: 150,
-      description: "Ad Campaign - Hotels",
-      date: "2024-01-14",
-      method: "Wallet",
-      status: "completed"
-    },
-    {
-      id: "3",
-      type: "credit",
-      amount: 1000,
-      description: "Wallet Top-up",
-      date: "2024-01-10",
-      method: "GCash",
-      status: "completed"
-    },
-    {
-      id: "4",
-      type: "debit",
-      amount: 99.25,
-      description: "Event Ticket Promotion",
-      date: "2024-01-08",
-      method: "Wallet",
-      status: "completed"
-    },
-    {
-      id: "5",
-      type: "credit",
-      amount: 250,
-      description: "Wallet Top-up",
-      date: "2024-01-05",
-      method: "PayMaya",
-      status: "completed"
-    },
-  ]);
+  const { user } = useAuth();
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "http://localhost:4000";
 
-  // Load wallet data from localStorage on mount
+  // Load wallet data from Firestore when user changes
   useEffect(() => {
-    const savedBalance = localStorage.getItem("wallet_balance");
-    const savedTransactions = localStorage.getItem("wallet_transactions");
-    
-    if (savedBalance) {
-      setBalance(parseFloat(savedBalance));
-    }
-    
-    if (savedTransactions) {
-      try {
-        setTransactions(JSON.parse(savedTransactions));
-      } catch (error) {
-        console.error("Error parsing saved transactions:", error);
+    const loadWallet = async () => {
+      if (!user) return;
+      const walletRef = doc(db, "wallets", user.id);
+      const walletSnap = await getDoc(walletRef);
+      if (walletSnap.exists()) {
+        const data: any = walletSnap.data();
+        setBalance(Number(data.balance || 0));
+      } else {
+        // Initialize wallet doc with zero balance
+        await setDoc(walletRef, {
+          userId: user.id,
+          balance: 0,
+          currency: "NGN",
+          status: "active",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        setBalance(0);
       }
-    }
-  }, []);
+      // Transactions list (optional display) can be fetched on demand; keep local-only sorted copy
+    };
+    loadWallet().catch((e) => console.error("Load wallet error", e));
+  }, [user]);
 
-  // Save wallet data to localStorage whenever it changes
+  // Keep local copy of transactions sorted (for UI)
   useEffect(() => {
-    localStorage.setItem("wallet_balance", balance.toString());
+    setTransactions((prev) => prev.slice());
   }, [balance]);
 
-  useEffect(() => {
-    localStorage.setItem("wallet_transactions", JSON.stringify(transactions));
-  }, [transactions]);
-
-  const addFunds = async (amount: number, paymentMethod: PaymentMethod): Promise<boolean> => {
+  const addFunds = async (amount: number): Promise<boolean> => {
+    if (!user) {
+      toast({ title: "Login required", description: "Please sign in to fund your wallet.", variant: "destructive" });
+      return false;
+    }
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -131,69 +107,85 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return false;
     }
 
-    setIsLoading(true);
+    const loadPaystackScript = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        if ((window as any).PaystackPop) return resolve();
+        const script = document.createElement('script');
+        script.src = 'https://js.paystack.co/v1/inline.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Paystack script'));
+        document.body.appendChild(script);
+      });
+    };
 
     try {
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Simulate payment success (90% success rate)
-      const isSuccess = Math.random() > 0.1;
-
-      if (isSuccess) {
-        const newTransaction: Transaction = {
-          id: Date.now().toString(),
-          type: "credit",
-          amount,
-          description: "Wallet Top-up",
-          date: new Date().toISOString().split('T')[0],
-          method: paymentMethod.name,
-          status: "completed"
-        };
-
-        setBalance(prev => prev + amount);
-        setTransactions(prev => [newTransaction, ...prev]);
-
-        toast({
-          title: "Wallet Funded Successfully",
-          description: `₦${amount.toFixed(2)} has been added to your wallet.`,
-        });
-
-        return true;
-      } else {
-        const failedTransaction: Transaction = {
-          id: Date.now().toString(),
-          type: "credit",
-          amount,
-          description: "Wallet Top-up (Failed)",
-          date: new Date().toISOString().split('T')[0],
-          method: paymentMethod.name,
-          status: "failed"
-        };
-
-        setTransactions(prev => [failedTransaction, ...prev]);
-
-        toast({
-          title: "Payment Failed",
-          description: "There was an issue processing your payment. Please try again.",
-          variant: "destructive",
-        });
-
+      const publicKey = (import.meta as any)?.env?.VITE_PAYSTACK_PUBLIC_KEY;
+      if (!publicKey) {
+        toast({ title: 'Configuration Error', description: 'Missing VITE_PAYSTACK_PUBLIC_KEY in .env', variant: 'destructive' });
         return false;
       }
-    } catch (error) {
-      toast({
-        title: "Payment Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+
+      await loadPaystackScript();
+      setIsLoading(true);
+
+      const handler = (window as any).PaystackPop.setup({
+        key: publicKey,
+        email: user.email,
+        amount: Math.round(Number(amount) * 100),
+        currency: 'NGN',
+        ref: `WALLET_${Date.now()}`,
+        callback: async (response: any) => {
+          try {
+            const resp = await fetch(`${serverBase}/api/wallet/verify/${response.reference}`);
+            const data = await resp.json();
+
+            if (data?.status) {
+              const credited = Number(data?.amount ?? amount);
+              const walletRef = doc(db, 'wallets', user.id);
+              await updateDoc(walletRef, { balance: increment(credited), updatedAt: serverTimestamp() });
+              await addDoc(collection(db, 'wallets', user.id, 'transactions'), {
+                userId: user.id,
+                type: 'credit',
+                amount: credited,
+                description: 'Wallet Top-up',
+                date: serverTimestamp(),
+                method: 'Paystack',
+                status: 'completed',
+                referenceNumber: response.reference,
+                createdAt: serverTimestamp(),
+              });
+
+              setBalance(prev => prev + credited);
+              toast({ title: 'Wallet Funded', description: `₦${credited.toFixed(2)} has been added to your wallet.` });
+            } else {
+              toast({ title: 'Payment Failed', description: data?.message || 'Payment was not successful.', variant: 'destructive' });
+            }
+          } catch (error) {
+            toast({ title: 'Verification Error', description: (error as any)?.message || 'Could not verify payment.', variant: 'destructive' });
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        onClose: () => {
+          setIsLoading(false);
+          toast({ title: 'Payment Cancelled', description: 'You closed the payment window.', variant: 'destructive' });
+        },
       });
+
+      handler.openIframe();
+      return true;
+    } catch (error) {
+      toast({ title: 'Payment Error', description: (error as any)?.message || 'An unexpected error occurred.', variant: 'destructive' });
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const withdrawFunds = async (amount: number, withdrawalMethod: PaymentMethod): Promise<boolean> => {
+  const withdrawFunds = async (amount: number, withdrawalMethod: PaymentMethod, recipientCode?: string): Promise<boolean> => {
+    if (!user) {
+      toast({ title: "Login required", description: "Please sign in to withdraw.", variant: "destructive" });
+      return false;
+    }
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -211,61 +203,51 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
       return false;
     }
+    if (!recipientCode) {
+      toast({ title: "Recipient Required", description: "Please provide a valid recipient code.", variant: "destructive" });
+      return false;
+    }
 
     setIsLoading(true);
 
     try {
-      // Simulate withdrawal processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Simulate withdrawal success (95% success rate)
-      const isSuccess = Math.random() > 0.05;
-
-      if (isSuccess) {
-        const newTransaction: Transaction = {
-          id: Date.now().toString(),
-          type: "debit",
-          amount,
-          description: "Wallet Withdrawal",
-          date: new Date().toISOString().split('T')[0],
-          method: withdrawalMethod.name,
-          status: "completed"
-        };
-
-        setBalance(prev => prev - amount);
-        setTransactions(prev => [newTransaction, ...prev]);
-
-        toast({
-          title: "Withdrawal Successful",
-          description: `₦${amount.toFixed(2)} has been withdrawn from your wallet to ${withdrawalMethod.name}.`,
-        });
-
-        return true;
-      } else {
-        const failedTransaction: Transaction = {
-          id: Date.now().toString(),
-          type: "debit",
-          amount,
-          description: "Wallet Withdrawal (Failed)",
-          date: new Date().toISOString().split('T')[0],
-          method: withdrawalMethod.name,
-          status: "failed"
-        };
-
-        setTransactions(prev => [failedTransaction, ...prev]);
-
-        toast({
-          title: "Withdrawal Failed",
-          description: "There was an issue processing your withdrawal. Please try again.",
-          variant: "destructive",
-        });
-
-        return false;
+      const resp = await fetch(`${serverBase}/api/wallet/withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, recipient_code: recipientCode, reason: `Wallet withdrawal to ${withdrawalMethod.name}` }),
+      });
+      const data = await resp.json();
+      if (!data?.status) {
+        throw new Error(data?.message || 'Withdrawal failed');
       }
+
+      // Update Firestore wallet and log transaction
+      const walletRef = doc(db, 'wallets', user.id);
+      await updateDoc(walletRef, { balance: increment(-amount), updatedAt: serverTimestamp() });
+      await addDoc(collection(db, 'wallets', user.id, 'transactions'), {
+        userId: user.id,
+        type: 'debit',
+        amount,
+        description: 'Wallet Withdrawal',
+        date: serverTimestamp(),
+        method: withdrawalMethod.name,
+        status: 'completed',
+        referenceNumber: data?.data?.transfer_code || data?.data?.reference || 'N/A',
+        createdAt: serverTimestamp(),
+      });
+
+      setBalance(prev => prev - amount);
+
+      toast({
+        title: "Withdrawal Successful",
+        description: `₦${amount.toFixed(2)} has been withdrawn to ${withdrawalMethod.name}.`,
+      });
+
+      return true;
     } catch (error) {
       toast({
         title: "Withdrawal Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: (error as any)?.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
       return false;
@@ -275,6 +257,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const deductFunds = async (amount: number, description: string): Promise<boolean> => {
+    if (!user) {
+      toast({ title: "Login required", description: "Please sign in to proceed.", variant: "destructive" });
+      return false;
+    }
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -296,27 +282,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setIsLoading(true);
 
     try {
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const newTransaction: Transaction = {
-        id: Date.now().toString(),
-        type: "debit",
+      const walletRef = doc(db, 'wallets', user.id);
+      await updateDoc(walletRef, { balance: increment(-amount), updatedAt: serverTimestamp() });
+      await addDoc(collection(db, 'wallets', user.id, 'transactions'), {
+        userId: user.id,
+        type: 'debit',
         amount,
         description,
-        date: new Date().toISOString().split('T')[0],
-        method: "Wallet",
-        status: "completed"
-      };
-
-      setBalance(prev => prev - amount);
-      setTransactions(prev => [newTransaction, ...prev]);
-
-      toast({
-        title: "Payment Successful",
-        description: `₦${amount.toFixed(2)} has been deducted from your wallet.`,
+        date: serverTimestamp(),
+        method: 'Wallet',
+        status: 'completed',
+        createdAt: serverTimestamp(),
       });
-
+      setBalance(prev => prev - amount);
+      toast({ title: "Payment Successful", description: `₦${amount.toFixed(2)} has been deducted from your wallet.` });
       return true;
     } catch (error) {
       toast({
@@ -335,11 +314,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const refreshBalance = () => {
-    // In a real app, this would fetch the latest balance from the server
-    const savedBalance = localStorage.getItem("wallet_balance");
-    if (savedBalance) {
-      setBalance(parseFloat(savedBalance));
-    }
+    // Fetch latest balance from Firestore
+    (async () => {
+      try {
+        if (!user) return;
+        const walletRef = doc(db, 'wallets', user.id);
+        const snap = await getDoc(walletRef);
+        if (snap.exists()) {
+          const data: any = snap.data();
+          setBalance(Number(data.balance || 0));
+        }
+      } catch (e) {
+        console.error('refreshBalance error', e);
+      }
+    })();
   };
 
   const value: WalletContextType = {

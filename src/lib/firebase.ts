@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -32,6 +33,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Initialize providers
 export const googleProvider = new GoogleAuthProvider();
@@ -110,6 +112,22 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 
 export const resetPassword = (email: string) => {
   return sendPasswordResetEmail(auth, email);
+};
+
+// User profile helpers (Firestore)
+export const getUserProfile = async (uid: string) => {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : null;
+};
+
+export const updateUserProfile = async (
+  uid: string,
+  data: Record<string, any>
+) => {
+  const ref = doc(db, 'users', uid);
+  const payload = { ...data, uid, updatedAt: serverTimestamp() };
+  await setDoc(ref, payload, { merge: true });
 };
 
 export default app;

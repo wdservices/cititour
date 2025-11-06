@@ -10,6 +10,7 @@ import SideMenu from "./SideMenu";
 
 const AppHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { brandName } = useRegion();
 
@@ -18,14 +19,14 @@ const AppHeader = () => {
       <div className="flex items-center justify-between px-4 py-3">
         {/* Left: Menu & Logo */}
         <div className="flex items-center gap-3">
-          <Sheet>
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-80">
-              <SideMenu />
+              <SideMenu onMenuItemClick={() => setIsMenuOpen(false)} />
             </SheetContent>
           </Sheet>
 

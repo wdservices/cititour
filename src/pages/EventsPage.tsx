@@ -1,69 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
-import eventMusic from "@/assets/event-music.jpg";
-import eventArt from "@/assets/event-art.jpg";
-import eventFood from "@/assets/event-food.jpg";
-import eventTech from "@/assets/event-tech.jpg";
-
-// Mock data for events
-const eventsData = [
-  {
-    id: "1",
-    title: "Garden City Music Festival",
-    description: "Annual music festival featuring local and international artists. Experience live performances, food trucks, and amazing atmosphere.",
-    image: eventMusic,
-    category: "Music",
-    rating: 4.8,
-    price: "$25-50",
-    location: "Central Park, Garden City",
-    phone: "+1234567890",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "2", 
-    title: "Art Gallery Exhibition",
-    description: "Contemporary art exhibition showcasing works by emerging local artists. Interactive displays and guided tours available.",
-    image: eventArt,
-    category: "Art",
-    rating: 4.6,
-    price: "$15",
-    location: "Garden City Art Center",
-    phone: "+1234567891",
-    website: "https://example.com",
-    isOpen: true
-  },
-  {
-    id: "3",
-    title: "Food & Wine Festival", 
-    description: "Culinary celebration featuring the best restaurants in Garden City. Wine tastings, cooking demonstrations, and live entertainment.",
-    image: eventFood,
-    category: "Food",
-    rating: 4.9,
-    price: "$30-75",
-    location: "Garden City Convention Center", 
-    phone: "+1234567892",
-    website: "https://example.com",
-    isOpen: false
-  },
-  {
-    id: "4",
-    title: "Tech Conference 2024",
-    description: "Leading technology conference bringing together innovators, entrepreneurs, and tech enthusiasts. Keynotes and networking sessions.",
-    image: eventTech, 
-    category: "Technology",
-    rating: 4.7,
-    price: "$100-200",
-    location: "Garden City Business District",
-    phone: "+1234567893", 
-    website: "https://example.com",
-    isOpen: true
-  }
-];
+// All events are loaded from Firestore; no mock data.
 
 interface Event {
   id: string;
@@ -89,12 +30,23 @@ const EventsPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("category", "==", "Event"));
-        const querySnapshot = await getDocs(q);
-        const eventsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Event[];
+        const snapshot = await getDocs(collection(db, "events"));
+        const eventsData = snapshot.docs.map(doc => {
+          const d = doc.data() as any;
+          return {
+            id: doc.id,
+            title: String(d.title || "Untitled Event"),
+            description: String(d.description || ""),
+            image: String(d.imageUrl || ""),
+            category: String(d.category || "Event"),
+            rating: Number(d.rating ?? 4.5),
+            price: String(d.priceRange || ""),
+            location: String(d.location || ""),
+            phone: String(d.phone || ""),
+            website: String(d.website || ""),
+            isOpen: Boolean(d.isActive ?? true),
+          } as Event;
+        });
         setEvents(eventsData);
       } catch (err) {
         setError("Failed to fetch events.");
@@ -103,7 +55,6 @@ const EventsPage = () => {
         setLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 

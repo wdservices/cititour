@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
 import { RegionProvider } from "./contexts/RegionContext";
@@ -34,6 +34,7 @@ import FeedbackPage from "./pages/FeedbackPage";
 import SettingsPage from "./pages/SettingsPage";
 import ContactSupportPage from "./pages/ContactSupportPage";
 import WalletPage from "./pages/WalletPage";
+import WalletVerifyPage from "./pages/WalletVerifyPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfUsePage from "./pages/TermsOfUsePage";
 
@@ -44,18 +45,14 @@ const ProtectedRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isLoading, isAuthenticated, navigate]);
+  // Avoid showing a full-screen loader; wait silently while auth initializes.
+  if (isLoading) {
+    return null;
+  }
 
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
+  // If not authenticated, redirect declaratively without flashing a loader.
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
   }
 
   return (
@@ -82,6 +79,7 @@ const ProtectedRoutes = () => {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/contact-support" element={<ContactSupportPage />} />
         <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/wallet/verify" element={<WalletVerifyPage />} />
         <Route path="/events/:id" element={<DetailPage />} />
         <Route path="/hotels/:id" element={<DetailPage />} />
         <Route path="/restaurants/:id" element={<DetailPage />} />
