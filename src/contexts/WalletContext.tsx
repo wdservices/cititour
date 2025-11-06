@@ -98,6 +98,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       toast({ title: "Login required", description: "Please sign in to fund your wallet.", variant: "destructive" });
       return false;
     }
+    if (!user.email) {
+      toast({ title: "Email required", description: "Your account must have a valid email to fund the wallet.", variant: "destructive" });
+      return false;
+    }
     if (amount <= 0) {
       toast({
         title: "Invalid Amount",
