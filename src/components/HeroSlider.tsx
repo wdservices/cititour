@@ -12,7 +12,7 @@ const heroImages = [
   {
     id: 1,
     src: heroCityscape,
-    title: "Discover the Philippines",
+    title: "Discover Nigeria",
     subtitle: "Explore the best of urban lifestyle"
   },
   {

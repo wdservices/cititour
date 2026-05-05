@@ -7,6 +7,7 @@ import AnimatedRegionTitle from '@/components/AnimatedRegionTitle';
 import { useRegion } from '@/contexts/RegionContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import EventsSection from '@/components/EventsSection';
 import heroCity from '@/assets/hero-cityscape.jpg';
 import heroNightlife from '@/assets/hero-nightlife.jpg';
 import heroRestaurant from '@/assets/hero-restaurant.jpg';
@@ -173,6 +174,24 @@ const LandingPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-end items-center mb-20 gap-2"
           >
+            {/* Events Button */}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                const eventsSection = document.getElementById('events');
+                if (eventsSection) {
+                  eventsSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  navigate('/events');
+                }
+              }}
+              className="flex items-center gap-2 rounded-full border border-muted/50 hover:bg-muted/30"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Events</span>
+            </Button>
+            
             {/* Theme Toggle */}
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full border border-muted/50 hover:bg-muted/30">
               {theme === 'dark' ? (
@@ -181,6 +200,7 @@ const LandingPage = () => {
                 <Moon className="h-5 w-5" />
               )}
             </Button>
+            
             {/* Sign In Button - gradient pill with shimmer */}
             <Button 
               onClick={() => navigate('/auth?force=true')}
@@ -459,6 +479,9 @@ const LandingPage = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Events Section */}
+      <EventsSection />
 
       {/* Footer */}
       <footer className="py-12 border-t bg-gradient-card">

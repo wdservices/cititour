@@ -6,16 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-PH', {
+  return new Intl.NumberFormat('en-NG', {
     style: 'currency',
-    currency: 'PHP',
+    currency: 'NGN',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
 }
 
 export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-PH', {
+  return new Intl.DateTimeFormat('en-NG', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -23,7 +23,7 @@ export function formatDate(date: string | Date): string {
 }
 
 export function formatDateTime(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-PH', {
+  return new Intl.DateTimeFormat('en-NG', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -87,7 +87,7 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  const phoneRegex = /^(\+63|0)?[0-9]{10}$/
+  const phoneRegex = /^(\+234|0)?[0-9]{10}$/
   return phoneRegex.test(phone.replace(/\s/g, ''))
 }
 

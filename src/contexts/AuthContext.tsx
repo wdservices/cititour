@@ -81,7 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signInWithEmail(email, password);
     } catch (error: any) {
       console.error('Email login error:', error);
-      throw new Error(error.message || 'Login failed. Please try again.');
+      // Re-throw the original Firebase error so callers can inspect error.code
+      throw error;
     }
   };
 
@@ -90,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signUpWithEmail(email, password);
     } catch (error: any) {
       console.error('Email signup error:', error);
-      throw new Error(error.message || 'Sign up failed. Please try again.');
+      throw error;
     }
   };
 
@@ -99,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signInWithGoogle();
     } catch (error: any) {
       console.error('Google login error:', error);
-      throw new Error(error.message || 'Google sign-in failed. Please try again.');
+      throw error;
     }
   };
 
@@ -108,7 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await signInWithFacebook();
     } catch (error: any) {
       console.error('Facebook login error:', error);
-      throw new Error(error.message || 'Facebook sign-in failed. Please try again.');
+      throw error;
     }
   };
 
@@ -117,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await firebaseResetPassword(email);
     } catch (error: any) {
       console.error('Reset password error:', error);
-      throw new Error(error.message || 'Failed to send reset email.');
+      throw error;
     }
   };
 
@@ -126,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await logOut();
     } catch (error: any) {
       console.error('Logout error:', error);
-      throw new Error('Logout failed. Please try again.');
+      throw error;
     }
   };
 

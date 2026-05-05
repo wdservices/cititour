@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { useToast } from "@/hooks/use-toast";
 
 const propertyTypes = [
   "Apartment", "House", "Villa", "Condo", "Studio", "Loft", "Townhouse"
@@ -60,7 +62,14 @@ const myListings = [
 
 const HouseListingsPage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<string>("listings");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleAmenity = (amenityId: string) => {
     setSelectedAmenities(prev => 
@@ -68,6 +77,31 @@ const HouseListingsPage = () => {
         ? prev.filter(id => id !== amenityId)
         : [...prev, amenityId]
     );
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      if (imageFiles.length) {
+        setIsUploadingImages(true);
+        const results: Array<{ secureUrl: string; publicId: string }> = [];
+        for (const file of imageFiles.slice(0, 10)) {
+          const { secureUrl, publicId } = await uploadImageToCloudinary(file, { folder: "house_listings" });
+          results.push({ secureUrl, publicId });
+        }
+        setUploadedImageUrls((prev) => [...prev, ...results.map((r) => r.secureUrl)]);
+        setUploadedPublicIds((prev) => [...prev, ...results.map((r) => r.publicId)]);
+        setIsUploadingImages(false);
+        toast({ title: "Images uploaded", description: `${results.length} image(s) uploaded successfully.` });
+      }
+      // TODO: Wire up actual property submission (e.g., Firestore) here.
+      console.log("House listing submitted with images:", uploadedImageUrls);
+    } catch (err) {
+      console.error("Submit listing failed:", err);
+      toast({ title: "Upload failed", description: `${(err as Error)?.message || "Unable to upload images."}` });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -96,6 +130,7 @@ const HouseListingsPage = () => {
             <Button 
               variant="secondary" 
               className="hidden md:flex items-center gap-2"
+              onClick={() => setActiveTab("add")}
             >
               <Plus className="h-4 w-4" />
               Add New Property
@@ -105,7 +140,7 @@ const HouseListingsPage = () => {
       </div>
 
       <div className="px-4 py-6 max-w-6xl mx-auto">
-        <Tabs defaultValue="listings" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="listings">My Listings</TabsTrigger>
             <TabsTrigger value="add">Add Property</TabsTrigger>
@@ -116,7 +151,7 @@ const HouseListingsPage = () => {
           <TabsContent value="listings" className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Your Properties ({myListings.length})</h2>
-              <Button className="md:hidden">
+              <Button className="md:hidden" onClick={() => setActiveTab("add")}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Property
               </Button>
@@ -262,6 +297,43 @@ const HouseListingsPage = () => {
                 </CardContent>
               </Card>
 
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Images</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Label htmlFor="uploadFiles">Upload Image File(s)</Label>
+                  <div className="space-y-2 mb-4">
+                    <Input
+                      id="uploadFiles"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setImageFiles(files as File[]);
+                      }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {isUploadingImages ? "Uploading..." : "Images upload automatically on submit."}
+                      </span>
+                      {uploadedImageUrls.length > 0 && (
+                        <span className="text-xs text-muted-foreground">{uploadedImageUrls.length} image(s) selected</span>
+                      )}
+                    </div>
+                    {uploadedImageUrls.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                        {uploadedImageUrls.map((url) => (
+                          <img key={url} src={url} alt="Uploaded" className="w-full h-24 object-cover rounded" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Amenities */}
               <Card>
                 <CardHeader>
@@ -293,8 +365,8 @@ const HouseListingsPage = () => {
                 </p>
                 <div className="space-x-4">
                   <Button variant="outline">Save Draft</Button>
-                  <Button className="bg-gradient-primary hover:opacity-90">
-                    Submit for Review
+                  <Button className="bg-gradient-primary hover:opacity-90" onClick={handleSubmit} disabled={isSubmitting || isUploadingImages}>
+                    {isSubmitting ? "Submitting..." : "Submit for Review"}
                   </Button>
                 </div>
               </div>

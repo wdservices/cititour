@@ -1,7 +1,7 @@
-# Firestore Database Setup Guide for MyPHApp (TourPH)
+# Firestore Database Setup Guide for MyPHApp (CititourNG)
 
 ## Overview
-This is a step-by-step guide to manually create your Firestore database structure in the Firebase Console. The app is a tourism and business listing platform for the Philippines with user authentication, wallet system, business listings, ads, events, and more.
+This is a step-by-step guide to manually create your Firestore database structure in the Firebase Console. The app is a tourism and business listing platform for Nigeria with user authentication, wallet system, business listings, ads, events, and more.
 
 ---
 
@@ -15,7 +15,7 @@ This is a step-by-step guide to manually create your Firestore database structur
 - In the left sidebar, click on **"Firestore Database"**
 - Click on **"Create database"** if you haven't already
 - Choose **"Start in production mode"** or **"Start in test mode"** (test mode for development)
-- Select your Firestore location (choose closest to Philippines, e.g., asia-southeast1)
+- Select your Firestore location (choose closest to Nigeria, e.g., europe-west1)
 
 ---
 
@@ -36,8 +36,8 @@ This is a step-by-step guide to manually create your Firestore database structur
 | email | string | john@example.com |
 | displayName | string | John Doe |
 | photoURL | string | https://example.com/photo.jpg |
-| phoneNumber | string | +639123456789 |
-| location | string | Manila, Philippines |
+| phoneNumber | string | +2348012345678 |
+| location | string | Lagos, Nigeria |
 | bio | string | Travel enthusiast |
 | status | string | active |
 | emailVerified | boolean | true |
@@ -73,7 +73,7 @@ This is a step-by-step guide to manually create your Firestore database structur
 |-------|------|-----------------|
 | itemType | string | business |
 | itemId | string | business123 |
-| itemName | string | Garden City Grand Hotel |
+| itemName | string | Eko Atlantic Grand Hotel |
 | itemImage | string | https://example.com/hotel.jpg |
 | itemCategory | string | Hotels |
 | savedAt | timestamp | (Click "Set to current time") |
@@ -138,7 +138,7 @@ Firestore Database
 |-------|------|-----------------|
 | userId | string | user123 |
 | balance | number | 1250.75 |
-| currency | string | PHP |
+| currency | string | NGN |
 | status | string | active |
 | createdAt | timestamp | (Click "Set to current time") |
 | updatedAt | timestamp | (Click "Set to current time") |
@@ -160,7 +160,7 @@ Firestore Database
 | amount | number | 500 |
 | description | string | Wallet Top-up |
 | date | timestamp | (Click "Set to current time") |
-| method | string | GCash |
+| method | string | Paystack |
 | status | string | completed |
 | referenceNumber | string | REF123456789 |
 | createdAt | timestamp | (Click "Set to current time") |
@@ -177,8 +177,8 @@ Firestore Database
 
 | Field | Type | Value (Example) |
 |-------|------|-----------------|
-| name | string | GCash |
-| type | string | gcash |
+| name | string | Paystack |
+| type | string | paystack |
 | description | string | Mobile wallet payment |
 | isDefault | boolean | true |
 | createdAt | timestamp | (Click "Set to current time") |
@@ -223,16 +223,16 @@ Firestore Database
 | Field | Type | Value (Example) |
 |-------|------|-----------------|
 | ownerId | string | user123 |
-| businessName | string | Garden City Grand Hotel |
+| businessName | string | Eko Atlantic Grand Hotel |
 | category | string | hotel |
-| description | string | Luxury 5-star hotel in the heart of Garden City |
-| address | string | 123 Main Street, Makati City |
-| city | string | Makati |
-| region | string | Metro Manila |
-| country | string | Philippines |
-| phone | string | +639123456789 |
-| email | string | info@gardencityhotel.com |
-| website | string | https://gardencityhotel.com |
+| description | string | Luxury 5-star hotel in the heart of Victoria Island |
+| address | string | 123 Ahmadu Bello Way, Victoria Island, Lagos |
+| city | string | Lagos |
+| region | string | Lagos State |
+| country | string | Nigeria |
+| phone | string | +2348012345678 |
+| email | string | info@ekoatlantichotel.com |
+| website | string | https://ekoatlantichotel.com |
 | operatingHours | string | 24/7 |
 | priceRange | string | $$$$ |
 | rating | number | 4.9 |
@@ -251,8 +251,8 @@ Firestore Database
 - Click **"Add field"**
 - Field: `location`
 - Type: **geopoint**
-- Latitude: 14.5547 (example for Manila)
-- Longitude: 121.0244
+- Latitude: 6.4521 (example for Lagos)
+- Longitude: 3.3955
 - Click **"Save"**
 
 ### Step 4: Add Images (Array)
@@ -369,12 +369,12 @@ Firestore Database
 | Field | Type | Value (Example) |
 |-------|------|-----------------|
 | organizerId | string | user123 |
-| title | string | Garden City Music Festival |
+| title | string | Lagos Music Festival |
 | description | string | Annual music festival featuring local and international artists |
 | category | string | music |
 | eventType | string | festival |
-| venue | string | Central Park, Garden City |
-| location | string | Central Park, Quezon City, Philippines |
+| venue | string | Eko Atlantic Beach, Lagos |
+| location | string | Eko Atlantic Beach, Victoria Island, Lagos, Nigeria |
 | startDate | timestamp | (Set future date) |
 | endDate | timestamp | (Set future date) |
 | startTime | string | 18:00 |
@@ -394,8 +394,8 @@ Firestore Database
 - Click **"Add field"**
 - Field: `geopoint`
 - Type: **geopoint**
-- Latitude: 14.6760
-- Longitude: 121.0437
+- Latitude: 6.4521
+- Longitude: 3.3955
 - Click **"Save"**
 
 ### Step 4: Add Price (Map)
@@ -405,7 +405,7 @@ Firestore Database
 - Add nested fields:
   - min: number → 25
   - max: number → 50
-  - currency: string → "PHP"
+  - currency: string → "NGN"
 - Click **"Save"**
 
 ### Step 5: Add Images (Array)
@@ -519,14 +519,14 @@ Firestore Database
 | Field | Type | Value (Example) |
 |-------|------|-----------------|
 | ownerId | string | user123 |
-| title | string | Modern Downtown Apartment |
-| description | string | Beautiful 2-bedroom apartment in the heart of the city |
+| title | string | Modern Victoria Island Apartment |
+| description | string | Beautiful 2-bedroom apartment in the heart of Victoria Island |
 | propertyType | string | apartment |
-| address | string | 456 Urban Street, Makati City |
-| city | string | Makati |
-| region | string | Metro Manila |
+| address | string | 456 Adeola Odeku Street, Victoria Island, Lagos |
+| city | string | Lagos |
+| region | string | Lagos State |
 | pricePerNight | number | 3500 |
-| currency | string | PHP |
+| currency | string | NGN |
 | maxGuests | number | 4 |
 | bedrooms | number | 2 |
 | bathrooms | number | 1 |
@@ -545,8 +545,8 @@ Firestore Database
 - Click **"Add field"**
 - Field: `location`
 - Type: **geopoint**
-- Latitude: 14.5547
-- Longitude: 121.0244
+- Latitude: 6.4521
+- Longitude: 3.3955
 - Click **"Save"**
 
 ### Step 4: Add Amenities (Array)
@@ -679,14 +679,14 @@ Firestore Database
 | userId | string | user123 |
 | bookingType | string | business |
 | relatedId | string | business123 |
-| relatedName | string | Garden City Grand Hotel |
+| relatedName | string | Eko Atlantic Grand Hotel |
 | bookingDate | timestamp | (Click "Set to current time") |
 | checkInDate | timestamp | (Set future date) |
 | checkOutDate | timestamp | (Set future date) |
 | numberOfGuests | number | 2 |
 | totalAmount | number | 15000 |
-| currency | string | PHP |
-| paymentMethod | string | GCash |
+| currency | string | NGN |
+| paymentMethod | string | Paystack |
 | paymentStatus | string | completed |
 | bookingStatus | string | confirmed |
 | confirmationCode | string | BOOK123456 |
@@ -812,7 +812,7 @@ Firestore Database
 - Field: `targetAudience`
 - Type: **map**
 - Add nested fields:
-  - location: array → ["Metro Manila", "Cebu", "Davao"]
+  - location: array → ["Lagos", "Abuja", "Port Harcourt"]
   - ageRange: string → "25-45"
   - interests: array → ["travel", "hotels", "luxury"]
 - Click **"Save"**
@@ -950,11 +950,11 @@ Firestore Database
 | Field | Type | Value (Example) |
 |-------|------|-----------------|
 | commissionRate | number | 5 |
-| currency | string | PHP |
-| supportEmail | string | support@tourph.com |
-| supportPhone | string | +639123456789 |
-| termsAndConditionsUrl | string | https://tourph.com/terms |
-| privacyPolicyUrl | string | https://tourph.com/privacy |
+| currency | string | NGN |
+| supportEmail | string | support@cititourng.com |
+| supportPhone | string | +2348012345678 |
+| termsAndConditionsUrl | string | https://cititourng.com/terms |
+| privacyPolicyUrl | string | https://cititourng.com/privacy |
 | maintenanceMode | boolean | false |
 | appVersion | string | 1.0.0 |
 | updatedAt | timestamp | (Click "Set to current time") |
@@ -964,9 +964,9 @@ Firestore Database
 - Field: `socialMedia`
 - Type: **map**
 - Add nested fields:
-  - facebook: string → https://facebook.com/tourph
-  - instagram: string → https://instagram.com/tourph
-  - twitter: string → https://twitter.com/tourph
+  - facebook: string → https://facebook.com/cititourng
+  - instagram: string → https://instagram.com/cititourng
+  - twitter: string → https://twitter.com/cititourng
 - Click **"Save"**
 
 ### Step 4: Add Payment Methods (Array)
@@ -974,8 +974,8 @@ Firestore Database
 - Field: `paymentMethods`
 - Type: **array**
 - Add items:
-  - string: GCash
-  - string: PayMaya
+  - string: Paystack
+  - string: Flutterwave
   - string: Credit Card
   - string: Bank Transfer
 - Click **"Save"**

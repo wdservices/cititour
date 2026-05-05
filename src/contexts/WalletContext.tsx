@@ -124,7 +124,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     };
 
     try {
-      const publicKey = (import.meta as any)?.env?.VITE_PAYSTACK_PUBLIC_KEY;
+      let publicKey = (import.meta as any)?.env?.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
+      if (!publicKey) {
+        // Fallback: fetch from backend config
+        try {
+          const resp = await fetch(`${serverBase}/api/wallet/config`);
+          const cfg = await resp.json();
+          if (cfg?.status && (cfg?.public_key || cfg?.publicKey)) {
+            publicKey = String(cfg.public_key || cfg.publicKey);
+          }
+        } catch (e) {
+          // ignore and show configuration error below
+        }
+      }
       if (!publicKey) {
         toast({ title: 'Configuration Error', description: 'Missing VITE_PAYSTACK_PUBLIC_KEY in .env', variant: 'destructive' });
         return false;

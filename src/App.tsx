@@ -23,6 +23,7 @@ import AttractionsPage from "./pages/AttractionsPage";
 import LifestylePage from "./pages/LifestylePage";
 import EventTicketsPage from "./pages/EventTicketsPage";
 import DetailPage from "./pages/DetailPage";
+import DynamicEventPage from "./pages/DynamicEventPage";
 import BusinessListingPage from "./pages/BusinessListingPage";
 import RunAdsPage from "./pages/RunAdsPage";
 import HouseListingsPage from "./pages/HouseListingsPage";
@@ -37,6 +38,9 @@ import WalletPage from "./pages/WalletPage";
 import WalletVerifyPage from "./pages/WalletVerifyPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfUsePage from "./pages/TermsOfUsePage";
+import SearchPage from "./pages/SearchPage";
+import OthersPage from "./pages/OthersPage";
+import AllBusinessesPage from "./pages/AllBusinessesPage";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +63,7 @@ const ProtectedRoutes = () => {
     <AppShell>
       <Routes>
         <Route path="/explore" element={<CategoriesPage />} />
+        <Route path="/businesses" element={<AllBusinessesPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/hotels" element={<HotelsPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
@@ -67,6 +72,8 @@ const ProtectedRoutes = () => {
         <Route path="/airbnb" element={<AirbnbPage />} />
         <Route path="/attractions" element={<AttractionsPage />} />
         <Route path="/lifestyle" element={<LifestylePage />} />
+        <Route path="/others" element={<OthersPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/event-tickets" element={<EventTicketsPage />} />
         <Route path="/business-listing" element={<BusinessListingPage />} />
         <Route path="/run-ads" element={<RunAdsPage />} />
@@ -88,6 +95,7 @@ const ProtectedRoutes = () => {
         <Route path="/airbnb/:id" element={<DetailPage />} />
         <Route path="/attractions/:id" element={<DetailPage />} />
         <Route path="/lifestyle/:id" element={<DetailPage />} />
+        <Route path="/others/:id" element={<DetailPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -104,9 +112,10 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+              <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/events/:eventId" element={<DynamicEventPage />} />
                   <Route path="/auth" element={<AuthPage onAuthenticated={() => {}} />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfUsePage />} />

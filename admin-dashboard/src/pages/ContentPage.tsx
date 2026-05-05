@@ -16,7 +16,7 @@ interface Content {
 const mockContent: Content[] = [
   {
     id: '1',
-    title: 'Top 10 Tourist Destinations in the Philippines',
+    title: 'Top 10 Tourist Destinations in Nigeria',
     type: 'article',
     category: 'Travel Guide',
     status: 'published',

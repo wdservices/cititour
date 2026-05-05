@@ -6,7 +6,8 @@ import {
   ShoppingBag, 
   Home, 
   Camera, 
-  Heart 
+  Heart,
+  MoreHorizontal,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -76,6 +77,15 @@ const categories = [
     description: "Wellness, spa & fitness",
     color: "from-rose-500 to-pink-500",
     path: "/lifestyle"
+  }
+  ,
+  {
+    id: 9,
+    title: "Others",
+    icon: MoreHorizontal,
+    description: "Everything else that doesn’t fit",
+    color: "from-gray-500 to-slate-600",
+    path: "/others"
   }
 ];
 

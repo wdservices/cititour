@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const walletRoutes = require('./walletRoutes.cjs');
-
 dotenv.config();
 const app = express();
 
@@ -14,7 +12,11 @@ app.get('/', (req, res) => {
   res.json({ status: true, message: 'Wallet server running' });
 });
 
+// Require routes after dotenv has loaded env variables
+const walletRoutes = require('./walletRoutes.cjs');
+const uploadRoutes = require('./uploadRoutes.cjs');
 app.use('/api/wallet', walletRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Serve favicon to avoid 404s from browsers requesting /favicon.ico on the API origin
 app.get('/favicon.ico', (req, res) => {

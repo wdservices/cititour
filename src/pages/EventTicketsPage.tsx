@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Ticket, Plus, Calendar, DollarSign } from "lucide-react";
+import { Ticket, Plus, Calendar, DollarSign, Share2, Copy, QrCode } from "lucide-react";
 import SearchHeader from "@/components/SearchHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+// Removed Firebase Storage; using Cloudinary for image uploads
 import QRCode from "react-qr-code";
 
 // All tickets are loaded from Firestore; no mock data.
@@ -77,7 +78,11 @@ const EventTicketsPage = () => {
   const [endTime, setEndTime] = useState("");
   const [capacity, setCapacity] = useState("");
   const [isActive, setIsActive] = useState(true);
-  
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [createdEventId, setCreatedEventId] = useState<string>("");
+  const [shareableLink, setShareableLink] = useState<string>("");
+
   const filteredTickets = listings.filter(ticket =>
     ticket.eventTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.ticketType.toLowerCase().includes(searchTerm.toLowerCase())
@@ -302,14 +307,11 @@ const EventTicketsPage = () => {
         createdAt: serverTimestamp(),
       });
 
-      // Optional image upload (non-blocking)
+      // Optional image upload (non-blocking) via Cloudinary
       if (imageFile) {
         try {
-          const imagePath = `events/${eventRef.id}/${Date.now()}_${imageFile.name}`;
-          const storageRef = ref(storage, imagePath);
-          await uploadBytes(storageRef, imageFile);
-          const url = await getDownloadURL(storageRef);
-          await updateDoc(doc(db, 'events', eventRef.id), { imageUrl: url, imagePath });
+          const { secureUrl, publicId } = await uploadImageToCloudinary(imageFile, { folder: `events/${eventRef.id}` });
+          await updateDoc(doc(db, 'events', eventRef.id), { imageUrl: secureUrl, imagePublicId: publicId });
         } catch (imgErr: any) {
           console.error('Image upload failed', imgErr);
           toast({
@@ -338,9 +340,14 @@ const EventTicketsPage = () => {
       ]);
 
       toast({
-        title: 'Ticket created',
+        title: 'Event created successfully!',
         description: 'Your event and ticket type have been created.',
       });
+      
+      // Generate shareable link and show share dialog
+      const shareLink = generateShareableLink(eventRef.id, eventTitle);
+      setShareDialogOpen(true);
+      
       // Reset and close
       setEventTitle('');
       setTicketType('');
@@ -358,6 +365,53 @@ const EventTicketsPage = () => {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  // Share functionality
+  const generateShareableLink = (eventId: string, eventTitle: string) => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://cititourng.com';
+    const shareLink = `${baseUrl}/events/${eventId}`;
+    setShareableLink(shareLink);
+    setCreatedEventId(eventId);
+    return shareLink;
+  };
+
+  const handleShareEvent = (ticket: TicketItem) => {
+    const shareLink = generateShareableLink(ticket.eventId, ticket.eventTitle);
+    setShareDialogOpen(true);
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareableLink);
+      toast({
+        title: "Link Copied!",
+        description: "Event link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy link to clipboard.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShareViaNative = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: "Check out this event!",
+        text: `Join us for an amazing event`,
+        url: shareableLink,
+      });
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleShowQR = () => {
+    setQrDialogOpen(true);
+    setShareDialogOpen(false);
   };
 
   return (
@@ -558,14 +612,17 @@ const EventTicketsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(ticket)}>
-                    Edit Ticket
+                  <Button variant="outline" size="sm" onClick={() => openEdit(ticket)}>
+                    Edit
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openSales(ticket)}>
-                    View Sales
+                  <Button variant="outline" size="sm" onClick={() => openSales(ticket)}>
+                    Sales
                   </Button>
-                  <Button size="sm" className="flex-1" onClick={() => handlePurchase(ticket)} disabled={isPurchasing}>
-                    {isPurchasing ? 'Processing...' : 'Buy Ticket'}
+                  <Button variant="outline" size="sm" onClick={() => handleShareEvent(ticket)}>
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" onClick={() => handlePurchase(ticket)} disabled={isPurchasing}>
+                    {isPurchasing ? 'Processing...' : 'Buy'}
                   </Button>
                 </div>
               </CardContent>
@@ -666,6 +723,81 @@ const EventTicketsPage = () => {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Event Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Event</DialogTitle>
+            <DialogDescription>Share your event with potential attendees</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm font-medium mb-2">Event Link:</p>
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={shareableLink} 
+                  readOnly 
+                  className="flex-1 text-sm"
+                />
+                <Button size="sm" onClick={handleCopyLink}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button onClick={handleShareViaNative} className="flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
+                Share
+              </Button>
+              <Button onClick={handleShowQR} variant="outline" className="flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                QR Code
+              </Button>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              <p>• Anyone with this link can view and book your event</p>
+              <p>• QR code can be scanned for quick access</p>
+              <p>• Share on social media to reach more attendees</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Event QR Code</DialogTitle>
+            <DialogDescription>Scan this code to view the event</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex flex-col items-center justify-center p-6 bg-muted rounded-lg">
+              <QRCode value={shareableLink} size={200} />
+              <p className="text-sm text-muted-foreground mt-4">Scan to view event</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Input 
+                value={shareableLink} 
+                readOnly 
+                className="flex-1 text-sm"
+              />
+              <Button size="sm" onClick={handleCopyLink}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Print this QR code and display it at your venue or share it digitally
+              </p>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

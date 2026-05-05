@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Menu, Search, Bell, Moon, Sun } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Menu, Search, Bell, Moon, Sun, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 import { useTheme } from "@/contexts/ThemeContext";
 import { useRegion } from "@/contexts/RegionContext";
@@ -13,6 +15,7 @@ const AppHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { brandName } = useRegion();
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-soft">
@@ -26,6 +29,12 @@ const AppHeader = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-80">
+              <VisuallyHidden.Root>
+                <SheetHeader>
+                  <SheetTitle>Main Menu</SheetTitle>
+                  <SheetDescription>Navigate app sections and features</SheetDescription>
+                </SheetHeader>
+              </VisuallyHidden.Root>
               <SideMenu onMenuItemClick={() => setIsMenuOpen(false)} />
             </SheetContent>
           </Sheet>
@@ -45,6 +54,11 @@ const AppHeader = () => {
               placeholder="Search restaurants, events, hotels..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
             />
           </div>
@@ -53,7 +67,16 @@ const AppHeader = () => {
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
           {/* Mobile Search */}
-          <Button variant="ghost" size="icon" className="md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => {
+              if (searchQuery.trim()) {
+                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              }
+            }}
+          >
             <Search className="h-5 w-5" />
           </Button>
 
@@ -64,6 +87,23 @@ const AppHeader = () => {
             ) : (
               <Moon className="h-5 w-5" />
             )}
+          </Button>
+
+          {/* Events Button */}
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2"
+            onClick={() => {
+              const eventsSection = document.getElementById('events');
+              if (eventsSection) {
+                eventsSection.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate('/events');
+              }
+            }}
+          >
+            <Calendar className="h-5 w-5" />
+            <span className="hidden sm:inline">Events</span>
           </Button>
 
           {/* Notifications */}
@@ -87,6 +127,11 @@ const AppHeader = () => {
             placeholder="Search anything..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchQuery.trim()) {
+                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              }
+            }}
             className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
           />
         </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRegion } from '@/contexts/RegionContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { auth } from '@/lib/firebase';
 
 interface AuthPageProps {
   onAuthenticated: () => void;
@@ -17,6 +18,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
+  const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -31,6 +33,28 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
 
+  // Check reachability of Firebase Auth iframe/handler; if blocked, disable Google sign-in
+  useEffect(() => {
+    try {
+      const opts = (auth.app.options || {}) as { authDomain?: string; apiKey?: string };
+      const authDomain = opts.authDomain;
+      const apiKey = opts.apiKey;
+      if (!authDomain || !apiKey) return;
+      const url = `https://${authDomain}/__/auth/iframe?apiKey=${encodeURIComponent(apiKey)}&appName=%5BDEFAULT%5D&v=12.3.0`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      fetch(url, { method: 'GET', mode: 'no-cors', signal: controller.signal })
+        .then(() => setGoogleUnavailable(false))
+        .catch(() => setGoogleUnavailable(true))
+        .finally(() => clearTimeout(timeout));
+
+      return () => clearTimeout(timeout);
+    } catch {
+      setGoogleUnavailable(false);
+    }
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -43,8 +67,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     setIsWorking(true);
 
     try {
+      const email = formData.email.trim();
+      const password = formData.password;
+      if (!email || !password) {
+        toast({
+          title: "Missing credentials",
+          description: "Please enter your email and password.",
+        });
+        return;
+      }
       if (isSignUp) {
-        await signUpWithEmailPassword(formData.email, formData.password);
+        await signUpWithEmailPassword(email, password);
         toast({
           title: "Account Created!",
           description: "Your account has been created successfully.",
@@ -52,7 +85,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         onAuthenticated?.();
         navigate('/explore');
       } else {
-        await loginWithEmail(formData.email, formData.password);
+        await loginWithEmail(email, password);
         toast({
           title: "Welcome Back!",
           description: "You have successfully signed in.",
@@ -70,10 +103,18 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         });
         setIsSignUp(false);
       } else {
+        const description =
+          code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential'
+            ? 'Incorrect email or password.'
+            : code === 'auth/too-many-requests'
+              ? 'Too many attempts. Please try again later or reset your password.'
+              : code === 'auth/invalid-api-key' || code === 'auth/operation-not-allowed'
+                ? 'Email/password sign-in is not configured for this project.'
+                : error?.message || 'Please check your credentials and try again.';
         toast({
-          title: "Authentication Failed",
-          description: error.message || "Please check your credentials and try again.",
-          variant: "destructive",
+          title: 'Authentication Failed',
+          description,
+          variant: 'destructive',
         });
       }
     } finally {
@@ -92,11 +133,23 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
       onAuthenticated?.();
       navigate('/explore');
     } catch (error: any) {
-      toast({
-        title: "Google Sign-In Failed",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+      const code = String(error?.code || '');
+      if (code === 'auth/popup-closed-by-user') {
+        toast({
+          title: 'Popup closed',
+          description: 'You closed the sign-in window. Please try again.',
+        });
+      } else {
+        const description =
+          code === 'auth/network-request-failed'
+            ? 'Network issue during Google sign-in. Check your connection and try again.'
+            : error?.message || 'Please try again.';
+        toast({
+          title: 'Google Sign-In Failed',
+          description,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsWorking(false);
     }
@@ -212,15 +265,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="text-center mb-8"
             >
-              <div className="flex items-center justify-center mb-4">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl"
-                >
-                  <Sparkles className="w-8 h-8 text-white" />
-                </motion.div>
-              </div>
               <h1 className="text-3xl font-bold text-white mb-1">
                 Welcome to CityTour
               </h1>
@@ -386,6 +430,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               transition={{ delay: 0.8, duration: 0.6 }}
               className="mt-8"
             >
+              {googleUnavailable && (
+                <div className="rounded-md border border-yellow-300 bg-yellow-50/10 p-3 text-sm text-yellow-200 mb-4">
+                  Google sign-in is unavailable on this network. Allowlist `*.web.app`, `*.firebaseapp.com`, and `apis.google.com`, or use email sign-in above.
+                </div>
+              )}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-white/20"></div>
@@ -400,7 +449,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleGoogleSignIn}
-                  disabled={isWorking}
+                  disabled={isWorking || googleUnavailable}
                   className="w-full inline-flex justify-center py-3 px-4 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="text-sm font-medium">Google</span>

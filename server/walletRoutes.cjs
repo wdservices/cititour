@@ -3,7 +3,20 @@ const axios = require('axios');
 
 const router = express.Router();
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+const PAYSTACK_PUBLIC_KEY = process.env.VITE_PAYSTACK_PUBLIC_KEY || process.env.PAYSTACK_PUBLIC_KEY;
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
+
+// Frontend config: expose Paystack public key
+router.get('/config', async (req, res) => {
+  try {
+    return res.json({
+      status: true,
+      public_key: PAYSTACK_PUBLIC_KEY || null,
+    });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: 'Error loading config' });
+  }
+});
 
 // Initialize wallet top-up (Paystack payment link)
 router.post('/initialize', async (req, res) => {

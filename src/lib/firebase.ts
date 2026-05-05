@@ -61,6 +61,8 @@ export const signInWithGoogle = async () => {
       error.code === 'auth/popup-blocked' ||
       error.code === 'auth/cancelled-popup-request' ||
       error.code === 'auth/network-request-failed' ||
+      // Some environments (Safari/iOS, strict privacy settings) report popup-closed when cookies are blocked
+      error.code === 'auth/popup-closed-by-user' ||
       /Failed to fetch/i.test(msg)
     );
     if (shouldRedirect) {
