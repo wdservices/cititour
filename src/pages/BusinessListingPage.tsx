@@ -12,11 +12,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import SEO from "@/components/SEO";
-import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
+import ImageUpload from "@/components/ImageUpload";
+import { X } from "lucide-react";
 
 const categories = [
   "Restaurant", "Hotel", "Event Venue", "Shopping", "Entertainment", 
-  "Attraction", "Spa & Wellness", "Business Services", "Other"
+  "Attraction", "Spa & Wellness", "Business Services", "Fun", "Lifestyle", "Other"
 ];
 
 const BusinessListingPage = () => {
@@ -52,54 +54,15 @@ const BusinessListingPage = () => {
       toast({ title: "Missing required fields", description: "Please fill all required fields marked with *.", variant: "destructive" });
       return;
     }
+    
+    if (uploadedImageUrls.length === 0) {
+      toast({ title: "Images Required", description: "Please upload at least one business image.", variant: "destructive" });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      // Auto-upload selected images to Cloudinary on submit
-      if (imageFiles.length) {
-        setIsUploadingImages(true);
-        const results: Array<{ secureUrl: string; publicId: string }> = [];
-        
-        try {
-          // Process each image one by one to handle errors individually
-          for (let i = 0; i < Math.min(imageFiles.length, 10); i++) {
-            const file = imageFiles[i];
-            try {
-              const result = await uploadImageToCloudinary(file, { 
-                folder: "businesses" 
-              });
-              results.push({
-                secureUrl: result.secureUrl,
-                publicId: result.publicId
-              });
-              
-              // Update state after each successful upload
-              setUploadedImageUrls(prev => [...prev, result.secureUrl]);
-              setUploadedPublicIds(prev => [...prev, result.publicId]);
-              
-            } catch (error) {
-              console.error(`Failed to upload image ${i + 1}:`, error);
-              // Continue with next image even if one fails
-              toast({
-                title: `Image ${i + 1} upload failed`,
-                description: error instanceof Error ? error.message : 'Failed to upload image',
-                variant: 'destructive',
-              });
-            }
-          }
-          
-          if (results.length === 0) {
-            throw new Error('Failed to upload any images. Please try again.');
-          }
-          
-        } catch (error) {
-          console.error('Error during image uploads:', error);
-          throw error; // Re-throw to be caught by the outer try-catch
-          
-        } finally {
-          setIsUploadingImages(false);
-        }
-      }
-      const allImageUrls = [...uploadedImageUrls].slice(0, 10);
+      const allImageUrls = uploadedImageUrls.slice(0, 10);
       const primaryImageUrl = allImageUrls[0] || "";
 
       const tags = tagsRaw
@@ -162,7 +125,7 @@ const BusinessListingPage = () => {
           <Button 
             variant="ghost" 
             className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
@@ -332,31 +295,54 @@ const BusinessListingPage = () => {
 
           <Card className="bg-white border shadow-sm dark:bg-transparent dark:border-0 dark:shadow-none">
             <CardHeader>
-              <CardTitle>Images</CardTitle>
+              <CardTitle>Business Images</CardTitle>
             </CardHeader>
             <CardContent>
-              <Label className="font-medium" htmlFor="uploadFiles">Upload Image File(s)</Label>
-              <div className="space-y-2 mb-4">
-                <Input
-                  id="uploadFiles"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setImageFiles(files as File[]);
-                  }}
-                  className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
-                />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {isUploadingImages ? "Uploading..." : "Images upload automatically on submit."}
-                  </span>
-                  {uploadedImageUrls.length > 0 && (
-                    <span className="text-xs text-muted-foreground">{uploadedImageUrls.length} image(s) selected</span>
-                  )}
+              <ImageUpload
+                onUploadSuccess={(result) => {
+                  setUploadedImageUrls(prev => [...prev, result.secureUrl]);
+                  setUploadedPublicIds(prev => [...prev, result.publicId]);
+                }}
+                folder={CLOUDINARY_FOLDERS.BUSINESS}
+                currentImage={uploadedImageUrls[0]}
+                buttonText="📤 Upload Business Photos"
+                placeholder="Upload business photos, logo, or menu"
+                disabled={isSubmitting}
+              />
+              
+              {uploadedImageUrls.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {uploadedImageUrls.length} image(s) uploaded
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {uploadedImageUrls.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={url}
+                            alt={`Business image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            setUploadedImageUrls(prev => prev.filter((_, i) => i !== index));
+                            setUploadedPublicIds(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          disabled={isSubmitting}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

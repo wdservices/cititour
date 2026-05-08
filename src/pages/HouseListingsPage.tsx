@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Home, Plus, MapPin, Users, Bed, Bath, Wifi, Car, Star, DollarSign, Calendar } from "lucide-react";
+import { ArrowLeft, Home, Plus, MapPin, Users, Bed, Bath, Wifi, Car, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,18 +9,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { collection, getDocs, addDoc, serverTimestamp, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import { useToast } from "@/hooks/use-toast";
+import ImageUpload from "@/components/ImageUpload";
+
+interface HouseListing {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  images?: string[];
+  type: string;
+  price: string;
+  pricePerNight?: number;
+  rating: number;
+  reviews?: number;
+  guests: number;
+  bedrooms: number;
+  bathrooms: number;
+  location: string;
+  status: string;
+  ownerId: string;
+}
 
 const propertyTypes = [
   "Apartment", "House", "Villa", "Condo", "Studio", "Loft", "Townhouse"
 ];
 
 const amenities = [
-  { id: "wifi", label: "WiFi", icon: Wifi },
-  { id: "parking", label: "Parking", icon: Car },
+  { id: "wifi", label: "WiFi", icon: "📶" },
+  { id: "parking", label: "Parking", icon: "🚗" },
   { id: "pool", label: "Swimming Pool", icon: "🏊" },
   { id: "kitchen", label: "Full Kitchen", icon: "🍳" },
   { id: "gym", label: "Gym/Fitness", icon: "💪" },
@@ -29,47 +51,98 @@ const amenities = [
   { id: "balcony", label: "Balcony/Terrace", icon: "🌿" }
 ];
 
-const myListings = [
-  {
-    id: "1",
-    title: "Modern Downtown Apartment",
-    type: "Apartment",
-    price: "$120/night",
-    rating: 4.9,
-    reviews: 127,
-    guests: 4,
-    bedrooms: 2,
-    bathrooms: 1,
-    location: "Downtown Garden City",
-    status: "Active",
-    bookings: 15
-  },
-  {
-    id: "2", 
-    title: "Cozy Garden Villa",
-    type: "Villa",
-    price: "$250/night",
-    rating: 4.8,
-    reviews: 89,
-    guests: 8,
-    bedrooms: 4,
-    bathrooms: 3,
-    location: "Garden City Suburbs",
-    status: "Active",
-    bookings: 8
-  }
-];
-
 const HouseListingsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("listings");
+  const [myListings, setMyListings] = useState<HouseListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Form state
+  const [propertyTitle, setPropertyTitle] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [address, setAddress] = useState("");
+  const [description, setDescription] = useState("");
+  const [guests, setGuests] = useState("1");
+  const [bedrooms, setBedrooms] = useState("1");
+  const [bathrooms, setBathrooms] = useState("1");
+  const [pricePerNight, setPricePerNight] = useState("");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([]);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchMyListings = async () => {
+      if (!user?.id) return;
+      try {
+        const q = query(collection(db, "house_listings"), where("ownerId", "==", user.id));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as HouseListing[];
+        setMyListings(data);
+      } catch (err) {
+        console.error("Error fetching listings:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMyListings();
+  }, [user?.id]);
+
+  const handleSubmit = async () => {
+    if (!user?.id) {
+      toast({ title: "Sign in required", variant: "destructive" });
+      return;
+    }
+    if (!propertyTitle || !propertyType || !address || !description || !pricePerNight || uploadedImageUrls.length === 0) {
+      toast({ title: "Please fill all required fields and upload images", variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const docData = {
+        title: propertyTitle,
+        type: propertyType,
+        location: address,
+        description,
+        guests: parseInt(guests),
+        bedrooms: parseInt(bedrooms),
+        bathrooms: parseInt(bathrooms),
+        pricePerNight: parseFloat(pricePerNight),
+        price: `$${pricePerNight}/night`,
+        amenities: selectedAmenities,
+        image: uploadedImageUrls[0],
+        images: uploadedImageUrls,
+        imagePublicIds: uploadedPublicIds,
+        ownerId: user.id,
+        status: "Pending",
+        rating: 0,
+        reviews: 0,
+        createdAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, "house_listings"), docData);
+      setMyListings(prev => [{ id: docRef.id, ...docData } as HouseListing, ...prev]);
+      toast({ title: "Listing submitted successfully!" });
+      setActiveTab("listings");
+      // Reset form
+      setPropertyTitle("");
+      setAddress("");
+      setDescription("");
+      setUploadedImageUrls([]);
+      setUploadedPublicIds([]);
+    } catch (err) {
+      console.error("Submit listing failed:", err);
+      toast({ title: "Failed to submit listing", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const toggleAmenity = (amenityId: string) => {
     setSelectedAmenities(prev => 
@@ -77,31 +150,6 @@ const HouseListingsPage = () => {
         ? prev.filter(id => id !== amenityId)
         : [...prev, amenityId]
     );
-  };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      if (imageFiles.length) {
-        setIsUploadingImages(true);
-        const results: Array<{ secureUrl: string; publicId: string }> = [];
-        for (const file of imageFiles.slice(0, 10)) {
-          const { secureUrl, publicId } = await uploadImageToCloudinary(file, { folder: "house_listings" });
-          results.push({ secureUrl, publicId });
-        }
-        setUploadedImageUrls((prev) => [...prev, ...results.map((r) => r.secureUrl)]);
-        setUploadedPublicIds((prev) => [...prev, ...results.map((r) => r.publicId)]);
-        setIsUploadingImages(false);
-        toast({ title: "Images uploaded", description: `${results.length} image(s) uploaded successfully.` });
-      }
-      // TODO: Wire up actual property submission (e.g., Firestore) here.
-      console.log("House listing submitted with images:", uploadedImageUrls);
-    } catch (err) {
-      console.error("Submit listing failed:", err);
-      toast({ title: "Upload failed", description: `${(err as Error)?.message || "Unable to upload images."}` });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -112,7 +160,7 @@ const HouseListingsPage = () => {
           <Button 
             variant="ghost" 
             className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
@@ -141,10 +189,9 @@ const HouseListingsPage = () => {
 
       <div className="px-4 py-6 max-w-6xl mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="listings">My Listings</TabsTrigger>
             <TabsTrigger value="add">Add Property</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
           </TabsList>
 
           {/* My Listings Tab */}
@@ -198,10 +245,6 @@ const HouseListingsPage = () => {
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             {listing.rating} ({listing.reviews} reviews)
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {listing.bookings} bookings this month
-                          </span>
                         </div>
                         <div className="space-x-2">
                           <Button variant="outline" size="sm">Edit</Button>
@@ -221,7 +264,7 @@ const HouseListingsPage = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4">Add New Property</h2>
               <p className="text-muted-foreground mb-6">
-                List your property for short-term rentals. Earn 85% of booking fees.
+                List your property for short-term rentals.
               </p>
             </div>
 
@@ -303,34 +346,51 @@ const HouseListingsPage = () => {
                   <CardTitle>Images</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Label htmlFor="uploadFiles">Upload Image File(s)</Label>
-                  <div className="space-y-2 mb-4">
-                    <Input
-                      id="uploadFiles"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        setImageFiles(files as File[]);
-                      }}
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {isUploadingImages ? "Uploading..." : "Images upload automatically on submit."}
-                      </span>
-                      {uploadedImageUrls.length > 0 && (
-                        <span className="text-xs text-muted-foreground">{uploadedImageUrls.length} image(s) selected</span>
-                      )}
-                    </div>
-                    {uploadedImageUrls.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                        {uploadedImageUrls.map((url) => (
-                          <img key={url} src={url} alt="Uploaded" className="w-full h-24 object-cover rounded" />
+                  <ImageUpload
+                    onUploadSuccess={(result) => {
+                      setUploadedImageUrls(prev => [...prev, result.secureUrl]);
+                      setUploadedPublicIds(prev => [...prev, result.publicId]);
+                    }}
+                    folder={CLOUDINARY_FOLDERS.PROPERTIES}
+                    currentImage={uploadedImageUrls[0]}
+                    buttonText="📤 Upload Property Photos"
+                    placeholder="Upload property photos, rooms, and amenities"
+                    disabled={isSubmitting}
+                  />
+                  
+                  {uploadedImageUrls.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {uploadedImageUrls.length} photo(s) uploaded
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {uploadedImageUrls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                              <img
+                                src={url}
+                                alt={`Property photo ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                setUploadedImageUrls(prev => prev.filter((_, i) => i !== index));
+                                setUploadedPublicIds(prev => prev.filter((_, i) => i !== index));
+                              }}
+                              disabled={isSubmitting}
+                            >
+                              ×
+                            </Button>
+                          </div>
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -365,70 +425,12 @@ const HouseListingsPage = () => {
                 </p>
                 <div className="space-x-4">
                   <Button variant="outline">Save Draft</Button>
-                  <Button className="bg-gradient-primary hover:opacity-90" onClick={handleSubmit} disabled={isSubmitting || isUploadingImages}>
+                  <Button className="bg-gradient-primary hover:opacity-90" onClick={handleSubmit} disabled={isSubmitting}>
                     {isSubmitting ? "Submitting..." : "Submit for Review"}
                   </Button>
                 </div>
               </div>
             </div>
-          </TabsContent>
-
-          {/* Bookings Tab */}
-          <TabsContent value="bookings" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Calendar className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">23</p>
-                  <p className="text-sm text-muted-foreground">Total Bookings</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <DollarSign className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">$3,420</p>
-                  <p className="text-sm text-muted-foreground">This Month</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">4.8</p>
-                  <p className="text-sm text-muted-foreground">Avg Rating</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">89%</p>
-                  <p className="text-sm text-muted-foreground">Occupancy</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Bookings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((booking) => (
-                    <div key={booking} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Modern Downtown Apartment</p>
-                        <p className="text-sm text-muted-foreground">
-                          Guest: John Doe • Check-in: Dec 25, 2024 • 3 nights
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className="mb-1">Confirmed</Badge>
-                        <p className="font-semibold">$360</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>

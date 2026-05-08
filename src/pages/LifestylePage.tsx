@@ -29,12 +29,14 @@ const LifestylePage = () => {
   useEffect(() => {
     const fetchLifestylePlaces = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("category", "==", "Lifestyle"));
+        const q = query(collection(db, "businesses"));
         const querySnapshot = await getDocs(q);
-        const placesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as LifestylePlace[];
+        const placesData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter((doc: any) => doc.category === "Lifestyle") as LifestylePlace[];
         setPlaces(placesData);
       } catch (err) {
         setError("Failed to fetch lifestyle places.");
@@ -48,9 +50,9 @@ const LifestylePage = () => {
   }, []);
 
   const filteredPlaces = places.filter(place =>
-    place.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    place.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    place.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (place.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (place.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (place.category?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   const handlePlaceClick = (placeId: string) => {

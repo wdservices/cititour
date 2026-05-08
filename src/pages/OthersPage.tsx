@@ -49,9 +49,9 @@ const OthersPage = () => {
   }, []);
 
   const filtered = items.filter(item =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.title?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+    (item.description?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+    (item.category?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false)
   );
 
   const handleClick = (id: string) => {

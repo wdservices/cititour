@@ -29,12 +29,14 @@ const RestaurantsPage = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("category", "==", "Restaurant"));
+        const q = query(collection(db, "businesses"));
         const querySnapshot = await getDocs(q);
-        const restaurantsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Restaurant[];
+        const restaurantsData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter((doc: any) => doc.category === "Restaurant") as Restaurant[];
         setRestaurants(restaurantsData);
       } catch (err) {
         setError("Failed to fetch restaurants.");
@@ -48,9 +50,9 @@ const RestaurantsPage = () => {
   }, []);
 
   const filteredRestaurants = restaurants.filter(restaurant =>
-    restaurant.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    restaurant.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    restaurant.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (restaurant.title?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+    (restaurant.description?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+    (restaurant.category?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false)
   );
 
   const handleRestaurantClick = (restaurantId: string) => {

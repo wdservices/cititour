@@ -143,7 +143,7 @@ const ContactSupportPage = () => {
           <Button 
             variant="ghost" 
             className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back

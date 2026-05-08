@@ -3,12 +3,30 @@ export type CloudinaryUploadResult = {
   publicId: string;
   resourceType?: string;
   bytes?: number;
+  format?: string;
+  width?: number;
+  height?: number;
+  createdAt?: string;
 };
 
 type UploadOptions = {
   folder?: string;
   publicId?: string;
+  tags?: string[];
+  transformation?: string;
 };
+
+// Default Cloudinary folder structure
+export const CLOUDINARY_FOLDERS = {
+  EVENTS: 'events',
+  BUSINESS: 'businesses',
+  USERS: 'users',
+  LISTINGS: 'listings',
+  TICKETS: 'tickets',
+  AVATARS: 'avatars',
+  PROPERTIES: 'properties',
+  ADS: 'advertisements',
+} as const;
 
 export async function uploadImageToCloudinary(
   file: File,
@@ -163,3 +181,135 @@ export async function uploadImageToCloudinary(
     throw error;
   }
 }
+
+/**
+ * Get optimized image URL
+ */
+export const getOptimizedImageUrl = (
+  publicId: string,
+  options: {
+    width?: number;
+    height?: number;
+    quality?: number;
+    crop?: string;
+    format?: string;
+  } = {}
+): string => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
+  if (!cloudName) {
+    console.warn('Cloudinary cloud name not configured');
+    return '';
+  }
+
+  const transformations = [];
+  
+  if (options.width) transformations.push(`w_${options.width}`);
+  if (options.height) transformations.push(`h_${options.height}`);
+  if (options.quality) transformations.push(`q_${options.quality}`);
+  if (options.crop) transformations.push(`c_${options.crop}`);
+  if (options.format) transformations.push(`f_${options.format}`);
+  
+  const transformationString = transformations.length > 0 ? transformations.join(',') : '';
+  
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transformationString}${publicId}`;
+};
+
+/**
+ * Image validation helper
+ */
+export const validateImageFile = (file: File): { isValid: boolean; error?: string } => {
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      isValid: false,
+      error: 'Invalid file type. Please upload JPEG, PNG, WebP, or GIF images.',
+    };
+  }
+  
+  // Check file size (max 10MB)
+  const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+  if (file.size > maxSize) {
+    return {
+      isValid: false,
+      error: 'File too large. Please upload an image smaller than 10MB.',
+    };
+  }
+  
+  return { isValid: true };
+};
+
+/**
+ * Get image preview URL before upload
+ */
+export const getImagePreview = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        resolve(e.target.result as string);
+      } else {
+        reject(new Error('Failed to read file'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Delete an image from Cloudinary
+ */
+export const deleteImageFromCloudinary = async (publicId: string): Promise<boolean> => {
+  try {
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY?.trim();
+    const apiSecret = import.meta.env.CLOUDINARY_API_SECRET?.trim();
+    
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error('Cloudinary configuration missing for delete operation');
+      return false;
+    }
+
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const signature = generateDeleteSignature(publicId, timestamp, apiSecret);
+    
+    const formData = new FormData();
+    formData.append('public_id', publicId);
+    formData.append('signature', signature);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('api_key', apiKey);
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/image/destroy`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+    
+    const data = await response.json();
+    return data.result === 'ok';
+  } catch (error) {
+    console.error('Cloudinary delete error:', error);
+    return false;
+  }
+};
+
+/**
+ * Generate signature for delete operations
+ */
+const generateDeleteSignature = (publicId: string, timestamp: number, apiSecret: string): string => {
+  // This is a simplified signature generation
+  // In production, use proper crypto library
+  const stringToSign = `public_id=${publicId}&timestamp=${timestamp}`;
+  return btoa(stringToSign); // This is a placeholder - use proper crypto in production
+};
+
+/**
+ * Get Cloudinary base URL
+ */
+export const getCloudinaryBaseUrl = (): string => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
+  return cloudName ? `https://res.cloudinary.com/${cloudName}` : '';
+};

@@ -9,7 +9,7 @@ interface ListingCardProps {
   description: string;
   image: string;
   category: string;
-  rating: number;
+  rating?: number;
   price?: string;
   location: string;
   phone?: string;
@@ -23,7 +23,7 @@ const ListingCard = ({
   description,
   image,
   category,
-  rating,
+  rating = 0,
   price,
   location,
   phone,
@@ -31,23 +31,34 @@ const ListingCard = ({
   isOpen = true,
   onClick
 }: ListingCardProps) => {
+  const renderValue = (val: any) => {
+    if (val === null || val === undefined) return "";
+    if (typeof val === 'object') {
+      if (val._lat !== undefined && val._long !== undefined) {
+        return `${val._lat.toFixed(4)}, ${val._long.toFixed(4)}`;
+      }
+      return JSON.stringify(val);
+    }
+    return String(val);
+  };
+
   return (
     <Card className="overflow-hidden cursor-pointer group hover:shadow-card transition-all duration-300 animate-fade-in">
       <div className="relative h-48 overflow-hidden" onClick={onClick}>
         <img 
-          src={image} 
-          alt={title}
+          src={renderValue(image)} 
+          alt={renderValue(title)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-3 left-3">
           <Badge variant="secondary" className="bg-white/90 text-primary">
-            {category}
+            {renderValue(category)}
           </Badge>
         </div>
         {price && (
           <div className="absolute top-3 right-3">
             <Badge className="bg-primary text-white">
-              {price}
+              {renderValue(price)}
             </Badge>
           </div>
         )}
@@ -66,21 +77,21 @@ const ListingCard = ({
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
-            {title}
+            {renderValue(title)}
           </h3>
           <div className="flex items-center gap-1 ml-2">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium">{rating}</span>
+            <span className="text-sm font-medium">{renderValue(rating)}</span>
           </div>
         </div>
         
         <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-          {description}
+          {renderValue(description)}
         </p>
         
         <div className="flex items-center gap-1 mb-3">
           <MapPin className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground line-clamp-1">{location}</span>
+          <span className="text-sm text-muted-foreground line-clamp-1">{renderValue(location)}</span>
         </div>
         
         <div className="flex items-center gap-2">

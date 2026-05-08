@@ -59,9 +59,9 @@ const EventsPage = () => {
   }, []);
 
   const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (event.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (event.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (event.category?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   const handleEventClick = (eventId: string) => {

@@ -80,8 +80,8 @@ const FavouritesPage = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredFavourites = favourites.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                         (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -89,7 +89,7 @@ const FavouritesPage = () => {
   const handleItemClick = (itemId: string) => {
     const item = favourites.find(f => f.id === itemId);
     if (item) {
-      navigate(`/${item.category.toLowerCase()}/${itemId}`);
+      navigate(`/${(item.category || 'others').toLowerCase()}/${itemId}`);
     }
   };
 
@@ -101,7 +101,7 @@ const FavouritesPage = () => {
           <Button 
             variant="ghost" 
             className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back

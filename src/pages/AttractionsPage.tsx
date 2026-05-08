@@ -29,12 +29,14 @@ const AttractionsPage = () => {
   useEffect(() => {
     const fetchAttractions = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("category", "==", "Attraction"));
+        const q = query(collection(db, "businesses"));
         const querySnapshot = await getDocs(q);
-        const attractionsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Attraction[];
+        const attractionsData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter((doc: any) => doc.category === "Attraction") as Attraction[];
         setAttractions(attractionsData);
       } catch (err) {
         setError("Failed to fetch attractions.");
@@ -48,9 +50,9 @@ const AttractionsPage = () => {
   }, []);
 
   const filteredAttractions = attractions.filter(attraction =>
-    attraction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    attraction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    attraction.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (attraction.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (attraction.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (attraction.category?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   const handleAttractionClick = (attractionId: string) => {

@@ -186,7 +186,7 @@ const WalletPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
             className="text-white hover:bg-white/20"
           >
             <ArrowLeft className="h-5 w-5" />

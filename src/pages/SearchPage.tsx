@@ -6,7 +6,7 @@ import SearchHeader from "@/components/SearchHeader";
 import SEO from "@/components/SEO";
 import ListingCard from "@/components/ListingCard";
 
-interface BusinessItem {
+interface SearchResultItem {
   id: string;
   title: string;
   description: string;
@@ -19,6 +19,7 @@ interface BusinessItem {
   phone?: string;
   website?: string;
   isOpen?: boolean;
+  type: 'business' | 'event' | 'house';
 }
 
 const SearchPage = () => {
@@ -26,16 +27,66 @@ const SearchPage = () => {
   const [params, setParams] = useSearchParams();
   const initialQuery = params.get("q") || "";
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [results, setResults] = useState<BusinessItem[]>([]);
+  const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const snap = await getDocs(collection(db, "businesses"));
-        const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
-        setResults(data);
+        setLoading(true);
+        console.log("Searching for businesses...");
+        const [bizSnap, eventSnap, houseSnap] = await Promise.all([
+          getDocs(collection(db, "businesses")),
+          getDocs(collection(db, "events")),
+          getDocs(collection(db, "house_listings"))
+        ]);
+
+        console.log(`Found ${bizSnap.docs.length} businesses, ${eventSnap.docs.length} events, ${houseSnap.docs.length} houses`);
+
+        const businesses = bizSnap.docs.map(doc => {
+          const data = doc.data();
+          if (data.title?.toLowerCase().includes("bluewaves") || data.businessName?.toLowerCase().includes("bluewaves")) {
+            console.log("Found Bluewaves match in Firestore:", data);
+          }
+          return {
+            id: doc.id,
+            ...data,
+            title: data.title || data.businessName || 'Untitled Business',
+            type: 'business'
+          };
+        }) as SearchResultItem[];
+
+        const events = eventSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || 'Untitled Event',
+            description: data.description || '',
+            image: data.imageUrl || '',
+            category: data.category || 'Events',
+            location: data.location || data.venue || '',
+            type: 'event',
+            ...data
+          };
+        }) as SearchResultItem[];
+
+        const houses = houseSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.propertyTitle || data.title || 'Untitled Property',
+            description: data.description || '',
+            image: (data.images && data.images[0]) || data.image || '',
+            category: 'House',
+            location: data.address || '',
+            price: data.pricePerNight ? `$${data.pricePerNight}/night` : data.price,
+            type: 'house',
+            ...data
+          };
+        }) as SearchResultItem[];
+
+        setResults([...businesses, ...events, ...houses]);
       } catch (err) {
         console.error(err);
         setError("Failed to load search results.");
@@ -76,22 +127,35 @@ const SearchPage = () => {
     });
   }, [results, searchTerm]);
 
-  const handleClick = (itemId: string, category: string) => {
-    // Navigate to detail page using category path mapping
+  const handleClick = (item: SearchResultItem) => {
+    if (item.type === 'event') {
+      navigate(`/events/${item.id}`);
+      return;
+    }
+    if (item.type === 'house') {
+      navigate(`/houses/${item.id}`);
+      return;
+    }
+    
+    // Original business logic
     const pathMap: Record<string, string> = {
       Restaurant: "restaurants",
       Hotel: "hotels",
       Shopping: "shopping",
       Attraction: "attractions",
       "Fun Places": "fun-places",
+      Fun: "fun-places",
       Airbnb: "airbnb",
       Lifestyle: "lifestyle",
+      "Spa & Wellness": "lifestyle",
       Event: "events",
       Events: "events",
+      "Event Venue": "events",
       Other: "others",
+      "Business Services": "others",
     };
-    const base = pathMap[category] || "others";
-    navigate(`/${base}/${itemId}`);
+    const base = pathMap[item.category] || "others";
+    navigate(`/${base}/${item.id}`);
   };
 
   return (
@@ -117,9 +181,19 @@ const SearchPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((item) => (
                 <ListingCard
-                  key={item.id}
-                  {...item}
-                  onClick={() => handleClick(item.id, item.category)}
+                  key={`${item.type}-${item.id}`}
+                  id={item.id}
+                  title={item.title}
+                  description={item.description}
+                  image={item.image}
+                  category={item.category}
+                  rating={item.rating}
+                  price={item.price}
+                  location={item.location || ""}
+                  phone={item.phone}
+                  website={item.website}
+                  isOpen={item.isOpen}
+                  onClick={() => handleClick(item)}
                 />
               ))}
             </div>

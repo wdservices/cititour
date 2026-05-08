@@ -29,12 +29,14 @@ const HotelsPage = () => {
   useEffect(() => {
     const fetchHotels = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("category", "==", "Hotel"));
+        const q = query(collection(db, "businesses"));
         const querySnapshot = await getDocs(q);
-        const hotelsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Hotel[];
+        const hotelsData = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter((doc: any) => doc.category === "Hotel") as Hotel[];
         setHotels(hotelsData);
       } catch (err) {
         setError("Failed to fetch hotels.");
@@ -47,11 +49,14 @@ const HotelsPage = () => {
     fetchHotels();
   }, []);
 
-  const filteredHotels = hotels.filter(hotel =>
-    hotel.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    hotel.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    hotel.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHotels = hotels.filter(hotel => {
+    const q = searchTerm.toLowerCase();
+    return (
+      (hotel.title?.toLowerCase().includes(q) ?? false) ||
+      (hotel.description?.toLowerCase().includes(q) ?? false) ||
+      (hotel.category?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
   const handleHotelClick = (hotelId: string) => {
     navigate(`/hotels/${hotelId}`);

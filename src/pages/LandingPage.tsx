@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Sparkles, MapPin, Calendar, Hotel, ShoppingBag, Utensils, ArrowRight, Star, Users, Shield, Sun, Moon, Heart, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
+import { Sparkles, MapPin, Calendar, Hotel, ShoppingBag, Utensils, ArrowRight, Star, Users, Shield, Sun, Moon, Heart, MessageCircle, Share2, ThumbsUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useNavigate, Link } from 'react-router-dom';
 import AnimatedRegionTitle from '@/components/AnimatedRegionTitle';
 import { useRegion } from '@/contexts/RegionContext';
@@ -18,6 +19,7 @@ const LandingPage = () => {
   const { brandName } = useRegion();
   const { theme, toggleTheme } = useTheme();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Lightweight live stats and social feed for fun interactions
   const [activeUsers, setActiveUsers] = useState(52340);
@@ -176,7 +178,7 @@ const LandingPage = () => {
           >
             {/* Events Button */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm"
               onClick={() => {
                 const eventsSection = document.getElementById('events');
@@ -186,14 +188,19 @@ const LandingPage = () => {
                   navigate('/events');
                 }
               }}
-              className="flex items-center gap-2 rounded-full border border-muted/50 hover:bg-muted/30"
+              className="flex items-center gap-2 rounded-full border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all duration-200 text-foreground"
             >
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Events</span>
+              <span className="hidden sm:inline font-medium">Events</span>
             </Button>
             
             {/* Theme Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full border border-muted/50 hover:bg-muted/30">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={toggleTheme} 
+              className="rounded-full border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all duration-200"
+            >
               {theme === 'dark' ? (
                 <Sun className="h-5 w-5" />
               ) : (
@@ -201,15 +208,34 @@ const LandingPage = () => {
               )}
             </Button>
             
-            {/* Sign In Button - gradient pill with shimmer */}
+            {/* Sign In Button - enhanced visibility */}
             <Button 
               onClick={() => navigate('/auth?force=true')}
-              className="relative overflow-hidden rounded-full bg-gradient-to-r from-violet-600 to-sky-600 text-white px-6 py-2 hover:opacity-90 shadow-soft group"
+              className="relative overflow-hidden rounded-full bg-gradient-to-r from-violet-600 to-sky-600 text-white px-6 py-2 hover:from-violet-700 hover:to-sky-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 group"
             >
-              Sign In
+              <span className="font-semibold">Sign In</span>
               <span className="pointer-events-none absolute inset-y-0 left-[-30%] w-[60%] translate-x-[-100%] group-hover:translate-x-[250%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
             </Button>
           </motion.nav>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden px-4 pb-6">
+            <div className="relative max-w-sm mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search restaurants, events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors rounded-full"
+              />
+            </div>
+          </div>
 
           {/* Hero Content - two-column layout with details and mosaic */}
           <div className="relative">

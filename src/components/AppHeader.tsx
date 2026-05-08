@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, Search, Bell, Moon, Sun, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,11 @@ const AppHeader = () => {
   const { theme, toggleTheme } = useTheme();
   const { brandName } = useRegion();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isLandingPage = location.pathname === "/" || location.pathname === "/landing";
+  const isExplorePage = location.pathname === "/explore";
+  const showGlobalSearch = isLandingPage || isExplorePage;
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-soft">
@@ -39,46 +44,50 @@ const AppHeader = () => {
             </SheetContent>
           </Sheet>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col cursor-pointer" onClick={() => navigate("/")}>
             <h1 className="font-bold text-lg text-primary">{brandName}</h1>
             <p className="text-xs text-muted-foreground">Explore</p>
           </div>
         </div>
 
-        {/* Center: Search Bar (Hidden on small screens) */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search restaurants, events, hotels..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery.trim()) {
-                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                }
-              }}
-              className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
-            />
+        {/* Center: Search Bar (Landing & Explore) */}
+        {showGlobalSearch && (
+          <div className="hidden md:flex items-center justify-center max-w-lg mx-auto flex-1">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search restaurants, events, hotels..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }
+                }}
+                className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors rounded-full w-full"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* Mobile Search */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => {
-              if (searchQuery.trim()) {
-                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-              }
-            }}
-          >
-            <Search className="h-5 w-5" />
-          </Button>
+          {/* Mobile Search Icon (Landing & Explore) */}
+          {showGlobalSearch && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
 
           {/* Theme Toggle */}
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
@@ -113,29 +122,29 @@ const AppHeader = () => {
               <span className="text-xs text-primary-foreground font-medium">3</span>
             </div>
           </Button>
-
-
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
-      <div className="md:hidden px-4 pb-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search anything..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && searchQuery.trim()) {
-                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-              }
-            }}
-            className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
-          />
+      {/* Mobile Search Bar (Landing & Explore) */}
+      {showGlobalSearch && (
+        <div className="md:hidden px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search anything..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+              className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 };
