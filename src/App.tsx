@@ -41,6 +41,8 @@ import TermsOfUsePage from "./pages/TermsOfUsePage";
 import SearchPage from "./pages/SearchPage";
 import OthersPage from "./pages/OthersPage";
 import AllBusinessesPage from "./pages/AllBusinessesPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import MarketplaceDetailPage from "./pages/MarketplaceDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,8 @@ const ProtectedRoutes = () => {
     <AppShell>
       <Routes>
         <Route path="/explore" element={<CategoriesPage />} />
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="/marketplace/:id" element={<MarketplaceDetailPage />} />
         <Route path="/businesses" element={<AllBusinessesPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/hotels" element={<HotelsPage />} />
