@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Search, SlidersHorizontal, Star, MapPin, Phone, Globe, MessageCircle, ChevronDown, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,46 @@ const EventsPage = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        // --- TEMPORARY MIGRATION SCRIPT ---
+        try {
+          const oldEventsSnap = await getDocs(collection(db, 'events'));
+          for (const oldDoc of oldEventsSnap.docs) {
+            const data = oldDoc.data();
+            const newRef = doc(db, 'businesses', oldDoc.id);
+            await setDoc(newRef, {
+              ...data,
+              category: "Event",
+              tags: data.category ? [data.category] : [],
+              isActive: true,
+            }, { merge: true });
+            
+            // Migrate tickets subcollection
+            const ticketsSnap = await getDocs(collection(db, 'events', oldDoc.id, 'tickets'));
+            for (const ticketDoc of ticketsSnap.docs) {
+              await setDoc(doc(db, 'businesses', oldDoc.id, 'tickets', ticketDoc.id), ticketDoc.data(), { merge: true });
+            }
+          }
+          console.log("Migration complete");
+        } catch (e) {
+          console.error("Migration failed", e);
+        }
+        // --- END TEMPORARY MIGRATION SCRIPT ---
+
         const snapshot = await getDocs(collection(db, "businesses"));
         const eventsData = snapshot.docs
           .map(doc => {
             const d = doc.data() as any;
+            
+            // Auto-delist logic: 24 hours after endDate
+            let isExpired = false;
+            if (d.endDate) {
+              const end = new Date(d.endDate).getTime();
+              const now = new Date().getTime();
+              if (now > end + 86400000) { // 24 hours in ms
+                isExpired = true;
+              }
+            }
+
             return {
               id: doc.id,
               title: String(d.title || "Untitled Event"),
@@ -50,9 +86,11 @@ const EventsPage = () => {
               website: String(d.website || ""),
               whatsapp: String(d.whatsapp || d.phone || ""),
               isOpen: Boolean(d.isActive ?? d.isOpen ?? true),
-            } as EventItem;
+              isExpired,
+            } as EventItem & { isExpired: boolean };
           })
           .filter(event => {
+            if (event.isExpired) return false;
             const cat = event.category.toLowerCase();
             return cat === "event" || cat === "events" || cat === "event venue";
           });

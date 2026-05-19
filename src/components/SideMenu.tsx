@@ -30,7 +30,6 @@ const menuItems = [
       { icon: User, title: "Profile", description: "Manage your account" },
       { icon: Wallet, title: "Wallet", description: "Manage your funds" },
       { icon: Heart, title: "Favourites", description: "Your saved places" },
-      { icon: Calendar, title: "Events & Deals", description: "Special offers" },
     ]
   },
   {
@@ -67,7 +66,6 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
       "Profile": "/profile",
       "Wallet": "/wallet",
       "Favourites": "/favourites", 
-      "Events & Deals": "/events",
       "Business Listing": "/businesses",
       "Run Ads": "/run-ads",
       "House Listings": "/house-listings",

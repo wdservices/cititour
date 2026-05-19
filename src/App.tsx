@@ -29,7 +29,6 @@ import RunAdsPage from "./pages/RunAdsPage";
 import HouseListingsPage from "./pages/HouseListingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import FavouritesPage from "./pages/FavouritesPage";
-import EventsDealsPage from "./pages/EventsDealsPage";
 import ShareAppPage from "./pages/ShareAppPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -84,7 +83,6 @@ const ProtectedRoutes = () => {
         <Route path="/house-listings" element={<HouseListingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/favourites" element={<FavouritesPage />} />
-        <Route path="/events-deals" element={<EventsDealsPage />} />
         <Route path="/share-app" element={<ShareAppPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/settings" element={<SettingsPage />} />

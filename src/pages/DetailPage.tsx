@@ -119,7 +119,7 @@ const DetailPage = () => {
       <div className="min-h-screen bg-background flex flex-col">
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
           <div className="flex items-center px-4 py-4 max-w-7xl mx-auto w-full">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
+            <Button variant="ghost" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="rounded-full">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </div>
@@ -127,7 +127,7 @@ const DetailPage = () => {
         <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-2">Business not found</h2>
           <p className="text-muted-foreground mb-8 text-lg">This profile may have been removed or doesn't exist.</p>
-          <Button onClick={() => navigate(-1)} size="lg" className="rounded-xl px-8">Go Back</Button>
+          <Button onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} size="lg" className="rounded-xl px-8">Go Back</Button>
         </div>
       </div>
     );
@@ -144,7 +144,7 @@ const DetailPage = () => {
 
       {/* Mobile Back Button (Floating over Hero) */}
       <div className="lg:hidden absolute top-4 left-4 z-50">
-        <Button variant="secondary" size="icon" onClick={() => navigate(-1)} className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/10">
+        <Button variant="secondary" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md border border-white/10">
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>
@@ -153,7 +153,7 @@ const DetailPage = () => {
         
         {/* Desktop Back Button */}
         <div className="hidden lg:block mb-6">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 pl-0 hover:bg-transparent hover:text-primary text-muted-foreground">
+          <Button variant="ghost" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="gap-2 pl-0 hover:bg-transparent hover:text-primary text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Button>
         </div>

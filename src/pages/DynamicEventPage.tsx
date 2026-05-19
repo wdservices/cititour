@@ -73,6 +73,7 @@ const DynamicEventPage = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'wallet' | 'transfer'>('card');
+  const [ticketQuantity, setTicketQuantity] = useState(1);
 
   useEffect(() => {
     if (!eventId) {
@@ -156,6 +157,7 @@ const DynamicEventPage = () => {
       return;
     }
     setSelectedTicket(ticket);
+    setTicketQuantity(1);
     setShowPayment(true);
   };
 
@@ -165,7 +167,7 @@ const DynamicEventPage = () => {
     // Simulate payment processing
     toast({
       title: "Payment Successful!",
-      description: `Your booking for "${event.title}" - ${selectedTicket.ticketType} is confirmed.`,
+      description: `Your booking for ${ticketQuantity}x "${event.title}" - ${selectedTicket.ticketType} is confirmed.`,
     });
     setShowPayment(false);
     setSelectedTicket(null);
@@ -194,7 +196,7 @@ const DynamicEventPage = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
           <p className="text-muted-foreground mb-6">This event may have been removed or the link is invalid.</p>
-          <Button onClick={() => navigate('/')}>
+          <Button onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
           </Button>
@@ -209,7 +211,7 @@ const DynamicEventPage = () => {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-semibold">Event Details</h1>
@@ -373,7 +375,7 @@ const DynamicEventPage = () => {
                         onClick={() => handleBookTicket(ticket)}
                         disabled={ticket.available <= 0}
                       >
-                        {ticket.available <= 0 ? 'Sold Out' : 'Book Now'}
+                        {ticket.available <= 0 ? 'Sold Out' : 'Buy Now'}
                       </Button>
                     </div>
                   ))
@@ -436,25 +438,32 @@ const DynamicEventPage = () => {
           
           {selectedTicket && (
             <div className="space-y-4">
-              {/* Booking Summary */}
               <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="font-medium mb-2">Booking Summary</h4>
-                <div className="space-y-2 text-sm">
+                <h4 className="font-medium mb-3">Booking Summary</h4>
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span>{event.title}</span>
+                    <span className="font-semibold text-foreground">{event.title}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>{selectedTicket.ticketType}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">{selectedTicket.ticketType}</span>
+                    <div className="flex items-center gap-3 bg-background border border-border/50 rounded-lg p-1 shadow-sm">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}>-</Button>
+                      <span className="font-bold w-4 text-center">{ticketQuantity}</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => setTicketQuantity(Math.min(selectedTicket.available, ticketQuantity + 1))}>+</Button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-muted-foreground">
+                    <span>Price per ticket</span>
                     <span>₦{selectedTicket.price.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center text-muted-foreground">
                     <span>Service fee</span>
                     <span>₦500</span>
                   </div>
-                  <Separator />
-                  <div className="flex justify-between font-semibold">
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center font-bold text-lg">
                     <span>Total</span>
-                    <span>₦{(selectedTicket.price + 500).toLocaleString()}</span>
+                    <span className="text-primary">₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -485,13 +494,12 @@ const DynamicEventPage = () => {
                 })}
               </div>
 
-              {/* Complete Payment Button */}
               <Button
                 onClick={handlePayment}
-                className="w-full bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90"
+                className="w-full h-12 bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90 font-bold text-base shadow-lg shadow-primary/20"
               >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Pay ₦{(selectedTicket.price + 500).toLocaleString()}
+                <CreditCard className="w-5 h-5 mr-2" />
+                Pay ₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}
               </Button>
             </div>
           )}

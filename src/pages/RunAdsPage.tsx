@@ -208,7 +208,7 @@ const RunAdsPage = () => {
                   Campaigns are reviewed within 2 hours. Payment is processed upon approval.
                 </p>
                 <div className="space-x-4">
-                  <Button variant="outline" onClick={() => navigate(-1)}>
+                  <Button variant="outline" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
                     Cancel
                   </Button>
                   <Button className="bg-gradient-primary hover:opacity-90">

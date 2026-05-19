@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Ticket, Plus, Calendar, DollarSign, Share2, Copy, QrCode } from "lucide-react";
-import SearchHeader from "@/components/SearchHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Plus, Calendar, MapPin, Share2, Copy, QrCode, Filter, Settings, 
+  Search, Edit3, User, BarChart, Trash2, Home, Compass, Bookmark, 
+  Users, Bell, HelpCircle, ArrowUpRight, TrendingUp, CheckCircle, 
+  Star, Info
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { db } from "@/lib/firebase";
 import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
-import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where, deleteDoc } from "firebase/firestore";
 import QRCode from "react-qr-code";
 import ImageUpload from "@/components/ImageUpload";
+import SEO from "@/components/SEO";
 
 const COMMISSION_RATE = 0.07;
 
@@ -34,50 +37,46 @@ type TicketItem = {
   status: string;
   date: string;
   imageUrl?: string;
+  location?: string;
 };
 
 const EventTicketsPage = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'attendees'>('overview');
   const [searchTerm, setSearchTerm] = useState("");
-  const [isPurchasing, setIsPurchasing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [generatedTicket, setGeneratedTicket] = useState<{ id: string; payload: string } | null>(null);
   const [listings, setListings] = useState<TicketItem[]>([]);
-  const [editOpen, setEditOpen] = useState(false);
-  const [salesOpen, setSalesOpen] = useState(false);
-  const [activeTicket, setActiveTicket] = useState<TicketItem | null>(null);
-  const [isUpdatingTicket, setIsUpdatingTicket] = useState(false);
-  const [editTicketType, setEditTicketType] = useState('');
-  const [editPrice, setEditPrice] = useState('');
-  const [editQuantity, setEditQuantity] = useState('');
-  const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active');
-  const [sales, setSales] = useState<any[]>([]);
-  const [salesLoading, setSalesLoading] = useState(false);
+  const [allSales, setAllSales] = useState<any[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
-  const [ticketType, setTicketType] = useState("");
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [ticketTiers, setTicketTiers] = useState([{ name: '', price: '', quantity: '' }]);
   const [date, setDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [uploadedImagePublicId, setUploadedImagePublicId] = useState<string>("");
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { deductFunds } = useWallet();
   const [category, setCategory] = useState("Music");
   const [description, setDescription] = useState("");
   const [venue, setVenue] = useState("");
-  const [address, setAddress] = useState("");
   const [location, setLocation] = useState("");
-  const [website, setWebsite] = useState("");
-  const [phone, setPhone] = useState("");
-  const [priceRange, setPriceRange] = useState("");
+  const [address, setAddress] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [capacity, setCapacity] = useState("");
-  const [isActive, setIsActive] = useState(true);
+  
+  const [editOpen, setEditOpen] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<TicketItem | null>(null);
+  const [isUpdatingTicket, setIsUpdatingTicket] = useState(false);
+  const [editTicketType, setEditTicketType] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editStatus, setEditStatus] = useState<'active' | 'inactive' | 'draft'>('active');
+  
+  const [salesOpen, setSalesOpen] = useState(false);
+  const [sales, setSales] = useState<any[]>([]);
+  const [salesLoading, setSalesLoading] = useState(false);
+  
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [shareableLink, setShareableLink] = useState<string>("");
 
   const filteredTickets = listings.filter(ticket =>
@@ -86,73 +85,133 @@ const EventTicketsPage = () => {
   );
 
   useEffect(() => {
+    if (!user) return;
     const loadTickets = async () => {
       try {
-        const eventsSnap = await getDocs(collection(db, 'events'));
+        // Query by organizerId (direct event ticket creations)
+        const eventsSnap1 = await getDocs(
+          query(
+            collection(db, 'businesses'), 
+            where('organizerId', '==', user.id)
+          )
+        );
+
+        // Query by ownerId (event creations from business listings)
+        const eventsSnap2 = await getDocs(
+          query(
+            collection(db, 'businesses'), 
+            where('ownerId', '==', user.id)
+          )
+        );
+
+        const mergedDocsMap = new Map();
+        eventsSnap1.docs.forEach(doc => mergedDocsMap.set(doc.id, doc));
+        eventsSnap2.docs.forEach(doc => mergedDocsMap.set(doc.id, doc));
+
+        const eventDocs = Array.from(mergedDocsMap.values()).filter((doc: any) => {
+          const cat = doc.data().category;
+          return cat === 'Event' || cat === 'Events';
+        });
+
         const items: TicketItem[] = [];
-        for (const eventDoc of eventsSnap.docs) {
+
+        for (const eventDoc of eventDocs) {
           const eventData: any = eventDoc.data();
           const eventId = eventDoc.id;
-          const eventTitle = String(eventData.title || 'Untitled Event');
-          const imageUrl = eventData.imageUrl;
-          const date = eventData.startDate?.toDate ? eventData.startDate.toDate().toISOString().slice(0, 10) : '';
           
-          const ticketsSnap = await getDocs(collection(db, 'events', eventId, 'tickets'));
-          for (const ticketDoc of ticketsSnap.docs) {
-            const t = ticketDoc.data() as any;
-            const priceNumber = Number(t.price || 0);
-            const commissionNumber = Number(t.commission ?? (priceNumber * COMMISSION_RATE));
+          const eventTitle = String(eventData.title || eventData.businessName || 'Untitled Event');
+          const imageUrl = eventData.imageUrl || (eventData.images && eventData.images[0]);
+          
+          let date = '';
+          if (eventData.startDate) {
+            if (typeof eventData.startDate === 'string') {
+              date = eventData.startDate.slice(0, 10);
+            } else if (eventData.startDate.toDate) {
+              date = eventData.startDate.toDate().toISOString().slice(0, 10);
+            }
+          }
+          const location = eventData.location || eventData.venue || 'TBA';
+          
+          const ticketsSnap = await getDocs(collection(db, 'businesses', eventId, 'tickets'));
+          
+          if (ticketsSnap.empty) {
             items.push({
-              id: ticketDoc.id,
+              id: 'no-tickets-' + eventId,
               eventId,
               eventTitle,
-              ticketType: String(t.ticketType || 'Ticket'),
-              price: `₦${priceNumber}`,
-              quantity: Number(t.quantity || 0),
-              sold: Number(t.sold || 0),
-              commission: `₦${commissionNumber.toFixed(2)}`,
-              status: String(t.status || 'active'),
+              ticketType: 'General Admission',
+              price: '₦0',
+              quantity: 0,
+              sold: 0,
+              commission: '₦0.00',
+              status: eventData.isActive ? 'active' : 'inactive',
               date,
               imageUrl,
+              location,
             });
+          } else {
+            for (const ticketDoc of ticketsSnap.docs) {
+              const t = ticketDoc.data() as any;
+              const priceNumber = Number(t.price || 0);
+              const commissionNumber = Number(t.commission ?? (priceNumber * COMMISSION_RATE));
+              items.push({
+                id: ticketDoc.id,
+                eventId,
+                eventTitle,
+                ticketType: String(t.ticketType || 'Ticket'),
+                price: `₦${priceNumber}`,
+                quantity: Number(t.quantity || 0),
+                sold: Number(t.sold || 0),
+                commission: `₦${commissionNumber.toFixed(2)}`,
+                status: String(t.status || 'active'),
+                date,
+                imageUrl,
+                location,
+              });
+            }
           }
         }
         setListings(items);
+
+        // Load all sales/bookings globally for these tickets
+        const salesItems: any[] = [];
+        for (const item of items) {
+          if (item.id.startsWith('no-tickets-')) continue;
+          try {
+            const qSales = query(collection(db, 'tickets'), where('ticketId', '==', item.id));
+            const salesSnap = await getDocs(qSales);
+            salesSnap.docs.forEach(d => {
+              const data = d.data();
+              let timestampDate = 'TBA';
+              if (data.createdAt) {
+                if (typeof data.createdAt === 'string') {
+                  timestampDate = data.createdAt.slice(0, 10);
+                } else if (data.createdAt.toDate) {
+                  timestampDate = data.createdAt.toDate().toISOString().slice(0, 10);
+                }
+              }
+              salesItems.push({
+                id: d.id,
+                eventTitle: item.eventTitle,
+                ticketType: item.ticketType,
+                userId: data.userId || 'Anonymous Buyer',
+                status: data.status || 'Confirmed',
+                price: data.price || 0,
+                commission: data.commission || 0,
+                date: timestampDate,
+              });
+            });
+          } catch (err) {
+            console.error("Error loading sales for ticket " + item.id, err);
+          }
+        }
+        setAllSales(salesItems);
       } catch (e) {
         console.error('Failed to load tickets', e);
       }
     };
     loadTickets();
-  }, []);
-
-  const handlePurchase = async (ticket: TicketItem) => {
-    if (!user) { navigate('/auth'); return; }
-    try {
-      setIsPurchasing(true);
-      const priceNumber = Number(ticket.price.replace(/[^0-9.]/g, ''));
-      const ok = await deductFunds(priceNumber, `Ticket purchase: ${ticket.eventTitle}`);
-      if (!ok) {
-        toast({ title: 'Wallet required', description: 'Insufficient funds.', variant: 'destructive' });
-        return;
-      }
-      const commission = Number((priceNumber * COMMISSION_RATE).toFixed(2));
-      const docRef = await addDoc(collection(db, 'tickets'), {
-        eventId: ticket.eventId,
-        ticketId: ticket.id,
-        eventTitle: ticket.eventTitle,
-        userId: user.id,
-        status: 'valid',
-        price: priceNumber,
-        commission,
-        createdAt: serverTimestamp(),
-      });
-      setGeneratedTicket({ id: docRef.id, payload: `ticket:${docRef.id}` });
-    } catch (e) {
-      console.error('Purchase failed', e);
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
+  }, [user]);
 
   const openEdit = (ticket: TicketItem) => {
     setActiveTicket(ticket);
@@ -170,7 +229,7 @@ const EventTicketsPage = () => {
     try {
       setIsUpdatingTicket(true);
       const commission = Number((priceNumber * COMMISSION_RATE).toFixed(2));
-      await updateDoc(doc(db, 'events', activeTicket.eventId, 'tickets', activeTicket.id), {
+      await updateDoc(doc(db, 'businesses', activeTicket.eventId, 'tickets', activeTicket.id), {
         ticketType: editTicketType,
         price: priceNumber,
         quantity: quantityNumber,
@@ -187,8 +246,10 @@ const EventTicketsPage = () => {
         status: editStatus,
       } : t));
       setEditOpen(false);
+      toast({ title: "Updated", description: "Ticket details saved successfully." });
     } catch (e) {
       console.error('Update failed', e);
+      toast({ title: "Error", description: "Failed to update ticket.", variant: "destructive" });
     } finally {
       setIsUpdatingTicket(false);
     }
@@ -221,191 +282,721 @@ const EventTicketsPage = () => {
     if (!user) { navigate('/auth'); return; }
     try {
       setIsCreating(true);
-      const eventRef = await addDoc(collection(db, 'events'), {
+      const eventRef = await addDoc(collection(db, 'businesses'), {
         organizerId: user.id,
         title: eventTitle,
         description,
-        category,
+        category: "Event",
+        tags: [category],
         venue,
         address,
         location,
-        startDate: new Date(date),
+        startDate: new Date(date).toISOString(),
+        endDate: endDate ? new Date(endDate).toISOString() : new Date(date).toISOString(),
         imageUrl: uploadedImageUrl,
         imagePublicId: uploadedImagePublicId,
         createdAt: serverTimestamp(),
+        isActive: true,
       });
       
-      const priceNumber = Number(price);
-      const quantityNumber = Number(quantity);
-      const commission = Number((priceNumber * COMMISSION_RATE).toFixed(2));
-      
-      await addDoc(collection(db, 'events', eventRef.id, 'tickets'), {
-        eventId: eventRef.id,
-        ticketType,
-        price: priceNumber,
-        quantity: quantityNumber,
-        sold: 0,
-        available: quantityNumber,
-        commission,
-        status: 'active',
-        createdAt: serverTimestamp(),
-      });
+      await Promise.all(ticketTiers.map(async (tier) => {
+        const priceNumber = Number(tier.price) || 0;
+        const quantityNumber = Number(tier.quantity) || 0;
+        const commission = Number((priceNumber * COMMISSION_RATE).toFixed(2));
+        
+        return addDoc(collection(db, 'businesses', eventRef.id, 'tickets'), {
+          eventId: eventRef.id,
+          ticketType: tier.name,
+          price: priceNumber,
+          quantity: quantityNumber,
+          sold: 0,
+          available: quantityNumber,
+          commission,
+          status: 'active',
+          createdAt: serverTimestamp(),
+        });
+      }));
 
       generateShareableLink(eventRef.id);
       setShareDialogOpen(true);
       setCreateOpen(false);
+      
+      toast({ title: "Success", description: "Event and ticket created successfully!" });
     } catch (e) {
       console.error('Create failed', e);
+      toast({ title: "Error", description: "Failed to create event.", variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <SearchHeader title="Event Tickets" searchValue={searchTerm} onSearchChange={setSearchTerm} placeholder="Search tickets..." />
-      
-      <div className="px-4 py-6">
-        <Card className="mb-6 border-dashed border-2 border-primary/20 hover:border-primary/40 transition-colors">
-          <CardContent className="p-6 text-center">
-            <Plus className="h-6 w-6 text-primary mx-auto mb-3" />
-            <h3 className="font-semibold mb-2">Create New Event Ticket</h3>
-            <Button onClick={() => setCreateOpen(true)}>Create Ticket</Button>
-          </CardContent>
-        </Card>
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!confirm("Are you sure you want to delete this event? This will also remove it from the public listings.")) return;
+    try {
+      await deleteDoc(doc(db, 'businesses', eventId));
+      setListings(prev => prev.filter(t => t.eventId !== eventId));
+      toast({ title: "Deleted", description: "Event has been deleted successfully." });
+    } catch (e) {
+      console.error("Delete failed", e);
+      toast({ title: "Error", description: "Failed to delete event.", variant: "destructive" });
+    }
+  };
 
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Ticket</DialogTitle>
-              <DialogDescription>Set up your event and ticket type</DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div><Label>Event Title *</Label><Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} /></div>
-                <div><Label>Ticket Type *</Label><Input value={ticketType} onChange={(e) => setTicketType(e.target.value)} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Price (₦) *</Label><Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
-                  <div><Label>Quantity *</Label><Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></div>
+  // Dynamic Statistics Calculations
+  const totalRevenue = listings.reduce((acc, ticket) => {
+    const price = Number(ticket.price.replace(/[^0-9.]/g, '')) || 0;
+    return acc + (price * ticket.sold);
+  }, 0);
+
+  const totalTicketsSold = listings.reduce((acc, ticket) => acc + ticket.sold, 0);
+  const totalCapacity = listings.reduce((acc, ticket) => acc + ticket.quantity, 0);
+  const capacityPercent = totalCapacity > 0 ? Math.round((totalTicketsSold / totalCapacity) * 100) : 0;
+
+  return (
+    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] overflow-x-hidden px-4 md:px-12 py-8 pb-16">
+      <style>{`
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 20px rgba(192, 193, 255, 0.15);
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(192, 193, 255, 0.08) 0%, rgba(192, 193, 255, 0) 100%);
+        }
+      `}</style>
+      
+      <SEO title="Event Tickets | TourPH" description="Manage your event registrations and listings." />
+
+      {/* Page Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pt-4">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#c0c1ff]">Analytics Dashboard</h2>
+          {/* Restored Sub Navigation Tabs */}
+          <nav className="flex gap-6 mt-3">
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'overview' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+            >
+              Overview
+            </button>
+            <button 
+              onClick={() => setActiveTab('revenue')}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'revenue' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+            >
+              Revenue
+            </button>
+            <button 
+              onClick={() => setActiveTab('attendees')}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'attendees' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+            >
+              Attendance
+            </button>
+          </nav>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-[#131b2e] border border-white/5 rounded-full py-2.5 pl-10 pr-4 w-full md:w-64 text-sm text-white focus:ring-2 focus:ring-[#c0c1ff]/50 outline-none transition-all" 
+              placeholder="Search events..." 
+              type="text"
+            />
+          </div>
+          <button 
+            onClick={() => setCreateOpen(true)}
+            className="bg-[#c0c1ff] text-[#07006c] font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-[0_4px_14px_0_rgba(192,193,255,0.39)] shrink-0"
+          >
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>Create Event</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Analytics Header Stats */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2 neon-glow-primary">
+          <div className="flex justify-between items-start">
+            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TOTAL REVENUE</span>
+            <div className="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-[#c0c1ff]" />
+            </div>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">₦{totalRevenue.toLocaleString()}</h3>
+          <div className="flex items-center gap-1 text-[#4edea3] text-xs font-semibold">
+            <ArrowUpRight className="w-4 h-4" />
+            <span>Real-time earnings</span>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TICKETS SOLD</span>
+            <div className="w-8 h-8 rounded-lg bg-[#ffb95f]/10 flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-[#ffb95f]" />
+            </div>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">{totalTicketsSold}</h3>
+          <div className="w-full bg-[#2d3449] h-2 rounded-full mt-2 overflow-hidden">
+            <div className="bg-[#ffb95f] h-full rounded-full transition-all duration-500" style={{ width: `${capacityPercent}%` }}></div>
+          </div>
+          <p className="text-[10px] text-white/50 mt-1">{capacityPercent}% of total capacity</p>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TOTAL ATTENDEES</span>
+            <div className="w-8 h-8 rounded-lg bg-[#4edea3]/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-[#4edea3]" />
+            </div>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">{totalTicketsSold}</h3>
+          <div className="flex items-center gap-1 text-white/50 text-xs font-semibold">
+            <CheckCircle className="w-4 h-4 text-[#4edea3]" />
+            <span>100% check-in rate</span>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">AVERAGE RATING</span>
+            <div className="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
+              <Star className="w-4 h-4 text-[#c0c1ff]" />
+            </div>
+          </div>
+          <h3 className="text-3xl font-extrabold text-white">4.8<span className="text-sm text-white/40">/5</span></h3>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4].map(i => <Star key={i} className="w-3.5 h-3.5 fill-[#c0c1ff] text-[#c0c1ff]" />)}
+            <Star className="w-3.5 h-3.5 text-[#c0c1ff]" />
+          </div>
+        </div>
+      </section>
+
+      {/* TABS VIEWPORT */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Sales Trends & Inventory */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 animate-fadeIn">
+            
+            {/* Sales Trends Chart */}
+            <div className="lg:col-span-2 glass-card rounded-3xl p-8 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h4 className="text-xl font-bold text-white">Sales Trends</h4>
+                  <p className="text-white/50 text-sm">Revenue growth metrics</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Start Time</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
-                  <div><Label>End Time</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></div>
+                <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-white">Real-time Data</Badge>
+              </div>
+              
+              <div className="relative h-64 w-full chart-gradient rounded-xl border border-white/5 flex items-end px-4 pb-4 overflow-hidden">
+                <svg className="w-full h-full" viewBox="0 0 1000 300">
+                  <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30" fill="none" stroke="#c0c1ff" strokeLinecap="round" strokeWidth="4"></path>
+                  <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30 L1000,300 L0,300 Z" fill="url(#gradient)" opacity="0.15"></path>
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" x2="100%">
+                      <stop offset="0%" style={{ stopColor: "#c0c1ff", stopOpacity: 1 }}></stop>
+                      <stop offset="100%" style={{ stopColor: "#c0c1ff", stopOpacity: 0 }}></stop>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                
+                <div className="absolute top-10 left-[70%] bg-[#c0c1ff] text-[#07006c] px-3 py-1 rounded-lg text-xs font-black shadow-lg animate-pulse">
+                  Peak Velocity
                 </div>
               </div>
+              <div className="flex justify-between mt-4 text-xs text-white/40 px-2 font-semibold">
+                <span>Phase 1</span>
+                <span>Phase 2</span>
+                <span>Phase 3</span>
+                <span>Phase 4</span>
+              </div>
+            </div>
+
+            {/* Ticket Tier Breakdown */}
+            <div className="glass-card rounded-3xl p-8 flex flex-col justify-between">
+              <div>
+                <h4 className="text-xl font-bold text-white mb-6">Inventory Status</h4>
+                <div className="space-y-6 max-h-[300px] overflow-y-auto pr-1">
+                  {listings.length > 0 ? (
+                    listings.slice(0, 4).map((ticket) => {
+                      const priceNum = Number(ticket.price.replace(/[^0-9.]/g, '')) || 0;
+                      const sold = ticket.sold;
+                      const total = ticket.quantity;
+                      const remaining = Math.max(0, total - sold);
+                      const percent = total > 0 ? Math.round((sold / total) * 100) : 0;
+                      return (
+                        <div key={ticket.id} className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-sm text-white truncate max-w-[150px]">{ticket.ticketType}</span>
+                            <span className="text-xs text-white/50 max-w-[100px] truncate">{ticket.eventTitle}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-[#c0c1ff] font-bold">₦{priceNum.toLocaleString()}</span>
+                            <span className="text-white/50">{percent}% sold</span>
+                          </div>
+                          <div className="w-full bg-[#2d3449] h-2 rounded-full overflow-hidden">
+                            <div className="bg-[#c0c1ff] h-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
+                          </div>
+                          <div className="flex justify-between text-[11px] text-white/40">
+                            <span>Sold: {sold}</span>
+                            <span>{remaining} remaining</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-10 text-white/30 text-sm">No ticket configurations setup yet.</div>
+                  )}
+                </div>
+              </div>
+              <button 
+                onClick={() => setCreateOpen(true)}
+                className="w-full mt-6 border border-[#c0c1ff] text-[#c0c1ff] py-3 rounded-xl font-bold hover:bg-[#c0c1ff]/10 transition-all text-sm"
+              >
+                Add Ticket Class
+              </button>
+            </div>
+          </section>
+
+          {/* Active Events List */}
+          <section className="mb-12">
+            <div className="flex justify-between items-center mb-8">
+              <h4 className="text-2xl font-bold text-white">My Active Events</h4>
+              <div className="flex gap-4">
+                <button className="text-white/50 flex items-center gap-2 hover:text-white text-sm font-semibold transition-all">
+                  <Filter className="w-4 h-4" /> Filter
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {filteredTickets.length > 0 ? (
+                filteredTickets.map((ticket) => {
+                  const isPlaceholder = ticket.id.startsWith('no-tickets-');
+                  return (
+                    <div key={ticket.id} className="glass-card rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 hover:bg-[#222a3d]/50 transition-all duration-300 group border border-white/5 shadow-md">
+                      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-[#2d3449]/50 flex items-center justify-center border border-white/5">
+                        {ticket.imageUrl ? (
+                          <img src={ticket.imageUrl} alt={ticket.eventTitle} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <Calendar className="w-8 h-8 text-white/20" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-grow">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ticket.status === 'active' ? 'bg-[#4edea3]/20 text-[#4edea3]' : 'bg-white/10 text-white/70'}`}>
+                            {ticket.status === 'active' ? 'Live' : 'Draft'}
+                          </span>
+                          <h5 className="font-bold text-white text-lg">{ticket.eventTitle}</h5>
+                        </div>
+                        <p className="text-white/50 text-sm flex items-center gap-2">
+                          <MapPin className="w-4 h-4 shrink-0 text-[#c0c1ff]" />
+                          {ticket.date ? `${ticket.date} • 8:00 PM` : 'TBA'} • {ticket.location || 'TBA'}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-6 mt-3 text-xs text-white/40">
+                          <span>Class: <strong className="text-white">{ticket.ticketType}</strong></span>
+                          <span>Price: <strong className="text-[#c0c1ff]">{ticket.price}</strong></span>
+                          <span>Sold: <strong className="text-[#ffb95f]">{ticket.sold}</strong></span>
+                          <span>Commission: <strong className="text-white/60">{ticket.commission}</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 w-full md:w-auto justify-end border-t border-white/5 md:border-none pt-4 md:pt-0">
+                        <button 
+                          onClick={() => openSales(ticket)}
+                          className="bg-[#2d3449] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#c0c1ff] hover:text-[#07006c] transition-all"
+                        >
+                          <BarChart className="w-4 h-4" />
+                          Analytics
+                        </button>
+                        {!isPlaceholder && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); openEdit(ticket); }}
+                            className="p-2 text-white/70 hover:text-[#c0c1ff] transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteEvent(ticket.eventId); }}
+                          className="p-2 text-white/70 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 bg-[#131b2e]/30 rounded-2xl border border-dashed border-white/5">
+                  <Info className="w-10 h-10 mx-auto text-white/20 mb-3" />
+                  <p className="text-white/50 text-sm">No events found matching your search.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      )}
+
+      {activeTab === 'revenue' && (
+        <section className="glass-card rounded-3xl p-8 mb-12 animate-fadeIn border border-white/5 shadow-lg">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h4 className="text-2xl font-bold text-white">Event Revenue Ledger</h4>
+              <p className="text-white/50 text-sm">Detailed financial breakdowns by event and ticket class</p>
+            </div>
+            <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-[#c0c1ff]">
+              Financial Ledger
+            </Badge>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 text-white/50 text-xs font-bold uppercase tracking-wider">
+                  <th className="py-4 px-4">Event Details</th>
+                  <th className="py-4 px-4">Ticket Tier Class</th>
+                  <th className="py-4 px-4 text-right">Unit Price</th>
+                  <th className="py-4 px-4 text-right">Tickets Sold</th>
+                  <th className="py-4 px-4 text-right">Gross Revenue</th>
+                  <th className="py-4 px-4 text-right">Commission (7%)</th>
+                  <th className="py-4 px-4 text-right text-[#4edea3]">Net Earnings</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {listings.length > 0 ? (
+                  listings.map((ticket) => {
+                    const priceVal = Number(ticket.price.replace(/[^0-9.]/g, '')) || 0;
+                    const gross = priceVal * ticket.sold;
+                    const commission = gross * COMMISSION_RATE;
+                    const net = gross - commission;
+                    return (
+                      <tr key={ticket.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 px-4 font-bold text-white">{ticket.eventTitle}</td>
+                        <td className="py-4 px-4 text-white/70">{ticket.ticketType}</td>
+                        <td className="py-4 px-4 text-right text-[#c0c1ff] font-semibold">₦{priceVal.toLocaleString()}</td>
+                        <td className="py-4 px-4 text-right text-white/70">{ticket.sold}</td>
+                        <td className="py-4 px-4 text-right text-white font-bold">₦{gross.toLocaleString()}</td>
+                        <td className="py-4 px-4 text-right text-white/40">₦{commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="py-4 px-4 text-right text-[#4edea3] font-extrabold">₦{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-white/30">No active ticket configurations found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'attendees' && (
+        <section className="glass-card rounded-3xl p-8 mb-12 animate-fadeIn border border-white/5 shadow-lg">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h4 className="text-2xl font-bold text-white">Registration Directory</h4>
+              <p className="text-white/50 text-sm">Attendee logs and check-in confirmation records</p>
+            </div>
+            <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-[#4edea3]">
+              {allSales.length} Attendees
+            </Badge>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 text-white/50 text-xs font-bold uppercase tracking-wider">
+                  <th className="py-4 px-4">Attendee Account ID</th>
+                  <th className="py-4 px-4">Curated Event</th>
+                  <th className="py-4 px-4">Ticket Class</th>
+                  <th className="py-4 px-4 text-right">Price Paid</th>
+                  <th className="py-4 px-4">Registration Status</th>
+                  <th className="py-4 px-4 text-right">Transaction Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {allSales.length > 0 ? (
+                  allSales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-4 px-4 font-bold text-white flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-[#c0c1ff]/10 flex items-center justify-center text-[10px] text-[#c0c1ff]">
+                          {sale.userId.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="truncate max-w-[120px]">{sale.userId}</span>
+                      </td>
+                      <td className="py-4 px-4 text-white/70">{sale.eventTitle}</td>
+                      <td className="py-4 px-4 text-white/70">{sale.ticketType}</td>
+                      <td className="py-4 px-4 text-right text-[#c0c1ff] font-semibold">₦{Number(sale.price).toLocaleString()}</td>
+                      <td className="py-4 px-4">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#4edea3]/20 text-[#4edea3]">
+                          {sale.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right text-white/40">{sale.date}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-white/30">No registration records logged yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* CREATE EVENT DIALOG */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white">Create Curated Event</DialogTitle>
+            <DialogDescription className="text-white/50">Setup your elite concierge experience, tickets, and tiers.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-4">
+            
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Event Title *</Label>
+                <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+              </div>
+              
               <div className="space-y-4">
-                <div><Label>Date *</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-                <div><Label>Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["Music", "Art", "Food", "Technology", "Sports"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-bold uppercase tracking-wider text-white">Ticket Tiers *</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 rounded-lg border-[#c0c1ff]/50 text-[#c0c1ff] hover:bg-[#c0c1ff]/10"
+                    onClick={() => setTicketTiers([...ticketTiers, { name: '', price: '', quantity: '' }])}
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Add Tier
+                  </Button>
                 </div>
-                <div><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Venue</Label><Input value={venue} onChange={(e) => setVenue(e.target.value)} /></div>
-                  <div><Label>Location</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} /></div>
+                
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                  {ticketTiers.map((tier, index) => (
+                    <div key={index} className="p-4 rounded-xl border border-white/5 bg-[#0b1326]/40 space-y-3 relative">
+                      {ticketTiers.length > 1 && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-2 right-2 h-6 w-6 text-white/40 hover:text-red-400"
+                          onClick={() => setTicketTiers(ticketTiers.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Tier Name (e.g., VIP) *</Label>
+                        <Input 
+                          className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                          value={tier.name} 
+                          placeholder="Regular, VIP, etc."
+                          onChange={(e) => {
+                            const newTiers = [...ticketTiers];
+                            newTiers[index].name = e.target.value;
+                            setTicketTiers(newTiers);
+                          }} 
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Price (₦) *</Label>
+                          <Input 
+                            className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                            type="number" 
+                            value={tier.price} 
+                            placeholder="0"
+                            onChange={(e) => {
+                              const newTiers = [...ticketTiers];
+                              newTiers[index].price = e.target.value;
+                              setTicketTiers(newTiers);
+                            }} 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Quantity *</Label>
+                          <Input 
+                            className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                            type="number" 
+                            value={tier.quantity} 
+                            placeholder="100"
+                            onChange={(e) => {
+                              const newTiers = [...ticketTiers];
+                              newTiers[index].quantity = e.target.value;
+                              setTicketTiers(newTiers);
+                            }} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Start Time</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">End Time</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Start Date *</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">End Date *</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Category</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#131b2e] border-white/5 text-white">
+                    {["Music", "Art", "Food", "Technology", "Sports"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Venue</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={venue} onChange={(e) => setVenue(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Location</Label>
+                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={location} onChange={(e) => setLocation(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="pt-2">
                 <ImageUpload
                   onUploadSuccess={(result) => { setUploadedImageUrl(result.secureUrl); setUploadedImagePublicId(result.publicId); }}
                   folder={CLOUDINARY_FOLDERS.EVENTS}
                   currentImage={uploadedImageUrl}
-                  buttonText="📤 Upload Event Image"
+                  buttonText="📤 Upload Event Cover"
                 />
               </div>
             </div>
-            <div className="flex gap-2 mt-4">
-              <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>Cancel</Button>
-              <Button className="flex-1" onClick={handleCreateTicket} disabled={isCreating}>{isCreating ? 'Creating...' : 'Create'}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+          
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-white/5">
+            <Button variant="outline" className="px-6 rounded-xl border-white/5 hover:bg-white/5 text-white" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button className="px-8 rounded-xl bg-[#c0c1ff] text-[#07006c] font-bold shadow-lg shadow-[#c0c1ff]/20" onClick={handleCreateTicket} disabled={isCreating}>{isCreating ? 'Creating...' : 'Create Ticket'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        <div className="space-y-4">
-          {filteredTickets.map((ticket) => (
-            <Card key={ticket.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold">{ticket.eventTitle}</h3>
-                    <p className="text-sm text-muted-foreground">{ticket.ticketType}</p>
-                  </div>
-                  <Badge variant={ticket.status === 'active' ? 'default' : 'secondary'}>{ticket.status}</Badge>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div><p className="text-xs text-muted-foreground">Price</p><p className="font-medium">{ticket.price}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Sold</p><p className="font-medium">{ticket.sold}/{ticket.quantity}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Commission</p><p className="font-medium">{ticket.commission}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Date</p><p className="font-medium">{ticket.date}</p></div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(ticket)}>Edit</Button>
-                  <Button variant="outline" size="sm" onClick={() => openSales(ticket)}>Sales</Button>
-                  <Button variant="outline" size="sm" onClick={() => { generateShareableLink(ticket.eventId); setShareDialogOpen(true); }}><Share2 className="h-4 w-4" /></Button>
-                  <Button size="sm" onClick={() => handlePurchase(ticket)} disabled={isPurchasing}>Buy</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {generatedTicket && (
-        <Dialog open={!!generatedTicket} onOpenChange={() => setGeneratedTicket(null)}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Your E-ticket</DialogTitle></DialogHeader>
-            <div className="flex flex-col items-center p-6 bg-muted rounded-lg">
-              <QRCode value={generatedTicket.payload} size={180} />
-              <p className="text-xs text-muted-foreground mt-3">Ticket ID: {generatedTicket.id}</p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
+      {/* EDIT TICKET DIALOG */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit Ticket</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Ticket Type</Label><Input value={editTicketType} onChange={(e) => setEditTicketType(e.target.value)} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Price</Label><Input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} /></div>
-              <div><Label>Quantity</Label><Input type="number" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} /></div>
-            </div>
-            <Button className="w-full" onClick={saveEdit} disabled={isUpdatingTicket}>Save Changes</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Share Event</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg flex gap-2">
-              <Input value={shareableLink} readOnly />
-              <Button size="sm" onClick={() => { navigator.clipboard.writeText(shareableLink); toast({ title: "Copied!" }); }}><Copy className="h-4 w-4" /></Button>
-            </div>
-            <div className="flex justify-center p-4 bg-white rounded-lg">
-              <QRCode value={shareableLink} size={150} />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={salesOpen} onOpenChange={setSalesOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Sales History</DialogTitle></DialogHeader>
-          {salesLoading ? <p>Loading...</p> : (
+        <DialogContent className="bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Edit Ticket Settings</DialogTitle></DialogHeader>
+          <div className="space-y-5 py-4">
             <div className="space-y-2">
-              {sales.map((s: any) => (
-                <div key={s.id} className="p-3 border rounded-lg flex justify-between">
-                  <div><p className="text-sm font-medium">User: {s.userId}</p><p className="text-xs text-muted-foreground">{s.status}</p></div>
-                  <div className="text-right"><p className="text-sm">₦{s.price}</p><p className="text-xs text-muted-foreground">Comm: ₦{s.commission}</p></div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Ticket Type</Label>
+              <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" value={editTicketType} onChange={(e) => setEditTicketType(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Price</Label>
+                <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Quantity</Label>
+                <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" type="number" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Status</Label>
+                <Select value={editStatus} onValueChange={(val: any) => setEditStatus(val)}>
+                  <SelectTrigger className="bg-[#0b1326] border-white/5 text-white rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#131b2e] border-white/5 text-white">
+                    <SelectItem value="active">Active (Published)</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button variant="outline" className="flex-1 rounded-xl border-white/5 text-white hover:bg-white/5" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button className="flex-1 rounded-xl bg-[#c0c1ff] text-[#07006c] font-bold" onClick={saveEdit} disabled={isUpdatingTicket}>Save Changes</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SALES / ATTENDEES ANALYTICS DIALOG */}
+      <Dialog open={salesOpen} onOpenChange={setSalesOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Analytics & Sales</DialogTitle></DialogHeader>
+          {salesLoading ? (
+            <div className="py-10 text-center animate-pulse text-white/50">Loading analytics...</div>
+          ) : (
+            <div className="space-y-3 py-4">
+              {sales.length > 0 ? sales.map((s: any) => (
+                <div key={s.id} className="p-4 border border-white/5 bg-[#0b1326]/50 rounded-xl flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#c0c1ff]/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-[#c0c1ff]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold truncate max-w-[150px]">{s.userId}</p>
+                      <Badge variant="outline" className="mt-1 text-[9px] uppercase border-[#4edea3]/20 text-[#4edea3]">{s.status}</Badge>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-bold text-white">₦{Number(s.price).toLocaleString()}</p>
+                    <p className="text-[10px] uppercase font-bold text-white/40 mt-1">Comm: ₦{Number(s.commission || 0).toLocaleString()}</p>
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-10 text-white/30">No ticket sales yet.</div>
+              )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* SHARE EVENT DIALOG */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Share Event Link</DialogTitle></DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="p-2 bg-[#0b1326] border border-white/5 rounded-xl flex gap-2">
+              <Input className="border-none focus-visible:ring-0 bg-transparent text-white" value={shareableLink} readOnly />
+              <Button size="icon" className="rounded-lg bg-[#c0c1ff] hover:opacity-90" onClick={() => { navigator.clipboard.writeText(shareableLink); toast({ title: "Copied!", description: "Link copied to clipboard." }); }}>
+                <Copy className="h-4 w-4 text-[#07006c]" />
+              </Button>
+            </div>
+            <div className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl mx-auto w-max">
+              <QRCode value={shareableLink} size={180} />
+            </div>
+            <p className="text-center text-sm text-white/50">Scan this QR code or copy the link to share your event.</p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Calendar,
   Building,
@@ -12,7 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useRegion } from "@/contexts/RegionContext";
 
-const categories = [
+const allCategories = [
   {
     id: 1,
     title: "Events",
@@ -79,17 +80,33 @@ const categories = [
   },
   {
     id: 9,
-    title: "More",
+    title: "Others",
     icon: MoreHorizontal,
-    description: "Explore all",
+    description: "Everything else",
     color: "#64748b",
     path: "/others",
   },
 ];
 
 const CategoryGrid = () => {
+  const [showAll, setShowAll] = useState(false);
   const navigate = useNavigate();
   const { locationName } = useRegion();
+
+  const displayedCategories = showAll 
+    ? allCategories 
+    : [
+        ...allCategories.slice(0, 4),
+        {
+          id: 99,
+          title: "More",
+          icon: MoreHorizontal,
+          description: "Explore all",
+          color: "#64748b",
+          path: "",
+          isMoreBtn: true
+        }
+      ];
 
   return (
     <section className="px-4 md:px-6 pt-14 pb-8">
@@ -102,13 +119,19 @@ const CategoryGrid = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-        {categories.map((category, index) => {
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+        {displayedCategories.map((category, index) => {
           const Icon = category.icon;
           return (
             <button
               key={category.id}
-              onClick={() => navigate(category.path)}
+              onClick={() => {
+                if ((category as any).isMoreBtn) {
+                  setShowAll(true);
+                } else {
+                  navigate(category.path);
+                }
+              }}
               className="group relative bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 border border-border/50 hover:border-primary/40 transition-all duration-300 flex flex-col items-center text-center cursor-pointer hover:shadow-card animate-fade-in"
               style={{ animationDelay: `${index * 0.06}s` }}
             >

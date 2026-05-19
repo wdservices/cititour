@@ -61,7 +61,23 @@ const AllBusinessesPage = () => {
       try {
         const snap = await getDocs(collection(db, "businesses"));
         const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
-        setItems(data);
+        
+        // Auto-delist logic for Events: 24 hours after endDate
+        const filteredData = data.filter(item => {
+          if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") {
+            const d = item as any;
+            if (d.endDate) {
+              const end = new Date(d.endDate).getTime();
+              const now = new Date().getTime();
+              if (now > end + 86400000) { // 24 hours in ms
+                return false;
+              }
+            }
+          }
+          return true;
+        });
+
+        setItems(filteredData);
       } catch (err) {
         console.error(err);
         setError("Failed to fetch businesses.");
@@ -82,8 +98,8 @@ const AllBusinessesPage = () => {
         item.category,
         item.location || "",
         item.price || "",
-        ...(Array.isArray(item.images) ? item.images.join(",") : ""),
-        ...(Array.isArray(item.tags) ? item.tags.join(",") : ""),
+        ...(Array.isArray(item.images) ? [item.images.join(",")] : []),
+        ...(Array.isArray(item.tags) ? [item.tags.join(",")] : []),
       ]
         .filter(Boolean)
         .map((s) => s.toLowerCase());

@@ -146,7 +146,7 @@ const MarketplaceDetailPage = () => {
       <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
           <div className="flex items-center px-4 py-4 max-w-7xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </div>
@@ -176,7 +176,7 @@ const MarketplaceDetailPage = () => {
       {/* Mobile Header (Back button etc) */}
       <div className="lg:hidden sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
+          <Button variant="ghost" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-1">
@@ -202,7 +202,7 @@ const MarketplaceDetailPage = () => {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 lg:py-10">
         {/* Desktop Breadcrumb/Back */}
         <div className="hidden lg:flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 pl-0 hover:bg-transparent hover:text-primary">
+          <Button variant="ghost" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="gap-2 pl-0 hover:bg-transparent hover:text-primary">
             <ArrowLeft className="h-4 w-4" /> Back to Marketplace
           </Button>
           <div className="flex items-center gap-2">
