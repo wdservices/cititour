@@ -258,20 +258,20 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         >
           {/* Glassmorphism Card */}
           <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
-            {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-center mb-8"
+              className="text-center mb-8 flex flex-col items-center"
             >
-              <h1 className="text-3xl font-bold text-white mb-1">
-                Welcome to CityTour
+              <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-16 w-auto object-contain mb-4 animate-bounce" style={{ animationDuration: '3s' }} />
+              <h1 className="text-3xl font-extrabold text-white mb-1 tracking-tight">
+                Welcome to CitiTour
               </h1>
-              <p className="text-white/80 mb-2">
-                <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm">{brandName}</span>
+              <p className="text-white/85 mb-2 font-medium">
+                Premium Concierge Portal
               </p>
-              <p className="text-white/70">
+              <p className="text-white/70 text-sm">
                 {isSignUp ? 'Create your account to get started' : 'Sign in to continue your journey'}
               </p>
             </motion.div>

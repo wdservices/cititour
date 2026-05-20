@@ -49,9 +49,9 @@ const AppHeader = () => {
             </SheetContent>
           </Sheet>
 
-          <div className="flex flex-col cursor-pointer" onClick={() => navigate("/")}>
-            <h1 className="font-bold text-lg text-primary">{brandName}</h1>
-            <p className="text-xs text-muted-foreground">Explore</p>
+          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate("/")}>
+            <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-8 w-auto object-contain" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-4 flex items-center mt-0.5">Explore</span>
           </div>
         </div>
 

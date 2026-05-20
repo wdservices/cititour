@@ -170,12 +170,19 @@ const LandingPage = () => {
         </div>
 
         <div className="relative container mx-auto px-4 pt-20 pb-32">
-          {/* Navigation */}
           <motion.nav
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-end items-center mb-20 gap-2"
+            className="flex justify-between items-center mb-20 gap-4"
           >
+            {/* Logo on the Left */}
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+              <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-10 w-auto object-contain" />
+              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-5 flex items-center mt-0.5">Concierge</span>
+            </div>
+
+            {/* Actions on the Right */}
+            <div className="flex items-center gap-2">
             {/* Events Button */}
             <Button 
               variant="outline" 
@@ -216,6 +223,7 @@ const LandingPage = () => {
               <span className="font-semibold">Sign In</span>
               <span className="pointer-events-none absolute inset-y-0 left-[-30%] w-[60%] translate-x-[-100%] group-hover:translate-x-[250%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
             </Button>
+            </div>
           </motion.nav>
 
           {/* Mobile Search Bar */}
@@ -243,6 +251,17 @@ const LandingPage = () => {
             <div className="grid md:grid-cols-2 gap-10 items-center relative z-10">
               {/* Left: Title and details */}
               <div className="max-w-xl text-center md:text-left">
+                 <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.05 }}
+                  className="flex justify-center md:justify-start mb-6"
+                >
+                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-primary/10 border border-primary/20 backdrop-blur-md">
+                    <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-7 w-auto object-contain" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">CitiTour Premium Concierge</span>
+                  </div>
+                </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                   <AnimatedRegionTitle />
                 </motion.div>

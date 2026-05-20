@@ -353,44 +353,31 @@ const EventTicketsPage = () => {
   const capacityPercent = totalCapacity > 0 ? Math.round((totalTicketsSold / totalCapacity) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] overflow-x-hidden px-4 md:px-12 py-8 pb-16">
-      <style>{`
-        .glass-card {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .neon-glow-primary {
-            box-shadow: 0 0 20px rgba(192, 193, 255, 0.15);
-        }
-        .chart-gradient {
-            background: linear-gradient(180deg, rgba(192, 193, 255, 0.08) 0%, rgba(192, 193, 255, 0) 100%);
-        }
-      `}</style>
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden px-4 md:px-12 py-8 pb-16">
       
       <SEO title="Event Tickets | TourPH" description="Manage your event registrations and listings." />
 
       {/* Page Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pt-4">
         <div>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#c0c1ff]">Analytics Dashboard</h2>
-          {/* Restored Sub Navigation Tabs */}
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Analytics Dashboard</h2>
+          {/* Theme-compliant Navigation Tabs */}
           <nav className="flex gap-6 mt-3">
             <button 
               onClick={() => setActiveTab('overview')}
-              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'overview' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'overview' ? 'text-primary after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Overview
             </button>
             <button 
               onClick={() => setActiveTab('revenue')}
-              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'revenue' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'revenue' ? 'text-primary after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Revenue
             </button>
             <button 
               onClick={() => setActiveTab('attendees')}
-              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'attendees' ? 'text-white after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-[#c0c1ff] after:rounded-full' : 'text-white/50 hover:text-white'}`}
+              className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'attendees' ? 'text-primary after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Attendance
             </button>
@@ -399,18 +386,18 @@ const EventTicketsPage = () => {
         
         <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-[#131b2e] border border-white/5 rounded-full py-2.5 pl-10 pr-4 w-full md:w-64 text-sm text-white focus:ring-2 focus:ring-[#c0c1ff]/50 outline-none transition-all" 
+              className="bg-card border border-border rounded-full py-2.5 pl-10 pr-4 w-full md:w-64 text-sm text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all" 
               placeholder="Search events..." 
               type="text"
             />
           </div>
           <button 
             onClick={() => setCreateOpen(true)}
-            className="bg-[#c0c1ff] text-[#07006c] font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-[0_4px_14px_0_rgba(192,193,255,0.39)] shrink-0"
+            className="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-md shadow-primary/20 shrink-0"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span>Create Event</span>
@@ -420,59 +407,59 @@ const EventTicketsPage = () => {
 
       {/* Analytics Header Stats */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2 neon-glow-primary">
+        <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TOTAL REVENUE</span>
-            <div className="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-[#c0c1ff]" />
+            <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">TOTAL REVENUE</span>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-primary" />
             </div>
           </div>
-          <h3 className="text-3xl font-extrabold text-white">₦{totalRevenue.toLocaleString()}</h3>
-          <div className="flex items-center gap-1 text-[#4edea3] text-xs font-semibold">
+          <h3 className="text-3xl font-extrabold text-foreground">₦{totalRevenue.toLocaleString()}</h3>
+          <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold">
             <ArrowUpRight className="w-4 h-4" />
             <span>Real-time earnings</span>
           </div>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+        <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TICKETS SOLD</span>
-            <div className="w-8 h-8 rounded-lg bg-[#ffb95f]/10 flex items-center justify-center">
-              <QrCode className="w-4 h-4 text-[#ffb95f]" />
+            <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">TICKETS SOLD</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-amber-500" />
             </div>
           </div>
-          <h3 className="text-3xl font-extrabold text-white">{totalTicketsSold}</h3>
-          <div className="w-full bg-[#2d3449] h-2 rounded-full mt-2 overflow-hidden">
-            <div className="bg-[#ffb95f] h-full rounded-full transition-all duration-500" style={{ width: `${capacityPercent}%` }}></div>
+          <h3 className="text-3xl font-extrabold text-foreground">{totalTicketsSold}</h3>
+          <div className="w-full bg-muted h-2 rounded-full mt-2 overflow-hidden">
+            <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: `${capacityPercent}%` }}></div>
           </div>
-          <p className="text-[10px] text-white/50 mt-1">{capacityPercent}% of total capacity</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{capacityPercent}% of total capacity</p>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+        <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">TOTAL ATTENDEES</span>
-            <div className="w-8 h-8 rounded-lg bg-[#4edea3]/10 flex items-center justify-center">
-              <Users className="w-4 h-4 text-[#4edea3]" />
+            <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">TOTAL ATTENDEES</span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-emerald-500" />
             </div>
           </div>
-          <h3 className="text-3xl font-extrabold text-white">{totalTicketsSold}</h3>
-          <div className="flex items-center gap-1 text-white/50 text-xs font-semibold">
-            <CheckCircle className="w-4 h-4 text-[#4edea3]" />
+          <h3 className="text-3xl font-extrabold text-foreground">{totalTicketsSold}</h3>
+          <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
             <span>100% check-in rate</span>
           </div>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 flex flex-col gap-2">
+        <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">AVERAGE RATING</span>
-            <div className="w-8 h-8 rounded-lg bg-[#c0c1ff]/10 flex items-center justify-center">
-              <Star className="w-4 h-4 text-[#c0c1ff]" />
+            <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">AVERAGE RATING</span>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Star className="w-4 h-4 text-primary" />
             </div>
           </div>
-          <h3 className="text-3xl font-extrabold text-white">4.8<span className="text-sm text-white/40">/5</span></h3>
+          <h3 className="text-3xl font-extrabold text-foreground">4.8<span className="text-sm text-muted-foreground/60">/5</span></h3>
           <div className="flex gap-1">
-            {[1, 2, 3, 4].map(i => <Star key={i} className="w-3.5 h-3.5 fill-[#c0c1ff] text-[#c0c1ff]" />)}
-            <Star className="w-3.5 h-3.5 text-[#c0c1ff]" />
+            {[1, 2, 3, 4].map(i => <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />)}
+            <Star className="w-3.5 h-3.5 text-primary" />
           </div>
         </div>
       </section>
@@ -484,32 +471,32 @@ const EventTicketsPage = () => {
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 animate-fadeIn">
             
             {/* Sales Trends Chart */}
-            <div className="lg:col-span-2 glass-card rounded-3xl p-8 flex flex-col justify-between">
+            <div className="lg:col-span-2 bg-card text-card-foreground border border-border rounded-3xl p-8 flex flex-col justify-between shadow-sm">
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h4 className="text-xl font-bold text-white">Sales Trends</h4>
-                  <p className="text-white/50 text-sm">Revenue growth metrics</p>
+                  <h4 className="text-xl font-bold text-foreground">Sales Trends</h4>
+                  <p className="text-muted-foreground text-sm">Revenue growth metrics</p>
                 </div>
-                <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-white">Real-time Data</Badge>
+                <Badge variant="outline" className="border-border px-3 py-1 bg-background text-foreground">Real-time Data</Badge>
               </div>
               
-              <div className="relative h-64 w-full chart-gradient rounded-xl border border-white/5 flex items-end px-4 pb-4 overflow-hidden">
+              <div className="relative h-64 w-full bg-gradient-to-b from-primary/5 to-transparent rounded-xl border border-border flex items-end px-4 pb-4 overflow-hidden">
                 <svg className="w-full h-full" viewBox="0 0 1000 300">
-                  <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30" fill="none" stroke="#c0c1ff" strokeLinecap="round" strokeWidth="4"></path>
+                  <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30" fill="none" stroke="currentColor" className="text-primary" strokeLinecap="round" strokeWidth="4"></path>
                   <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30 L1000,300 L0,300 Z" fill="url(#gradient)" opacity="0.15"></path>
                   <defs>
                     <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" x2="100%">
-                      <stop offset="0%" style={{ stopColor: "#c0c1ff", stopOpacity: 1 }}></stop>
-                      <stop offset="100%" style={{ stopColor: "#c0c1ff", stopOpacity: 0 }}></stop>
+                      <stop offset="0%" style={{ stopColor: "var(--primary)", stopOpacity: 1 }}></stop>
+                      <stop offset="100%" style={{ stopColor: "var(--primary)", stopOpacity: 0 }}></stop>
                     </linearGradient>
                   </defs>
                 </svg>
                 
-                <div className="absolute top-10 left-[70%] bg-[#c0c1ff] text-[#07006c] px-3 py-1 rounded-lg text-xs font-black shadow-lg animate-pulse">
+                <div className="absolute top-10 left-[70%] bg-primary text-primary-foreground px-3 py-1 rounded-lg text-xs font-black shadow-lg animate-pulse">
                   Peak Velocity
                 </div>
               </div>
-              <div className="flex justify-between mt-4 text-xs text-white/40 px-2 font-semibold">
+              <div className="flex justify-between mt-4 text-xs text-muted-foreground/60 px-2 font-semibold">
                 <span>Phase 1</span>
                 <span>Phase 2</span>
                 <span>Phase 3</span>
@@ -518,9 +505,9 @@ const EventTicketsPage = () => {
             </div>
 
             {/* Ticket Tier Breakdown */}
-            <div className="glass-card rounded-3xl p-8 flex flex-col justify-between">
+            <div className="bg-card text-card-foreground border border-border rounded-3xl p-8 flex flex-col justify-between shadow-sm">
               <div>
-                <h4 className="text-xl font-bold text-white mb-6">Inventory Status</h4>
+                <h4 className="text-xl font-bold text-foreground mb-6">Inventory Status</h4>
                 <div className="space-y-6 max-h-[300px] overflow-y-auto pr-1">
                   {listings.length > 0 ? (
                     listings.slice(0, 4).map((ticket) => {
@@ -532,17 +519,17 @@ const EventTicketsPage = () => {
                       return (
                         <div key={ticket.id} className="flex flex-col gap-2">
                           <div className="flex justify-between items-center">
-                            <span className="font-bold text-sm text-white truncate max-w-[150px]">{ticket.ticketType}</span>
-                            <span className="text-xs text-white/50 max-w-[100px] truncate">{ticket.eventTitle}</span>
+                            <span className="font-bold text-sm text-foreground truncate max-w-[150px]">{ticket.ticketType}</span>
+                            <span className="text-xs text-muted-foreground max-w-[100px] truncate">{ticket.eventTitle}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-[#c0c1ff] font-bold">₦{priceNum.toLocaleString()}</span>
-                            <span className="text-white/50">{percent}% sold</span>
+                            <span className="text-primary font-bold">₦{priceNum.toLocaleString()}</span>
+                            <span className="text-muted-foreground">{percent}% sold</span>
                           </div>
-                          <div className="w-full bg-[#2d3449] h-2 rounded-full overflow-hidden">
-                            <div className="bg-[#c0c1ff] h-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
+                          <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                            <div className="bg-primary h-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
                           </div>
-                          <div className="flex justify-between text-[11px] text-white/40">
+                          <div className="flex justify-between text-[11px] text-muted-foreground/60">
                             <span>Sold: {sold}</span>
                             <span>{remaining} remaining</span>
                           </div>
@@ -550,13 +537,13 @@ const EventTicketsPage = () => {
                       );
                     })
                   ) : (
-                    <div className="text-center py-10 text-white/30 text-sm">No ticket configurations setup yet.</div>
+                    <div className="text-center py-10 text-muted-foreground/40 text-sm">No ticket configurations setup yet.</div>
                   )}
                 </div>
               </div>
               <button 
                 onClick={() => setCreateOpen(true)}
-                className="w-full mt-6 border border-[#c0c1ff] text-[#c0c1ff] py-3 rounded-xl font-bold hover:bg-[#c0c1ff]/10 transition-all text-sm"
+                className="w-full mt-6 border border-primary text-primary py-3 rounded-xl font-bold hover:bg-primary/10 transition-all text-sm"
               >
                 Add Ticket Class
               </button>
@@ -566,9 +553,9 @@ const EventTicketsPage = () => {
           {/* Active Events List */}
           <section className="mb-12">
             <div className="flex justify-between items-center mb-8">
-              <h4 className="text-2xl font-bold text-white">My Active Events</h4>
+              <h4 className="text-2xl font-bold text-foreground">My Active Events</h4>
               <div className="flex gap-4">
-                <button className="text-white/50 flex items-center gap-2 hover:text-white text-sm font-semibold transition-all">
+                <button className="text-muted-foreground flex items-center gap-2 hover:text-foreground text-sm font-semibold transition-all">
                   <Filter className="w-4 h-4" /> Filter
                 </button>
               </div>
@@ -579,38 +566,38 @@ const EventTicketsPage = () => {
                 filteredTickets.map((ticket) => {
                   const isPlaceholder = ticket.id.startsWith('no-tickets-');
                   return (
-                    <div key={ticket.id} className="glass-card rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 hover:bg-[#222a3d]/50 transition-all duration-300 group border border-white/5 shadow-md">
-                      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-[#2d3449]/50 flex items-center justify-center border border-white/5">
+                    <div key={ticket.id} className="bg-card text-card-foreground border border-border rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 hover:bg-accent/40 transition-all duration-300 group shadow-sm">
+                      <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-muted/60 flex items-center justify-center border border-border">
                         {ticket.imageUrl ? (
                           <img src={ticket.imageUrl} alt={ticket.eventTitle} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
-                          <Calendar className="w-8 h-8 text-white/20" />
+                          <Calendar className="w-8 h-8 text-muted-foreground/40" />
                         )}
                       </div>
                       
                       <div className="flex-grow">
                         <div className="flex items-center gap-3 mb-1">
-                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ticket.status === 'active' ? 'bg-[#4edea3]/20 text-[#4edea3]' : 'bg-white/10 text-white/70'}`}>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ticket.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
                             {ticket.status === 'active' ? 'Live' : 'Draft'}
                           </span>
-                          <h5 className="font-bold text-white text-lg">{ticket.eventTitle}</h5>
+                          <h5 className="font-bold text-foreground text-lg">{ticket.eventTitle}</h5>
                         </div>
-                        <p className="text-white/50 text-sm flex items-center gap-2">
-                          <MapPin className="w-4 h-4 shrink-0 text-[#c0c1ff]" />
+                        <p className="text-muted-foreground text-sm flex items-center gap-2">
+                          <MapPin className="w-4 h-4 shrink-0 text-primary" />
                           {ticket.date ? `${ticket.date} • 8:00 PM` : 'TBA'} • {ticket.location || 'TBA'}
                         </p>
-                        <div className="flex flex-wrap items-center gap-6 mt-3 text-xs text-white/40">
-                          <span>Class: <strong className="text-white">{ticket.ticketType}</strong></span>
-                          <span>Price: <strong className="text-[#c0c1ff]">{ticket.price}</strong></span>
-                          <span>Sold: <strong className="text-[#ffb95f]">{ticket.sold}</strong></span>
-                          <span>Commission: <strong className="text-white/60">{ticket.commission}</strong></span>
+                        <div className="flex flex-wrap items-center gap-6 mt-3 text-xs text-muted-foreground">
+                          <span>Class: <strong className="text-foreground">{ticket.ticketType}</strong></span>
+                          <span>Price: <strong className="text-primary">{ticket.price}</strong></span>
+                          <span>Sold: <strong className="text-amber-500">{ticket.sold}</strong></span>
+                          <span>Commission: <strong className="text-muted-foreground/80">{ticket.commission}</strong></span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 w-full md:w-auto justify-end border-t border-white/5 md:border-none pt-4 md:pt-0">
+                      <div className="flex items-center gap-3 w-full md:w-auto justify-end border-t border-border md:border-none pt-4 md:pt-0">
                         <button 
                           onClick={() => openSales(ticket)}
-                          className="bg-[#2d3449] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#c0c1ff] hover:text-[#07006c] transition-all"
+                          className="bg-secondary text-secondary-foreground px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-all"
                         >
                           <BarChart className="w-4 h-4" />
                           Analytics
@@ -618,14 +605,14 @@ const EventTicketsPage = () => {
                         {!isPlaceholder && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); openEdit(ticket); }}
-                            className="p-2 text-white/70 hover:text-[#c0c1ff] transition-colors"
+                            className="p-2 text-muted-foreground hover:text-primary transition-colors"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                         )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleDeleteEvent(ticket.eventId); }}
-                          className="p-2 text-white/70 hover:text-red-400 transition-colors"
+                          className="p-2 text-muted-foreground hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -634,9 +621,9 @@ const EventTicketsPage = () => {
                   );
                 })
               ) : (
-                <div className="text-center py-20 bg-[#131b2e]/30 rounded-2xl border border-dashed border-white/5">
-                  <Info className="w-10 h-10 mx-auto text-white/20 mb-3" />
-                  <p className="text-white/50 text-sm">No events found matching your search.</p>
+                <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border">
+                  <Info className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground text-sm">No events found matching your search.</p>
                 </div>
               )}
             </div>
@@ -645,13 +632,13 @@ const EventTicketsPage = () => {
       )}
 
       {activeTab === 'revenue' && (
-        <section className="glass-card rounded-3xl p-8 mb-12 animate-fadeIn border border-white/5 shadow-lg">
+        <section className="bg-card text-card-foreground border border-border rounded-3xl p-8 mb-12 animate-fadeIn shadow-sm">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="text-2xl font-bold text-white">Event Revenue Ledger</h4>
-              <p className="text-white/50 text-sm">Detailed financial breakdowns by event and ticket class</p>
+              <h4 className="text-2xl font-bold text-foreground">Event Revenue Ledger</h4>
+              <p className="text-muted-foreground text-sm">Detailed financial breakdowns by event and ticket class</p>
             </div>
-            <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-[#c0c1ff]">
+            <Badge variant="outline" className="border-border px-3 py-1 bg-background text-primary">
               Financial Ledger
             </Badge>
           </div>
@@ -659,17 +646,17 @@ const EventTicketsPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 text-white/50 text-xs font-bold uppercase tracking-wider">
+                <tr className="border-b border-border text-muted-foreground text-xs font-bold uppercase tracking-wider">
                   <th className="py-4 px-4">Event Details</th>
                   <th className="py-4 px-4">Ticket Tier Class</th>
                   <th className="py-4 px-4 text-right">Unit Price</th>
                   <th className="py-4 px-4 text-right">Tickets Sold</th>
                   <th className="py-4 px-4 text-right">Gross Revenue</th>
                   <th className="py-4 px-4 text-right">Commission (7%)</th>
-                  <th className="py-4 px-4 text-right text-[#4edea3]">Net Earnings</th>
+                  <th className="py-4 px-4 text-right text-emerald-500">Net Earnings</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-border text-sm">
                 {listings.length > 0 ? (
                   listings.map((ticket) => {
                     const priceVal = Number(ticket.price.replace(/[^0-9.]/g, '')) || 0;
@@ -677,20 +664,20 @@ const EventTicketsPage = () => {
                     const commission = gross * COMMISSION_RATE;
                     const net = gross - commission;
                     return (
-                      <tr key={ticket.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-4 px-4 font-bold text-white">{ticket.eventTitle}</td>
-                        <td className="py-4 px-4 text-white/70">{ticket.ticketType}</td>
-                        <td className="py-4 px-4 text-right text-[#c0c1ff] font-semibold">₦{priceVal.toLocaleString()}</td>
-                        <td className="py-4 px-4 text-right text-white/70">{ticket.sold}</td>
-                        <td className="py-4 px-4 text-right text-white font-bold">₦{gross.toLocaleString()}</td>
-                        <td className="py-4 px-4 text-right text-white/40">₦{commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td className="py-4 px-4 text-right text-[#4edea3] font-extrabold">₦{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <tr key={ticket.id} className="hover:bg-accent/40 transition-colors">
+                        <td className="py-4 px-4 font-bold text-foreground">{ticket.eventTitle}</td>
+                        <td className="py-4 px-4 text-muted-foreground">{ticket.ticketType}</td>
+                        <td className="py-4 px-4 text-right text-primary font-semibold">₦{priceVal.toLocaleString()}</td>
+                        <td className="py-4 px-4 text-right text-muted-foreground">{ticket.sold}</td>
+                        <td className="py-4 px-4 text-right text-foreground font-bold">₦{gross.toLocaleString()}</td>
+                        <td className="py-4 px-4 text-right text-muted-foreground/60">₦{commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="py-4 px-4 text-right text-emerald-500 font-extrabold">₦{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-white/30">No active ticket configurations found.</td>
+                    <td colSpan={7} className="text-center py-10 text-muted-foreground/40">No active ticket configurations found.</td>
                   </tr>
                 )}
               </tbody>
@@ -700,13 +687,13 @@ const EventTicketsPage = () => {
       )}
 
       {activeTab === 'attendees' && (
-        <section className="glass-card rounded-3xl p-8 mb-12 animate-fadeIn border border-white/5 shadow-lg">
+        <section className="bg-card text-card-foreground border border-border rounded-3xl p-8 mb-12 animate-fadeIn shadow-sm">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="text-2xl font-bold text-white">Registration Directory</h4>
-              <p className="text-white/50 text-sm">Attendee logs and check-in confirmation records</p>
+              <h4 className="text-2xl font-bold text-foreground">Registration Directory</h4>
+              <p className="text-muted-foreground text-sm">Attendee logs and check-in confirmation records</p>
             </div>
-            <Badge variant="outline" className="border-white/10 px-3 py-1 bg-[#131b2e] text-[#4edea3]">
+            <Badge variant="outline" className="border-border px-3 py-1 bg-background text-emerald-500">
               {allSales.length} Attendees
             </Badge>
           </div>
@@ -714,7 +701,7 @@ const EventTicketsPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 text-white/50 text-xs font-bold uppercase tracking-wider">
+                <tr className="border-b border-border text-muted-foreground text-xs font-bold uppercase tracking-wider">
                   <th className="py-4 px-4">Attendee Account ID</th>
                   <th className="py-4 px-4">Curated Event</th>
                   <th className="py-4 px-4">Ticket Class</th>
@@ -723,30 +710,30 @@ const EventTicketsPage = () => {
                   <th className="py-4 px-4 text-right">Transaction Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-border text-sm">
                 {allSales.length > 0 ? (
                   allSales.map((sale) => (
-                    <tr key={sale.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-4 font-bold text-white flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#c0c1ff]/10 flex items-center justify-center text-[10px] text-[#c0c1ff]">
+                    <tr key={sale.id} className="hover:bg-accent/40 transition-colors">
+                      <td className="py-4 px-4 font-bold text-foreground flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary">
                           {sale.userId.slice(0, 2).toUpperCase()}
                         </div>
                         <span className="truncate max-w-[120px]">{sale.userId}</span>
                       </td>
-                      <td className="py-4 px-4 text-white/70">{sale.eventTitle}</td>
-                      <td className="py-4 px-4 text-white/70">{sale.ticketType}</td>
-                      <td className="py-4 px-4 text-right text-[#c0c1ff] font-semibold">₦{Number(sale.price).toLocaleString()}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{sale.eventTitle}</td>
+                      <td className="py-4 px-4 text-muted-foreground">{sale.ticketType}</td>
+                      <td className="py-4 px-4 text-right text-primary font-semibold">₦{Number(sale.price).toLocaleString()}</td>
                       <td className="py-4 px-4">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#4edea3]/20 text-[#4edea3]">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
                           {sale.status}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-right text-white/40">{sale.date}</td>
+                      <td className="py-4 px-4 text-right text-muted-foreground/60">{sale.date}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-white/30">No registration records logged yet.</td>
+                    <td colSpan={6} className="text-center py-10 text-muted-foreground/40">No registration records logged yet.</td>
                   </tr>
                 )}
               </tbody>
@@ -757,26 +744,26 @@ const EventTicketsPage = () => {
 
       {/* CREATE EVENT DIALOG */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border text-foreground rounded-2xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white">Create Curated Event</DialogTitle>
-            <DialogDescription className="text-white/50">Setup your elite concierge experience, tickets, and tiers.</DialogDescription>
+            <DialogTitle className="text-2xl font-bold text-foreground">Create Curated Event</DialogTitle>
+            <DialogDescription className="text-muted-foreground">Setup your elite concierge experience, tickets, and tiers.</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-4">
             
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Event Title *</Label>
-                <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Title *</Label>
+                <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-bold uppercase tracking-wider text-white">Ticket Tiers *</Label>
+                  <Label className="text-sm font-bold uppercase tracking-wider text-foreground">Ticket Tiers *</Label>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-8 rounded-lg border-[#c0c1ff]/50 text-[#c0c1ff] hover:bg-[#c0c1ff]/10"
+                    className="h-8 rounded-lg border-primary text-primary hover:bg-primary/10"
                     onClick={() => setTicketTiers([...ticketTiers, { name: '', price: '', quantity: '' }])}
                   >
                     <Plus className="w-4 h-4 mr-1" /> Add Tier
@@ -785,21 +772,21 @@ const EventTicketsPage = () => {
                 
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
                   {ticketTiers.map((tier, index) => (
-                    <div key={index} className="p-4 rounded-xl border border-white/5 bg-[#0b1326]/40 space-y-3 relative">
+                    <div key={index} className="p-4 rounded-xl border border-border bg-muted/30 space-y-3 relative">
                       {ticketTiers.length > 1 && (
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="absolute top-2 right-2 h-6 w-6 text-white/40 hover:text-red-400"
+                          className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-red-500"
                           onClick={() => setTicketTiers(ticketTiers.filter((_, i) => i !== index))}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Tier Name (e.g., VIP) *</Label>
+                        <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tier Name (e.g., VIP) *</Label>
                         <Input 
-                          className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                          className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-lg h-9" 
                           value={tier.name} 
                           placeholder="Regular, VIP, etc."
                           onChange={(e) => {
@@ -811,9 +798,9 @@ const EventTicketsPage = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Price (₦) *</Label>
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Price (₦) *</Label>
                           <Input 
-                            className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                            className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-lg h-9" 
                             type="number" 
                             value={tier.price} 
                             placeholder="0"
@@ -825,9 +812,9 @@ const EventTicketsPage = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Quantity *</Label>
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quantity *</Label>
                           <Input 
-                            className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-lg h-9 text-white" 
+                            className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-lg h-9" 
                             type="number" 
                             value={tier.quantity} 
                             placeholder="100"
@@ -846,12 +833,12 @@ const EventTicketsPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Start Time</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">End Time</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -859,22 +846,22 @@ const EventTicketsPage = () => {
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Start Date *</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date *</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">End Date *</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date *</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Category</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white">
+                  <SelectTrigger className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#131b2e] border-white/5 text-white">
+                  <SelectContent className="bg-card border-border text-foreground">
                     {["Music", "Art", "Food", "Technology", "Sports"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -882,12 +869,12 @@ const EventTicketsPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Venue</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={venue} onChange={(e) => setVenue(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={venue} onChange={(e) => setVenue(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Location</Label>
-                  <Input className="bg-[#0b1326] border-white/5 focus-visible:ring-[#c0c1ff]/30 rounded-xl text-white" value={location} onChange={(e) => setLocation(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</Label>
+                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={location} onChange={(e) => setLocation(e.target.value)} />
                 </div>
               </div>
 
@@ -902,39 +889,39 @@ const EventTicketsPage = () => {
             </div>
           </div>
           
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-white/5">
-            <Button variant="outline" className="px-6 rounded-xl border-white/5 hover:bg-white/5 text-white" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button className="px-8 rounded-xl bg-[#c0c1ff] text-[#07006c] font-bold shadow-lg shadow-[#c0c1ff]/20" onClick={handleCreateTicket} disabled={isCreating}>{isCreating ? 'Creating...' : 'Create Ticket'}</Button>
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-border">
+            <Button variant="outline" className="px-6 rounded-xl border-border hover:bg-accent text-foreground" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button className="px-8 rounded-xl bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20" onClick={handleCreateTicket} disabled={isCreating}>{isCreating ? 'Creating...' : 'Create Ticket'}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* EDIT TICKET DIALOG */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
-          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Edit Ticket Settings</DialogTitle></DialogHeader>
+        <DialogContent className="bg-card border-border text-foreground rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-foreground">Edit Ticket Settings</DialogTitle></DialogHeader>
           <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Ticket Type</Label>
-              <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" value={editTicketType} onChange={(e) => setEditTicketType(e.target.value)} />
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ticket Type</Label>
+              <Input className="bg-background border-border text-foreground rounded-xl" value={editTicketType} onChange={(e) => setEditTicketType(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Price</Label>
-                <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price</Label>
+                <Input className="bg-background border-border text-foreground rounded-xl" type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Quantity</Label>
-                <Input className="bg-[#0b1326] border-white/5 text-white rounded-xl" type="number" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Quantity</Label>
+                <Input className="bg-background border-border text-foreground rounded-xl" type="number" value={editQuantity} onChange={(e) => setEditQuantity(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-wider text-white/50">Status</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</Label>
                 <Select value={editStatus} onValueChange={(val: any) => setEditStatus(val)}>
-                  <SelectTrigger className="bg-[#0b1326] border-white/5 text-white rounded-xl">
+                  <SelectTrigger className="bg-background border-border text-foreground rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#131b2e] border-white/5 text-white">
+                  <SelectContent className="bg-card border-border text-foreground">
                     <SelectItem value="active">Active (Published)</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
@@ -942,8 +929,8 @@ const EventTicketsPage = () => {
                 </Select>
             </div>
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1 rounded-xl border-white/5 text-white hover:bg-white/5" onClick={() => setEditOpen(false)}>Cancel</Button>
-              <Button className="flex-1 rounded-xl bg-[#c0c1ff] text-[#07006c] font-bold" onClick={saveEdit} disabled={isUpdatingTicket}>Save Changes</Button>
+              <Button variant="outline" className="flex-1 rounded-xl border-border text-foreground hover:bg-accent" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button className="flex-1 rounded-xl bg-primary text-primary-foreground font-bold" onClick={saveEdit} disabled={isUpdatingTicket}>Save Changes</Button>
             </div>
           </div>
         </DialogContent>
@@ -951,30 +938,30 @@ const EventTicketsPage = () => {
 
       {/* SALES / ATTENDEES ANALYTICS DIALOG */}
       <Dialog open={salesOpen} onOpenChange={setSalesOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
-          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Analytics & Sales</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[80vh] overflow-y-auto bg-card border-border text-foreground rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-foreground">Analytics & Sales</DialogTitle></DialogHeader>
           {salesLoading ? (
-            <div className="py-10 text-center animate-pulse text-white/50">Loading analytics...</div>
+            <div className="py-10 text-center animate-pulse text-muted-foreground">Loading analytics...</div>
           ) : (
             <div className="space-y-3 py-4">
               {sales.length > 0 ? sales.map((s: any) => (
-                <div key={s.id} className="p-4 border border-white/5 bg-[#0b1326]/50 rounded-xl flex justify-between items-center">
+                <div key={s.id} className="p-4 border border-border bg-muted/40 rounded-xl flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#c0c1ff]/10 flex items-center justify-center">
-                      <User className="w-5 h-5 text-[#c0c1ff]" />
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold truncate max-w-[150px]">{s.userId}</p>
-                      <Badge variant="outline" className="mt-1 text-[9px] uppercase border-[#4edea3]/20 text-[#4edea3]">{s.status}</Badge>
+                      <Badge variant="outline" className="mt-1 text-[9px] uppercase border-emerald-500/20 text-emerald-500">{s.status}</Badge>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-base font-bold text-white">₦{Number(s.price).toLocaleString()}</p>
-                    <p className="text-[10px] uppercase font-bold text-white/40 mt-1">Comm: ₦{Number(s.commission || 0).toLocaleString()}</p>
+                    <p className="text-base font-bold text-foreground">₦{Number(s.price).toLocaleString()}</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground mt-1">Comm: ₦{Number(s.commission || 0).toLocaleString()}</p>
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-10 text-white/30">No ticket sales yet.</div>
+                <div className="text-center py-10 text-muted-foreground/40">No ticket sales yet.</div>
               )}
             </div>
           )}
@@ -983,19 +970,19 @@ const EventTicketsPage = () => {
 
       {/* SHARE EVENT DIALOG */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="bg-[#131b2e] border-white/5 text-white rounded-2xl shadow-2xl">
-          <DialogHeader><DialogTitle className="text-xl font-bold text-white">Share Event Link</DialogTitle></DialogHeader>
+        <DialogContent className="bg-card border-border text-foreground rounded-2xl shadow-2xl">
+          <DialogHeader><DialogTitle className="text-xl font-bold text-foreground">Share Event Link</DialogTitle></DialogHeader>
           <div className="space-y-6 py-4">
-            <div className="p-2 bg-[#0b1326] border border-white/5 rounded-xl flex gap-2">
-              <Input className="border-none focus-visible:ring-0 bg-transparent text-white" value={shareableLink} readOnly />
-              <Button size="icon" className="rounded-lg bg-[#c0c1ff] hover:opacity-90" onClick={() => { navigator.clipboard.writeText(shareableLink); toast({ title: "Copied!", description: "Link copied to clipboard." }); }}>
-                <Copy className="h-4 w-4 text-[#07006c]" />
+            <div className="p-2 bg-background border border-border rounded-xl flex gap-2">
+              <Input className="border-none focus-visible:ring-0 bg-transparent text-foreground" value={shareableLink} readOnly />
+              <Button size="icon" className="rounded-lg bg-primary hover:opacity-90 text-primary-foreground" onClick={() => { navigator.clipboard.writeText(shareableLink); toast({ title: "Copied!", description: "Link copied to clipboard." }); }}>
+                <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl mx-auto w-max">
+            <div className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl mx-auto w-max border border-border">
               <QRCode value={shareableLink} size={180} />
             </div>
-            <p className="text-center text-sm text-white/50">Scan this QR code or copy the link to share your event.</p>
+            <p className="text-center text-sm text-muted-foreground">Scan this QR code or copy the link to share your event.</p>
           </div>
         </DialogContent>
       </Dialog>

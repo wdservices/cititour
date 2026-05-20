@@ -191,8 +191,9 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
         </Button>
         
         {/* Company Branding */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-muted-foreground/60">
+        <div className="mt-4 flex flex-col items-center gap-1 justify-center">
+          <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-6 w-auto object-contain" />
+          <p className="text-[10px] text-muted-foreground/60 mt-1">
             By Bluewaves Technologies
           </p>
         </div>
