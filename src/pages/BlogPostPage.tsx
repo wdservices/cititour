@@ -24,9 +24,9 @@ function renderMarkdown(md: string) {
   });
 }
 
-function inline(text: string): React.ReactNode {
+function inline(text: string): ReactNode {
   // links
-  const parts: React.ReactNode[] = [];
+  const parts: ReactNode[] = [];
   const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
   let last = 0;
   let m: RegExpExecArray | null;
