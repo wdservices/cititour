@@ -6,7 +6,9 @@ interface SEOProps {
   keywords?: string[];
   canonicalUrl?: string;
   ogImage?: string;
-  structuredData?: Record<string, any> | string;
+  ogType?: string;
+  robots?: string;
+  structuredData?: Record<string, any> | Array<Record<string, any>> | string;
 }
 
 const setMeta = (attr: { name?: string; property?: string }, content: string) => {
@@ -31,18 +33,23 @@ const setLinkCanonical = (href: string) => {
   link.setAttribute("href", href);
 };
 
-const setStructuredData = (data: Record<string, any> | string) => {
-  let script = document.head.querySelector('script[type="application/ld+json"]') as HTMLScriptElement | null;
-  if (!script) {
-    script = document.createElement("script");
+const SEO_LD_ID = "seo-jsonld";
+
+const setStructuredData = (data: SEOProps["structuredData"]) => {
+  if (!data) return;
+  // Remove previous SEO-injected scripts
+  document.head.querySelectorAll(`script[data-seo="${SEO_LD_ID}"]`).forEach(n => n.remove());
+  const arr = Array.isArray(data) ? data : [data];
+  arr.forEach((item) => {
+    const script = document.createElement("script");
     script.setAttribute("type", "application/ld+json");
+    script.setAttribute("data-seo", SEO_LD_ID);
+    script.textContent = typeof item === "string" ? item : JSON.stringify(item);
     document.head.appendChild(script);
-  }
-  const json = typeof data === "string" ? data : JSON.stringify(data);
-  script.textContent = json;
+  });
 };
 
-const SEO = ({ title, description, keywords, canonicalUrl, ogImage, structuredData }: SEOProps) => {
+const SEO = ({ title, description, keywords, canonicalUrl, ogImage, ogType, robots, structuredData }: SEOProps) => {
   useEffect(() => {
     if (title) {
       document.title = title;
@@ -54,21 +61,20 @@ const SEO = ({ title, description, keywords, canonicalUrl, ogImage, structuredDa
       setMeta({ property: "og:description" }, description);
       setMeta({ name: "twitter:description" }, description);
     }
-    if (keywords && keywords.length) {
-      setMeta({ name: "keywords" }, keywords.join(", "));
-    }
+    if (keywords && keywords.length) setMeta({ name: "keywords" }, keywords.join(", "));
     if (canonicalUrl) {
       setLinkCanonical(canonicalUrl);
+      setMeta({ property: "og:url" }, canonicalUrl);
     }
     if (ogImage) {
       setMeta({ property: "og:image" }, ogImage);
       setMeta({ name: "twitter:image" }, ogImage);
       setMeta({ name: "twitter:card" }, "summary_large_image");
     }
-    if (structuredData) {
-      setStructuredData(structuredData);
-    }
-  }, [title, description, keywords, canonicalUrl, ogImage, structuredData]);
+    if (ogType) setMeta({ property: "og:type" }, ogType);
+    setMeta({ name: "robots" }, robots || "index, follow");
+    if (structuredData) setStructuredData(structuredData);
+  }, [title, description, keywords, canonicalUrl, ogImage, ogType, robots, structuredData]);
 
   return null;
 };

@@ -42,6 +42,12 @@ import OthersPage from "./pages/OthersPage";
 import AllBusinessesPage from "./pages/AllBusinessesPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import MarketplaceDetailPage from "./pages/MarketplaceDetailPage";
+import SplitItPage from "./pages/SplitItPage";
+import ListYourBusinessPage from "./pages/ListYourBusinessPage";
+import HostAnEventPage from "./pages/HostAnEventPage";
+import StatePage from "./pages/StatePage";
+import BlogIndexPage from "./pages/BlogIndexPage";
+import BlogPostPage from "./pages/BlogPostPage";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +123,12 @@ const App = () => (
               <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/split-it" element={<SplitItPage />} />
+                  <Route path="/list-your-business" element={<ListYourBusinessPage />} />
+                  <Route path="/host-an-event" element={<HostAnEventPage />} />
+                  <Route path="/nigeria/:stateSlug" element={<StatePage />} />
+                  <Route path="/blog" element={<BlogIndexPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="/events/:eventId" element={<DynamicEventPage />} />
                   <Route path="/auth" element={<AuthPage onAuthenticated={() => {}} />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />

@@ -485,7 +485,7 @@ const EventTicketsPage = () => {
                   <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30" fill="none" stroke="currentColor" className="text-primary" strokeLinecap="round" strokeWidth="4"></path>
                   <path d="M0,280 Q50,260 100,270 T200,220 T300,240 T400,150 T500,180 T600,100 T700,120 T800,50 T900,80 T1000,30 L1000,300 L0,300 Z" fill="url(#gradient)" opacity="0.15"></path>
                   <defs>
-                    <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" x2="100%">
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" style={{ stopColor: "var(--primary)", stopOpacity: 1 }}></stop>
                       <stop offset="100%" style={{ stopColor: "var(--primary)", stopOpacity: 0 }}></stop>
                     </linearGradient>

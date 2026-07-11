@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* CitiTour Admin — West-African urban-lux */
+
+@layer base {
+  html, body {
+    background-color: #FAF7F1;
+    color: #1C1710;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: 'Bricolage Grotesque', 'Fraunces', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #F2EDE1; }
+  ::-webkit-scrollbar-thumb { background: #D9891F; border-radius: 999px; }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl p-6 border border-sand-200 shadow-card;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-marigold hover:bg-marigold-dark text-ink font-semibold px-5 py-2.5 rounded-full transition-colors;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-ink text-ivory hover:opacity-90 font-medium px-5 py-2.5 rounded-full transition-opacity;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 bg-transparent border border-sand-300 text-ink hover:bg-sand-100 font-medium px-5 py-2.5 rounded-full transition-colors;
+  }
+  .input {
+    @apply w-full px-4 py-2.5 rounded-lg border border-sand-300 bg-white text-ink placeholder:text-sand-500 focus:outline-none focus:ring-2 focus:ring-marigold focus:border-marigold;
+  }
+  .badge-success { @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-palm text-white; }
+  .badge-warn    { @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-coral text-white; }
+  .badge-neutral { @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-sand-200 text-ink; }
+}
