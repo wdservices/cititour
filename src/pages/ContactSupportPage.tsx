@@ -29,7 +29,7 @@ const supportChannels = [
     availability: "24/7",
     responseTime: "< 4 hours",
     icon: Mail,
-    color: "bg-blue-500",
+    color: "bg-primary",
     available: true
   },
   {
@@ -38,7 +38,7 @@ const supportChannels = [
     availability: "Mon-Fri, 9AM-6PM EST",
     responseTime: "Immediate",
     icon: Phone,
-    color: "bg-purple-500",
+    color: "bg-accent",
     available: false
   }
 ];
@@ -394,12 +394,12 @@ const ContactSupportPage = () => {
                       </Select>
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="bg-primary/10 p-4 rounded-lg">
                       <div className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                         <div>
-                          <h4 className="font-medium text-blue-800">What happens next?</h4>
-                          <ul className="text-sm text-blue-600 mt-1 space-y-1">
+                          <h4 className="font-medium text-primary-dark">What happens next?</h4>
+                          <ul className="text-sm text-primary mt-1 space-y-1">
                             <li>• We'll send you a confirmation email with your ticket ID</li>
                             <li>• Our team will review your request within 4 hours</li>
                             <li>• You'll receive updates via email as we work on your case</li>

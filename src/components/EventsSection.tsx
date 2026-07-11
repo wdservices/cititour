@@ -196,7 +196,7 @@ const EventsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-violet-700 to-sky-600 bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Upcoming Events
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -219,7 +219,7 @@ const EventsSection = () => {
               onClick={() => setSelectedCategory(category)}
               className={`rounded-full ${
                 selectedCategory === category
-                  ? 'bg-gradient-to-r from-violet-600 to-sky-600 text-white'
+                  ? 'bg-gradient-to-r from-primary to-accent text-white'
                   : 'hover:border-primary'
               }`}
             >
@@ -242,13 +242,13 @@ const EventsSection = () => {
               <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={() => handleViewEvent(event)}>
                 {/* Event Image */}
                 <div className="relative h-48 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-violet-400 to-sky-400 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-primary/70 to-accent/70 flex items-center justify-center">
                     <Calendar className="w-16 h-16 text-white/50" />
                   </div>
                   
                   {/* Featured Badge */}
                   {event.isFeatured && (
-                    <Badge className="absolute top-3 left-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                    <Badge className="absolute top-3 left-3 bg-gradient-to-r from-primary to-primary-dark text-white">
                       Featured
                     </Badge>
                   )}
@@ -313,7 +313,7 @@ const EventsSection = () => {
                         e.stopPropagation();
                         handleBookEvent(event);
                       }}
-                      className="flex-1 bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90"
+                      className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     >
                       <Ticket className="w-4 h-4 mr-2" />
                       Book Now

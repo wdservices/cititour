@@ -7,7 +7,7 @@ const AnimatedRegionTitle = () => {
   const { locationName } = useRegion()
 
   // Base rotation list; current location prioritized and with safe fallback
-  const baseLocations = useMemo(() => ['Lagos', 'Port Harcourt', 'Abuja', 'Kano'], [])
+  const baseLocations = useMemo(() => ['Lagos', 'Port Harcourt', 'Abuja', 'Kano', 'Owerri', 'Kaduna'], [])
   const currentLocation = locationName || 'Your City'
   const orderedLocations = useMemo(
     () => [currentLocation, ...baseLocations.filter(l => l !== currentLocation)],
@@ -35,7 +35,7 @@ const AnimatedRegionTitle = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.45, ease: 'easeInOut' }}
-            className="block text-3xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
+            className="block text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
           >
             {orderedLocations[index]}
           </motion.span>

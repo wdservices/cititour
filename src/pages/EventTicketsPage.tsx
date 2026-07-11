@@ -415,7 +415,7 @@ const EventTicketsPage = () => {
             </div>
           </div>
           <h3 className="text-3xl font-extrabold text-foreground">₦{totalRevenue.toLocaleString()}</h3>
-          <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold">
+          <div className="flex items-center gap-1 text-success text-xs font-semibold">
             <ArrowUpRight className="w-4 h-4" />
             <span>Real-time earnings</span>
           </div>
@@ -424,8 +424,8 @@ const EventTicketsPage = () => {
         <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">TICKETS SOLD</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <QrCode className="w-4 h-4 text-amber-500" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-primary" />
             </div>
           </div>
           <h3 className="text-3xl font-extrabold text-foreground">{totalTicketsSold}</h3>
@@ -438,13 +438,13 @@ const EventTicketsPage = () => {
         <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">TOTAL ATTENDEES</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <Users className="w-4 h-4 text-emerald-500" />
+            <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-success" />
             </div>
           </div>
           <h3 className="text-3xl font-extrabold text-foreground">{totalTicketsSold}</h3>
-          <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold">
-            <CheckCircle className="w-4 h-4 text-emerald-500" />
+          <div className="flex items-center gap-1 text-success text-xs font-semibold">
+            <CheckCircle className="w-4 h-4 text-success" />
             <span>100% check-in rate</span>
           </div>
         </div>
@@ -577,7 +577,7 @@ const EventTicketsPage = () => {
                       
                       <div className="flex-grow">
                         <div className="flex items-center gap-3 mb-1">
-                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ticket.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-muted-foreground'}`}>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ticket.status === 'active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                             {ticket.status === 'active' ? 'Live' : 'Draft'}
                           </span>
                           <h5 className="font-bold text-foreground text-lg">{ticket.eventTitle}</h5>
@@ -589,7 +589,7 @@ const EventTicketsPage = () => {
                         <div className="flex flex-wrap items-center gap-6 mt-3 text-xs text-muted-foreground">
                           <span>Class: <strong className="text-foreground">{ticket.ticketType}</strong></span>
                           <span>Price: <strong className="text-primary">{ticket.price}</strong></span>
-                          <span>Sold: <strong className="text-amber-500">{ticket.sold}</strong></span>
+                          <span>Sold: <strong className="text-primary">{ticket.sold}</strong></span>
                           <span>Commission: <strong className="text-muted-foreground/80">{ticket.commission}</strong></span>
                         </div>
                       </div>
@@ -653,7 +653,7 @@ const EventTicketsPage = () => {
                   <th className="py-4 px-4 text-right">Tickets Sold</th>
                   <th className="py-4 px-4 text-right">Gross Revenue</th>
                   <th className="py-4 px-4 text-right">Commission (7%)</th>
-                  <th className="py-4 px-4 text-right text-emerald-500">Net Earnings</th>
+                  <th className="py-4 px-4 text-right text-success">Net Earnings</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-sm">
@@ -671,7 +671,7 @@ const EventTicketsPage = () => {
                         <td className="py-4 px-4 text-right text-muted-foreground">{ticket.sold}</td>
                         <td className="py-4 px-4 text-right text-foreground font-bold">₦{gross.toLocaleString()}</td>
                         <td className="py-4 px-4 text-right text-muted-foreground/60">₦{commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td className="py-4 px-4 text-right text-emerald-500 font-extrabold">₦{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td className="py-4 px-4 text-right text-success font-extrabold">₦{net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     );
                   })
@@ -693,7 +693,7 @@ const EventTicketsPage = () => {
               <h4 className="text-2xl font-bold text-foreground">Registration Directory</h4>
               <p className="text-muted-foreground text-sm">Attendee logs and check-in confirmation records</p>
             </div>
-            <Badge variant="outline" className="border-border px-3 py-1 bg-background text-emerald-500">
+            <Badge variant="outline" className="border-border px-3 py-1 bg-background text-success">
               {allSales.length} Attendees
             </Badge>
           </div>
@@ -724,7 +724,7 @@ const EventTicketsPage = () => {
                       <td className="py-4 px-4 text-muted-foreground">{sale.ticketType}</td>
                       <td className="py-4 px-4 text-right text-primary font-semibold">₦{Number(sale.price).toLocaleString()}</td>
                       <td className="py-4 px-4">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-success/10 text-success">
                           {sale.status}
                         </span>
                       </td>
@@ -952,7 +952,7 @@ const EventTicketsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold truncate max-w-[150px]">{s.userId}</p>
-                      <Badge variant="outline" className="mt-1 text-[9px] uppercase border-emerald-500/20 text-emerald-500">{s.status}</Badge>
+                      <Badge variant="outline" className="mt-1 text-[9px] uppercase border-success/20 text-success">{s.status}</Badge>
                     </div>
                   </div>
                   <div className="text-right">

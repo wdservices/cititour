@@ -2,7 +2,7 @@ export interface StateContent {
   slug: string;
   name: string;
   cityLabel: string;
-  brandCode: 'LAG' | 'ABJ' | 'PH' | 'KAN';
+  brandCode: 'LAG' | 'ABJ' | 'PH' | 'KAN' | 'OWR' | 'KAD';
   populated: boolean;
   hero: string;
   intro: string;
@@ -62,11 +62,47 @@ export const STATES: StateContent[] = [
     name: 'Kano',
     cityLabel: 'Kano',
     brandCode: 'KAN',
-    populated: false,
-    hero: 'Kano — coming soon.',
-    intro: 'We\u2019re curating Kano\u2019s best hotels, restaurants and cultural landmarks. Get notified when CitiTour Kano launches.',
-    neighborhoods: [],
-    faq: [],
+    populated: true,
+    hero: 'Kano trades in silk, spice and centuries of history.',
+    intro:
+      'Kano is Nigeria\u2019s oldest living city\u2014a thousand-year-old trade capital where the Kurmi Market still hums the way it has since the trans-Saharan caravans. CitiTour Kano maps the best of the Sabon Gari hotels and guesthouses, the tuwo and suya spots locals actually queue for, and the Durbar festival routes that draw visitors from across West Africa. Book a stay near the old city walls, catch a polo match at the Race Course, or split a group dinner after touring the Gidan Makama Museum. Built for business travelers working the Kano commercial corridor and for anyone curious about the North\u2019s cultural capital.',
+    neighborhoods: ['Sabon Gari', 'Nassarawa GRA', 'Fagge', 'Bompai', 'Tarauni', 'Old City'],
+    faq: [
+      { q: 'What is Kano known for?', a: 'Centuries of trans-Saharan trade, leather and textile craftsmanship, the Kurmi Market, and the annual Durbar Festival with its horse-mounted royal procession.' },
+      { q: 'Where should business travelers stay in Kano?', a: 'Nassarawa GRA and Bompai are closest to the commercial and banking districts, with easy access to the airport.' },
+      { q: 'Is Kano good for a short cultural visit?', a: 'Yes\u2014the Gidan Makama Museum, Kano City Walls, and Kurmi Market can be covered comfortably in a long weekend.' },
+    ],
+  },
+  {
+    slug: 'imo',
+    name: 'Imo (Owerri)',
+    cityLabel: 'Owerri',
+    brandCode: 'OWR',
+    populated: true,
+    hero: 'Owerri throws the loudest weekend in the South-East.',
+    intro:
+      'Owerri is the Eastern Heartland\u2019s party capital\u2014home to the Christmas-season "Owerri Detty December" scene, Nkwo Road nightlife, and some of the best isi ewu in Nigeria. CitiTour Owerri curates hotels along the New Owerri and Government layouts, tracks the December concert and comedy show calendar, and lists the private-lounge nights that fill up months in advance. Whether you\u2019re back home for the holidays, tracking business at the Owerri industrial corridor, or planning a wedding at the Dan Anyiam Stadium grounds, book, split bills and get tickets without leaving the app.',
+    neighborhoods: ['New Owerri', 'Government Layout', 'World Bank', 'Ikenegbu', 'Egbu Road', 'Wetheral'],
+    faq: [
+      { q: 'When is the best time to visit Owerri?', a: 'December\u2014the "Detty December" season\u2014brings the biggest concerts, weddings, and homecoming events, though hotels book out early.' },
+      { q: 'What is Owerri famous for?', a: 'Its December festive scene, isi ewu and nkwobi delicacies, and being the commercial and cultural hub of Imo State.' },
+      { q: 'Can I list a wedding or owambe venue on CitiTour Owerri?', a: 'Yes\u2014event centers, halls and outdoor venues can list directly and sell tickets or manage RSVPs through the platform.' },
+    ],
+  },
+  {
+    slug: 'kaduna',
+    name: 'Kaduna',
+    cityLabel: 'Kaduna',
+    brandCode: 'KAD',
+    populated: true,
+    hero: 'Kaduna keeps the North\u2019s business moving.',
+    intro:
+      'Kaduna built colonial-era rail lines and modern industry in equal measure, and today it\u2019s one of the North\u2019s fastest-growing commercial hubs. CitiTour Kaduna maps the best hotels along Independence Way and Barnawa, the suya spots that stay open past midnight, and the polo and durbar events that draw the region\u2019s business and political circles. Book a guesthouse near the industrial layout, find a boardroom-ready hotel in Kaduna GRA, or split the bill after a long dinner meeting\u2014all from one app built for the city\u2019s working rhythm.',
+    neighborhoods: ['Kaduna GRA', 'Barnawa', 'Sabon Tasha', 'Ungwan Rimi', 'Malali', 'Tudun Wada'],
+    faq: [
+      { q: 'Is Kaduna good for business travel?', a: 'Yes\u2014Kaduna GRA and Barnawa host most of the business hotels and are close to the state\u2019s commercial and government districts.' },
+      { q: 'What food is Kaduna known for?', a: 'Suya is practically a Kaduna institution\u2014Sabon Tasha and Barnawa have some of the most recommended spots on the app.' },
+    ],
   },
 ];
 

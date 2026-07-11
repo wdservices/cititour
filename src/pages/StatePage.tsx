@@ -93,23 +93,28 @@ export default function StatePage() {
 
           <section className="py-20 md:py-24">
             <div className="container mx-auto px-4">
-              <h2 className="font-display text-4xl md:text-5xl font-extrabold mb-10">Explore {state.cityLabel}</h2>
-              <div className="grid md:grid-cols-3 gap-6">
+              <h2 className="font-display text-4xl md:text-5xl font-extrabold mb-14">Explore {state.cityLabel}</h2>
+              <div className="grid sm:grid-cols-3 gap-x-8 gap-y-14">
                 {[
-                  { icon: Hotel, title: `Best hotels in ${state.cityLabel}`, to: "/hotels", body: "Luxury, boutique and business hotels\u2014verified by CitiTour." },
-                  { icon: Utensils, title: `Where to eat in ${state.cityLabel}`, to: "/restaurants", body: "From street kitchens to fine dining rooms." },
-                  { icon: Calendar, title: `What\u2019s on in ${state.cityLabel}`, to: "/events", body: "Concerts, brunches, launches and members-only nights." },
-                ].map(c => (
-                  <Link key={c.title} to={c.to}
-                    className="group p-8 rounded-2xl bg-card border border-border shadow-soft hover:shadow-card transition-shadow">
-                    <c.icon className="w-8 h-8 text-primary mb-4" />
-                    <h3 className="font-display text-xl font-bold mb-2">{c.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-4">{c.body}</p>
-                    <span className="text-sm font-semibold text-primary inline-flex items-center gap-1">
-                      Explore <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </Link>
-                ))}
+                  { icon: Hotel, title: `Best hotels in ${state.cityLabel}`, to: "/hotels", body: "Luxury, boutique and business hotels\u2014verified by CitiTour.", ring: 'border-primary text-primary', rotate: '-rotate-3' },
+                  { icon: Utensils, title: `Where to eat in ${state.cityLabel}`, to: "/restaurants", body: "From street kitchens to fine dining rooms.", ring: 'border-accent text-accent', rotate: 'rotate-2' },
+                  { icon: Calendar, title: `What\u2019s on in ${state.cityLabel}`, to: "/events", body: "Concerts, brunches, launches and members-only nights.", ring: 'border-success text-success', rotate: '-rotate-2' },
+                ].map(c => {
+                  const [ringBorder, ringText] = c.ring.split(' ');
+                  return (
+                    <Link key={c.title} to={c.to} className={`group flex flex-col items-center text-center ${c.rotate} hover:rotate-0 transition-transform duration-300`}>
+                      <div className={`relative flex items-center justify-center w-24 h-24 rounded-full border-2 border-dashed ${ringBorder}/50 mb-5 group-hover:${ringBorder} transition-colors`}>
+                        <div className={`absolute inset-2 rounded-full border ${ringBorder}/20`} />
+                        <c.icon className={`w-8 h-8 ${ringText}`} />
+                      </div>
+                      <h3 className="font-display text-xl font-bold mb-2">{c.title}</h3>
+                      <p className="text-muted-foreground text-sm mb-4 max-w-[240px]">{c.body}</p>
+                      <span className={`text-sm font-semibold ${ringText} inline-flex items-center gap-1`}>
+                        Explore <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </section>

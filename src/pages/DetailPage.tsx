@@ -180,7 +180,7 @@ const DetailPage = () => {
             <div className="space-y-3 md:space-y-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {data.isOpen !== undefined && (
-                  <span className={`px-3 sm:px-4 py-1 sm:py-1.5 ${data.isOpen ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'} text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
+                  <span className={`px-3 sm:px-4 py-1 sm:py-1.5 ${data.isOpen ? 'bg-success text-white' : 'bg-red-500 text-white'} text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
                     {data.isOpen ? "Open Now" : "Closed"}
                   </span>
                 )}

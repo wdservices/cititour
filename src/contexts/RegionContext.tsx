@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-type RegionCode = 'PH' | 'LAG' | 'ABJ' | 'KAN'
+type RegionCode = 'PH' | 'LAG' | 'ABJ' | 'KAN' | 'OWR' | 'KAD'
 
 interface RegionContextType {
   region: RegionCode
@@ -25,6 +25,10 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
         return 'TourABJ'
       case 'KAN':
         return 'TourKAN'
+      case 'OWR':
+        return 'TourOWR'
+      case 'KAD':
+        return 'TourKAD'
       case 'PH':
       default:
         return 'TourPH'
@@ -39,6 +43,10 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
         return 'Abuja'
       case 'KAN':
         return 'Kano'
+      case 'OWR':
+        return 'Owerri'
+      case 'KAD':
+        return 'Kaduna'
       case 'PH':
       default:
         return 'Port Harcourt'
@@ -55,11 +63,15 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
             const { latitude, longitude } = pos.coords
             // Simple heuristic mapping; replace with reverse geocoding for production
             // Lagos approx: 6.5244, 3.3792 | Abuja approx: 9.0765, 7.3986 | Port Harcourt approx: 4.8156, 7.0498
-            // Kano approx: 12.0022, 8.5920
-            if (latitude > 11 && longitude > 7.5 && longitude < 9.5) {
+            // Kano approx: 12.0022, 8.5920 | Kaduna approx: 10.5105, 7.4165 | Owerri approx: 5.4836, 7.0333
+            if (latitude > 11.5 && longitude > 7.5 && longitude < 9.5) {
               setRegion('KAN')
-            } else if (latitude > 8.5 && longitude > 7.0) {
+            } else if (latitude > 10.0 && longitude > 6.5 && longitude < 8.5) {
+              setRegion('KAD')
+            } else if (latitude > 8.0 && longitude > 6.5) {
               setRegion('ABJ')
+            } else if (latitude > 5.0 && latitude <= 6.0 && longitude > 6.5 && longitude < 7.5) {
+              setRegion('OWR')
             } else if (latitude > 6.0 && longitude > 3.0 && longitude < 4.5) {
               setRegion('LAG')
             } else {

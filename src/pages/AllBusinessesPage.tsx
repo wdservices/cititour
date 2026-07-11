@@ -45,7 +45,7 @@ const getCategoryColor = (category: string) => {
   const cat = category.toLowerCase();
   if (cat.includes("hotel") || cat.includes("airbnb")) return "bg-secondary text-secondary-foreground";
   if (cat.includes("restaurant") || cat.includes("food")) return "bg-primary text-primary-foreground";
-  if (cat.includes("shop") || cat.includes("retail")) return "bg-amber-500 text-white";
+  if (cat.includes("shop") || cat.includes("retail")) return "bg-primary text-white";
   return "bg-primary/20 text-primary";
 };
 

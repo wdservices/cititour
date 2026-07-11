@@ -74,7 +74,7 @@ const FeedbackPage = () => {
     switch (status) {
       case "In Progress": return "bg-yellow-500";
       case "Resolved": return "bg-green-500";
-      case "Under Review": return "bg-blue-500";
+      case "Under Review": return "bg-primary";
       default: return "bg-gray-500";
     }
   };

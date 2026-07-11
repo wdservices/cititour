@@ -11,8 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const socialPlatforms = [
   { name: "WhatsApp", icon: MessageCircle, color: "bg-green-500", shareUrl: "whatsapp://send?text=" },
-  { name: "Facebook", icon: Facebook, color: "bg-blue-600", shareUrl: "https://facebook.com/sharer/sharer.php?u=" },
-  { name: "Twitter", icon: Twitter, color: "bg-blue-400", shareUrl: "https://twitter.com/intent/tweet?text=" },
+  { name: "Facebook", icon: Facebook, color: "bg-primary", shareUrl: "https://facebook.com/sharer/sharer.php?u=" },
+  { name: "Twitter", icon: Twitter, color: "bg-accent", shareUrl: "https://twitter.com/intent/tweet?text=" },
   { name: "Instagram", icon: Instagram, color: "bg-pink-500", shareUrl: "" },
   { name: "Email", icon: Mail, color: "bg-gray-600", shareUrl: "mailto:?subject=Check out CititourNG&body=" }
 ];

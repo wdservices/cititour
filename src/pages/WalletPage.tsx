@@ -179,7 +179,7 @@ const WalletPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#1C1710] via-[#2A1D12] to-[#0B0E14]">
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
         <div className="flex items-center gap-4 p-4">
@@ -200,7 +200,7 @@ const WalletPage = () => {
 
       <div className="p-4 space-y-6">
         {/* Wallet Balance Card */}
-        <Card className="bg-gradient-to-r from-green-500 to-emerald-600 border-0 text-white">
+        <Card className="bg-success border-0 text-white">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Wallet Balance</span>

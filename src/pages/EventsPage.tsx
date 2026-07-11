@@ -208,7 +208,7 @@ const EventsPage = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg border border-white/10">
+                    <span className="px-3 py-1.5 bg-accent text-white font-bold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg border border-white/10">
                       {renderValue(event.category || "Event")}
                     </span>
                   </div>

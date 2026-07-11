@@ -51,7 +51,7 @@ const listings: Listing[] = [
     location: "Lekki, Lagos",
     price: "₦1,450,000",
     badge: "New Arrival",
-    badgeColor: "bg-emerald-500 text-white",
+    badgeColor: "bg-success text-white",
     category: "electronics",
     actionIcon: "cart",
   },

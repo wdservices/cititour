@@ -281,7 +281,7 @@ const MarketplaceDetailPage = () => {
                   {item.category}
                 </span>
                 {item.condition && (
-                  <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
+                  <span className="bg-success/10 text-success px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border border-success/20">
                     {item.condition}
                   </span>
                 )}
@@ -303,7 +303,7 @@ const MarketplaceDetailPage = () => {
               <div className="text-3xl lg:text-[40px] font-extrabold text-primary leading-none tracking-tight">
                 {item.price}
               </div>
-              <div className="mt-4 lg:mt-5 flex items-center gap-2 text-emerald-400 font-medium text-xs lg:text-sm bg-emerald-500/10 w-fit px-3 py-1.5 rounded-lg border border-emerald-500/20">
+              <div className="mt-4 lg:mt-5 flex items-center gap-2 text-success font-medium text-xs lg:text-sm bg-success/10 w-fit px-3 py-1.5 rounded-lg border border-success/20">
                 <ShieldCheck className="w-4 h-4 lg:w-4 lg:h-4" />
                 Secure payment through Urban Pulse
               </div>

@@ -156,7 +156,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         type="button"
         onClick={triggerFileInput}
         disabled={disabled || isUploading}
-        className="w-full h-12 bg-gradient-to-r from-violet-600 to-sky-600 hover:from-violet-700 hover:to-sky-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] group"
+        className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] group"
       >
         <input
           ref={fileInputRef}

@@ -102,7 +102,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header with Image */}
-        <div className="relative h-64 bg-gradient-to-br from-violet-400 to-sky-400">
+        <div className="relative h-64 bg-gradient-to-br from-primary/70 to-accent/70">
           <div className="absolute inset-0 bg-black/20" />
           <Button
             variant="ghost"
@@ -150,7 +150,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
           <div className="flex items-center gap-3 mb-6">
             <Button
               onClick={handleBookNow}
-              className="flex-1 bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90"
+              className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
             >
               <Ticket className="w-4 h-4 mr-2" />
               Book Now
@@ -358,7 +358,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
                 {/* Complete Payment Button */}
                 <Button
                   onClick={handlePayment}
-                  className="w-full bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90"
+                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Pay {event.currency} {(event.price + 500).toLocaleString()}

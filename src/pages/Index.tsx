@@ -17,9 +17,9 @@ const Index = () => {
         <section className="relative overflow-hidden">
           {/* Animated background blobs */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-24 -left-24 w-[28rem] h-[28rem] bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute top-32 -right-28 w-[22rem] h-[22rem] bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute bottom-0 left-1/3 w-[18rem] h-[18rem] bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-2000" />
+            <div className="absolute -top-24 -left-24 w-[28rem] h-[28rem] bg-primary/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute top-32 -right-28 w-[22rem] h-[22rem] bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute bottom-0 left-1/3 w-[18rem] h-[18rem] bg-success/10 rounded-full blur-3xl animate-pulse delay-2000" />
           </div>
 
           <div className="px-4 pt-10">
@@ -53,21 +53,21 @@ const Index = () => {
                   animate={{ y: [0, -10, 0] }}
                   transition={{ repeat: Infinity, duration: 3 }}
                 >
-                  <MapPin className="w-8 h-8 text-purple-600" />
+                  <MapPin className="w-8 h-8 text-primary" />
                 </motion.div>
                 <motion.div
                   className="absolute left-1/2"
                   animate={{ y: [0, -12, 0] }}
                   transition={{ repeat: Infinity, duration: 3.2 }}
                 >
-                  <Calendar className="w-8 h-8 text-blue-600" />
+                  <Calendar className="w-8 h-8 text-accent" />
                 </motion.div>
                 <motion.div
                   className="absolute left-[68%]"
                   animate={{ y: [0, -8, 0] }}
                   transition={{ repeat: Infinity, duration: 2.8 }}
                 >
-                  <UtensilsCrossed className="w-8 h-8 text-indigo-600" />
+                  <UtensilsCrossed className="w-8 h-8 text-success" />
                 </motion.div>
                 <motion.div
                   className="absolute left-[85%]"

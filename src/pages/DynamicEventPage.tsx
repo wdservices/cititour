@@ -250,7 +250,7 @@ const DynamicEventPage = () => {
 
                 {/* Event Image */}
                 {event.imageUrl && (
-                  <div className="w-full h-64 bg-gradient-to-br from-violet-400 to-sky-400 rounded-lg mb-6 flex items-center justify-center">
+                  <div className="w-full h-64 bg-gradient-to-br from-primary/70 to-accent/70 rounded-lg mb-6 flex items-center justify-center">
                     <img 
                       src={event.imageUrl} 
                       alt={event.title}
@@ -363,7 +363,7 @@ const DynamicEventPage = () => {
                         </div>
                       </div>
                       
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                      <div className="w-full bg-muted rounded-full h-2 mb-4">
                         <div 
                           className="bg-primary h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(ticket.sold / ticket.quantity) * 100}%` }}
@@ -496,7 +496,7 @@ const DynamicEventPage = () => {
 
               <Button
                 onClick={handlePayment}
-                className="w-full h-12 bg-gradient-to-r from-violet-600 to-sky-600 hover:opacity-90 font-bold text-base shadow-lg shadow-primary/20"
+                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:opacity-90 font-bold text-base shadow-lg shadow-primary/20"
               >
                 <CreditCard className="w-5 h-5 mr-2" />
                 Pay ₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}

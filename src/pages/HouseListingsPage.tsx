@@ -208,7 +208,7 @@ const HouseListingsPage = () => {
               {myListings.map((listing) => (
                 <Card key={listing.id} className="overflow-hidden">
                   <div className="flex flex-col md:flex-row">
-                    <div className="md:w-1/3 h-48 md:h-auto bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center">
+                    <div className="md:w-1/3 h-48 md:h-auto bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                       <Home className="h-16 w-16 text-primary opacity-50" />
                     </div>
                     <div className="flex-1 p-6">

@@ -217,12 +217,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   }, [forceLogin, isAuthenticated, isLoading, navigate]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#1C1710] via-[#2A1D12] to-[#0B0E14]">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-success/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
       {/* Floating Particles */}
@@ -307,7 +307,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                         type="text"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-purple-400 focus:ring-purple-400/20"
+                        className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary focus:ring-primary/20"
                         placeholder="Enter your full name"
                         required={isSignUp}
                       />
@@ -328,7 +328,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                       type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-purple-400 focus:ring-purple-400/20"
+                      className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary focus:ring-primary/20"
                       placeholder="Enter your email"
                       required
                     />
@@ -348,7 +348,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="pl-12 pr-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-purple-400 focus:ring-purple-400/20"
+                      className="pl-12 pr-12 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-primary focus:ring-primary/20"
                       placeholder="Enter your password"
                       required
                     />
@@ -365,7 +365,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                       <button
                         type="button"
                         onClick={handleResetPassword}
-                        className="mt-2 text-purple-300 hover:text-purple-200 font-semibold transition-colors underline underline-offset-4"
+                        className="mt-2 text-primary-light hover:text-primary font-semibold transition-colors underline underline-offset-4"
                       >
                         Forgot password?
                       </button>
@@ -381,7 +381,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                   <Button
                     type="submit"
                     disabled={isWorking}
-                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     <span className="flex items-center justify-center">
                       {isWorking ? (
@@ -417,7 +417,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               </p>
               <button
                 onClick={toggleMode}
-                className="mt-2 text-purple-300 hover:text-purple-200 font-semibold transition-colors underline underline-offset-4"
+                className="mt-2 text-primary-light hover:text-primary font-semibold transition-colors underline underline-offset-4"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>
