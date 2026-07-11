@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { postBySlug } from "@/content/blog";
