@@ -528,23 +528,49 @@ const LandingPage = () => {
       {/* Events Section */}
       <EventsSection />
 
-      {/* Footer */}
-      <footer className="py-12 border-t bg-gradient-card">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+      {/* Footer sitemap */}
+      <footer className="border-t border-border bg-card">
+        <div className="container mx-auto px-4 py-14">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+            <div className="col-span-2 md:col-span-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="font-display text-2xl font-extrabold">CitiTour</span>
               </div>
-              <span className="text-xl font-bold text-foreground">TourPH</span>
+              <p className="text-sm text-muted-foreground max-w-xs">Nigeria\u2019s urban concierge. Discover, book and split bills across Lagos, Abuja and Port Harcourt.</p>
             </div>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">Terms of Use</Link>
-            </nav>
-            <p className="text-muted-foreground text-sm">
-              © 2024 TourPH. All rights reserved.
-            </p>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Cities</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/nigeria/lagos" className="hover:text-primary">Lagos</Link></li>
+                <li><Link to="/nigeria/abuja" className="hover:text-primary">Abuja</Link></li>
+                <li><Link to="/nigeria/rivers" className="hover:text-primary">Port Harcourt</Link></li>
+                <li><Link to="/nigeria/kano" className="hover:text-primary">Kano (soon)</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Product</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/split-it" className="hover:text-primary">Split It</Link></li>
+                <li><Link to="/host-an-event" className="hover:text-primary">Host an event</Link></li>
+                <li><Link to="/list-your-business" className="hover:text-primary">List your business</Link></li>
+                <li><Link to="/blog" className="hover:text-primary">Blog</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Company</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/privacy" className="hover:text-primary">Privacy</Link></li>
+                <li><Link to="/terms" className="hover:text-primary">Terms</Link></li>
+                <li><Link to="/contact-support" className="hover:text-primary">Support</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 pt-6 border-t border-border flex flex-col md:flex-row justify-between gap-2 text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} CitiTour. Made in Nigeria.</p>
+            <p>Discover. Book. Split. Repeat.</p>
           </div>
         </div>
       </footer>
