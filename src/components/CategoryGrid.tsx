@@ -12,80 +12,27 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRegion } from "@/contexts/RegionContext";
+import StampIcon, { type StampTone } from "@/components/StampIcon";
 
-const allCategories = [
-  {
-    id: 1,
-    title: "Events",
-    icon: Calendar,
-    description: "Live shows & concerts",
-    color: "#6366f1",
-    path: "/events",
-  },
-  {
-    id: 2,
-    title: "Hotels",
-    icon: Building,
-    description: "Luxury stays",
-    color: "#10b981",
-    path: "/hotels",
-  },
-  {
-    id: 3,
-    title: "Restaurants",
-    icon: UtensilsCrossed,
-    description: "Fine dining",
-    color: "#f97316",
-    path: "/restaurants",
-  },
-  {
-    id: 4,
-    title: "Fun Places",
-    icon: MapPin,
-    description: "Entertainment",
-    color: "#d946ef",
-    path: "/fun-places",
-  },
-  {
-    id: 5,
-    title: "Shopping",
-    icon: ShoppingBag,
-    description: "Malls & boutiques",
-    color: "#14b8a6",
-    path: "/shopping",
-  },
-  {
-    id: 6,
-    title: "Airbnb",
-    icon: Home,
-    description: "Unique stays",
-    color: "#3b82f6",
-    path: "/airbnb",
-  },
-  {
-    id: 7,
-    title: "Attractions",
-    icon: Camera,
-    description: "Must-see spots",
-    color: "#eab308",
-    path: "/attractions",
-  },
-  {
-    id: 8,
-    title: "Lifestyle",
-    icon: Heart,
-    description: "Wellness & spa",
-    color: "#f43f5e",
-    path: "/lifestyle",
-  },
-  {
-    id: 9,
-    title: "Others",
-    icon: MoreHorizontal,
-    description: "Everything else",
-    color: "#64748b",
-    path: "/others",
-  },
+const allCategories: {
+  id: number;
+  title: string;
+  icon: typeof Calendar;
+  description: string;
+  tone: StampTone;
+  path: string;
+  rotate: "-rotate-6" | "-rotate-3" | "rotate-3" | "rotate-6";
+  isMoreBtn?: boolean;
+}[] = [
+  { id: 1, title: "Events", icon: Calendar, description: "Live shows & concerts", tone: "primary", path: "/events", rotate: "-rotate-6" },
+  { id: 2, title: "Hotels", icon: Building, description: "Luxury stays", tone: "success", path: "/hotels", rotate: "rotate-3" },
+  { id: 3, title: "Restaurants", icon: UtensilsCrossed, description: "Fine dining", tone: "accent", path: "/restaurants", rotate: "-rotate-3" },
+  { id: 4, title: "Fun Places", icon: MapPin, description: "Entertainment", tone: "primary-dark", path: "/fun-places", rotate: "rotate-6" },
+  { id: 5, title: "Shopping", icon: ShoppingBag, description: "Malls & boutiques", tone: "primary", path: "/shopping", rotate: "-rotate-3" },
+  { id: 6, title: "Airbnb", icon: Home, description: "Unique stays", tone: "success", path: "/airbnb", rotate: "rotate-3" },
+  { id: 7, title: "Attractions", icon: Camera, description: "Must-see spots", tone: "accent", path: "/attractions", rotate: "-rotate-6" },
+  { id: 8, title: "Lifestyle", icon: Heart, description: "Wellness & spa", tone: "primary-dark", path: "/lifestyle", rotate: "rotate-6" },
+  { id: 9, title: "Others", icon: MoreHorizontal, description: "Everything else", tone: "muted", path: "/others", rotate: "-rotate-3" },
 ];
 
 const CategoryGrid = () => {
@@ -93,8 +40,8 @@ const CategoryGrid = () => {
   const navigate = useNavigate();
   const { locationName } = useRegion();
 
-  const displayedCategories = showAll 
-    ? allCategories 
+  const displayedCategories = showAll
+    ? allCategories
     : [
         ...allCategories.slice(0, 4),
         {
@@ -102,62 +49,55 @@ const CategoryGrid = () => {
           title: "More",
           icon: MoreHorizontal,
           description: "Explore all",
-          color: "#64748b",
+          tone: "muted" as StampTone,
           path: "",
-          isMoreBtn: true
-        }
+          rotate: "rotate-0" as const,
+          isMoreBtn: true,
+        },
       ];
 
   return (
-    <section className="px-4 md:px-6 pt-14 pb-8">
-      <div className="mb-8 md:mb-10">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          Explore Categories
+    <section className="px-4 md:px-6 pt-14 pb-12">
+      <div className="mb-12 md:mb-14 max-w-2xl">
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Explore</span>
+        <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight mt-3 text-foreground">
+          Categories stamped for {locationName}
         </h2>
-        <p className="text-muted-foreground text-base">
-          Discover the best of {locationName} and beyond
+        <p className="text-muted-foreground text-base mt-3">
+          Pick a pass and collect the city one stamp at a time.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
         {displayedCategories.map((category, index) => {
-          const Icon = category.icon;
           return (
             <button
               key={category.id}
+              type="button"
               onClick={() => {
-                if ((category as any).isMoreBtn) {
+                if (category.isMoreBtn) {
                   setShowAll(true);
                 } else {
                   navigate(category.path);
                 }
               }}
-              className="group relative bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-3xl p-6 md:p-8 border border-border/50 hover:border-primary/40 transition-all duration-300 flex flex-col items-center text-center cursor-pointer hover:shadow-card animate-fade-in"
-              style={{ animationDelay: `${index * 0.06}s` }}
+              className="group flex flex-col items-center text-center gap-4 p-4 md:p-6 rounded-2xl border border-transparent hover:border-border hover:bg-card transition-all duration-300 animate-fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              {/* Glow icon container */}
-              <div
-                className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center mb-4 md:mb-5 transition-transform duration-300 group-hover:scale-110"
-                style={{
-                  backgroundColor: category.color,
-                  boxShadow: `0 0 24px ${category.color}40`,
-                }}
-              >
-                <Icon className="w-7 h-7 md:w-8 md:h-8 text-white" />
-              </div>
-
-              <h3 className="font-semibold text-foreground text-base md:text-lg mb-1">
-                {category.title}
-              </h3>
-              <p className="text-muted-foreground text-xs md:text-sm">
-                {category.description}
-              </p>
-
-              {/* Hover glow underlay */}
-              <div
-                className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-[0.06] transition-opacity duration-500 pointer-events-none"
-                style={{ backgroundColor: category.color }}
+              <StampIcon
+                icon={category.icon}
+                tone={category.tone}
+                size="lg"
+                rotate={category.rotate === "rotate-0" ? "rotate-0" : category.rotate}
               />
+              <div>
+                <h3 className="font-display font-bold text-foreground text-base md:text-lg">
+                  {category.title}
+                </h3>
+                <p className="text-muted-foreground text-xs md:text-sm mt-1">
+                  {category.description}
+                </p>
+              </div>
             </button>
           );
         })}

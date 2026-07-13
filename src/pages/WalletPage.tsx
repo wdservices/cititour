@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { useWallet, PaymentMethod } from "@/contexts/WalletContext";
 import { useAuth } from "@/contexts/AuthContext";
+import StampIcon from "@/components/StampIcon";
 
 const WalletPage = () => {
   const navigate = useNavigate();
