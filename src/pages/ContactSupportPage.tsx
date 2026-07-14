@@ -138,7 +138,7 @@ const ContactSupportPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
+      <div className="bg-primary text-white py-8">
         <div className="px-4">
           <Button 
             variant="ghost" 
@@ -206,9 +206,9 @@ const ContactSupportPage = () => {
                       </div>
 
                       <Button 
-                        className={`w-full ${channel.available ? "bg-gradient-primary hover:opacity-90" : ""}`}
-                        disabled={!channel.available}
-                      >
+                    className={`w-full ${channel.available ? "bg-primary hover:opacity-90" : ""}`}
+                    disabled={!channel.available}
+                  >
                         {channel.available ? `Start ${channel.name}` : "Currently Unavailable"}
                       </Button>
                     </CardContent>
@@ -408,7 +408,7 @@ const ContactSupportPage = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90">
+                    <Button type="submit" className="w-full bg-primary hover:opacity-90">
                       Submit Ticket
                     </Button>
                   </form>

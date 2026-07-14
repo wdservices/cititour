@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Search, SlidersHorizontal, Star, MapPin, Phone, Globe, MessageCircle, ChevronDown } from "lucide-react";
+import { Search, Star, MapPin, ChevronRight, ArrowLeft, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
+import { getMockImage } from "@/lib/mockImages";
 
 type BusinessItem = {
   id: string;
@@ -34,23 +35,39 @@ const pathMap: Record<string, string> = {
   Event: "events",
   Events: "events",
   Other: "others",
-  // Fallbacks for slightly different labels
   "Event Venue": "events",
   Entertainment: "fun-places",
   "Spa & Wellness": "lifestyle",
   "Business Services": "others",
 };
 
-const getCategoryColor = (category: string) => {
-  const cat = category.toLowerCase();
-  if (cat.includes("hotel") || cat.includes("airbnb")) return "bg-secondary text-secondary-foreground";
-  if (cat.includes("restaurant") || cat.includes("food")) return "bg-primary text-primary-foreground";
-  if (cat.includes("shop") || cat.includes("retail")) return "bg-primary text-white";
-  return "bg-primary/20 text-primary";
+const categories = [
+  "All",
+  "Restaurant",
+  "Hotel",
+  "Shopping",
+  "Attraction",
+  "Fun Places",
+  "Lifestyle",
+  "Events",
+  "Airbnb",
+];
+
+const categoryEmojis: Record<string, string> = {
+  All: "✨",
+  Restaurant: "🍽️",
+  Hotel: "🏨",
+  Shopping: "🛍️",
+  Attraction: "🎡",
+  "Fun Places": "🎉",
+  Lifestyle: "💆",
+  Events: "🎪",
+  Airbnb: "🏠",
 };
 
 const AllBusinessesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
   const [items, setItems] = useState<BusinessItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,22 +78,17 @@ const AllBusinessesPage = () => {
       try {
         const snap = await getDocs(collection(db, "businesses"));
         const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
-        
-        // Auto-delist logic for Events: 24 hours after endDate
         const filteredData = data.filter(item => {
           if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") {
             const d = item as any;
             if (d.endDate) {
               const end = new Date(d.endDate).getTime();
               const now = new Date().getTime();
-              if (now > end + 86400000) { // 24 hours in ms
-                return false;
-              }
+              if (now > end + 86400000) return false;
             }
           }
           return true;
         });
-
         setItems(filteredData);
       } catch (err) {
         console.error(err);
@@ -89,23 +101,28 @@ const AllBusinessesPage = () => {
   }, []);
 
   const filtered = useMemo(() => {
+    let result = items;
+    if (activeCategory !== "All") {
+      result = result.filter((item) => item.category === activeCategory);
+    }
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
-      const fields = [
-        item.title,
-        item.description,
-        item.category,
-        item.location || "",
-        item.price || "",
-        ...(Array.isArray(item.images) ? [item.images.join(",")] : []),
-        ...(Array.isArray(item.tags) ? [item.tags.join(",")] : []),
-      ]
-        .filter(Boolean)
-        .map((s) => s.toLowerCase());
-      return fields.some((f) => f.includes(q));
-    });
-  }, [items, searchTerm]);
+    if (q) {
+      result = result.filter((item) => {
+        const fields = [
+          item.title,
+          item.description,
+          item.category,
+          item.location || "",
+          item.price || "",
+          ...(Array.isArray(item.tags) ? item.tags.join(",") : []),
+        ]
+          .filter(Boolean)
+          .map((s) => s.toLowerCase());
+        return fields.some((f) => f.includes(q));
+      });
+    }
+    return result;
+  }, [items, searchTerm, activeCategory]);
 
   const handleClick = (itemId: string, category: string) => {
     const base = pathMap[category] || "others";
@@ -125,134 +142,158 @@ const AllBusinessesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO 
+      <SEO
         title="All Businesses | CititourNG"
         description="Browse all premium business spots in Lagos & Port Harcourt."
         keywords={["all businesses", "Nigeria", "restaurants", "hotels", "shopping", "lifestyle"]}
         canonicalUrl={`${window.location.origin}/businesses`}
       />
-      
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        {/* Page Header */}
-        <header className="mb-8 lg:mb-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">All Businesses</h1>
-              <p className="text-muted-foreground text-base lg:text-lg">Curated premium spots in Lagos & Port Harcourt</p>
-            </div>
-            
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="flex-1 md:w-80 flex items-center bg-card/60 backdrop-blur-sm rounded-xl px-4 py-3 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-sm">
-                <Search className="text-muted-foreground w-5 h-5 mr-3 shrink-0" />
-                <input 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by name or category" 
-                  className="bg-transparent border-none focus:outline-none focus:ring-0 text-foreground w-full text-base placeholder:text-muted-foreground/70"
-                />
+
+      {/* Blue Header */}
+      <div className="bg-gradient-to-br from-primary via-primary to-primary/80 text-white py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Button
+            variant="ghost"
+            className="text-white hover:bg-white/20 mb-4 -ml-2"
+            onClick={() => navigate('/explore')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Store className="h-7 w-7" />
               </div>
-              <button className="flex items-center justify-center p-3.5 bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl hover:bg-card/80 transition-colors shadow-sm">
-                <SlidersHorizontal className="text-foreground w-5 h-5" />
-              </button>
+              <div>
+                <h1 className="text-3xl font-display font-extrabold">All Businesses</h1>
+                <p className="text-white/80 mt-1">Curated premium spots across Nigeria</p>
+              </div>
             </div>
           </div>
-        </header>
+        </div>
+      </div>
 
-        {/* Loading / Error States */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="flex items-center bg-card/60 backdrop-blur-sm rounded-xl px-4 py-3 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-sm max-w-xl">
+            <Search className="text-muted-foreground w-5 h-5 mr-3 shrink-0" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, category, or location..."
+              className="bg-transparent border-none focus:outline-none focus:ring-0 text-foreground w-full text-base placeholder:text-muted-foreground/70"
+            />
+          </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="mb-8 overflow-x-auto pb-2 -mx-4 px-4">
+          <div className="flex gap-2 min-w-max">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    : "bg-card border border-border/50 text-muted-foreground hover:bg-card/80 hover:text-foreground"
+                }`}
+              >
+                <span className="text-base">{categoryEmojis[cat]}</span>
+                <span>{cat}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading */}
         {loading && (
-          <div className="flex justify-center py-20">
-            <p className="text-muted-foreground animate-pulse">Loading businesses...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-card/40 rounded-2xl border border-border/50 overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-muted/60" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-muted/60 rounded w-3/4" />
+                  <div className="h-3 bg-muted/40 rounded w-full" />
+                  <div className="h-3 bg-muted/40 rounded w-1/2" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        
+
+        {/* Error */}
         {error && (
           <div className="text-center py-20">
-            <p className="text-red-500 bg-red-500/10 inline-block px-4 py-2 rounded-lg">{error}</p>
+            <p className="text-destructive bg-destructive/10 inline-block px-4 py-2 rounded-lg">{error}</p>
           </div>
         )}
 
-        {/* Listings Stack */}
+        {/* Grid */}
         {!loading && !error && (
-          <section className="flex flex-col gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((biz) => (
-              <div 
+              <div
                 key={biz.id}
                 onClick={() => handleClick(biz.id, biz.category)}
-                className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden flex flex-col md:flex-row hover:bg-card/60 transition-all duration-300 shadow-card hover:shadow-primary/5 cursor-pointer"
+                className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
               >
-                {/* Image Section */}
-                <div className="md:w-[320px] lg:w-[380px] shrink-0 relative overflow-hidden aspect-video md:aspect-auto h-48 md:h-auto">
-                  <img 
-                    src={renderValue(biz.image)} 
+                {/* Image */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={renderValue(biz.image) || getMockImage(biz.category)}
                     alt={renderValue(biz.title)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1.5 font-bold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg border border-white/10 ${getCategoryColor(biz.category || "Other")}`}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  {biz.rating != null && biz.rating > 0 && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-lg">
+                      <Star className="text-yellow-400 fill-yellow-400 w-3.5 h-3.5" />
+                      <span className="font-bold text-white text-xs">{renderValue(biz.rating)}</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-3 left-3">
+                    <span className={`px-2.5 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full backdrop-blur-sm ${
+                      activeCategory === biz.category
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-white/90 text-foreground"
+                    }`}>
                       {renderValue(biz.category || "Business")}
                     </span>
                   </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 p-5 lg:p-7 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-2 gap-4">
-                      <h3 className="text-xl lg:text-2xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                        {renderValue(biz.title)}
-                      </h3>
-                      {biz.rating != null && biz.rating > 0 && (
-                        <div className="flex items-center gap-1 bg-background/50 backdrop-blur-sm border border-border/30 px-2 py-1 rounded-lg shrink-0">
-                          <Star className="text-yellow-400 fill-yellow-400 w-4 h-4" />
-                          <span className="font-bold text-foreground text-sm">{renderValue(biz.rating)}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-muted-foreground text-sm lg:text-base line-clamp-2 mb-4 leading-relaxed">
-                      {renderValue(biz.description)}
-                    </p>
-                    
-                    {biz.location && (
-                      <div className="flex items-center text-muted-foreground mb-6">
-                        <MapPin className="text-primary w-4 h-4 mr-2 shrink-0" />
-                        <span className="text-sm line-clamp-1">{renderValue(biz.location)}</span>
-                      </div>
-                    )}
+                {/* Content */}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="text-lg font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {renderValue(biz.title)}
+                    </h3>
+                    {(biz as any).verified || (biz as any).featured ? (
+                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-dashed border-success/50 text-success">
+                        {(biz as any).featured ? "Featured" : "Verified"}
+                      </span>
+                    ) : null}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-3 mt-auto">
-                    {biz.phone && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(`tel:${renderValue(biz.phone)}`, '_self'); }}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 h-11 px-6 rounded-xl font-bold transition-all shadow-none hover:shadow-[0_0_15px_rgba(192,193,255,0.4)]"
-                      >
-                        <Phone className="w-5 h-5" />
-                        <span>Call</span>
-                      </Button>
-                    )}
-                    {biz.website && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(renderValue(biz.website), '_blank'); }}
-                        variant="outline" 
-                        className="h-11 w-12 p-0 rounded-xl border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all bg-transparent"
-                        aria-label="Website"
-                      >
-                        <Globe className="w-5 h-5" />
-                      </Button>
-                    )}
-                    {biz.whatsapp && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${renderValue(biz.whatsapp).replace(/\D/g, "")}`, '_blank'); }}
-                        variant="outline" 
-                        className="h-11 w-12 p-0 rounded-xl border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all bg-transparent"
-                        aria-label="WhatsApp"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                      </Button>
-                    )}
+                  <p className="text-muted-foreground text-sm line-clamp-2 mb-3 leading-relaxed">
+                    {renderValue(biz.description)}
+                  </p>
+
+                  {biz.location && (
+                    <div className="flex items-center text-muted-foreground mb-4">
+                      <MapPin className="text-primary w-3.5 h-3.5 mr-1.5 shrink-0" />
+                      <span className="text-xs line-clamp-1">{renderValue(biz.location)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <span className="text-xs text-muted-foreground/70">View details</span>
+                    <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </div>
@@ -263,17 +304,8 @@ const AllBusinessesPage = () => {
         {/* Empty State */}
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-20 bg-card/30 rounded-2xl border border-border/50 border-dashed">
+            <p className="text-4xl mb-3">🔍</p>
             <p className="text-muted-foreground text-lg">No businesses found matching your search.</p>
-          </div>
-        )}
-
-        {/* Load More (Mock) */}
-        {!loading && !error && filtered.length > 0 && (
-          <div className="mt-12 flex justify-center">
-            <Button variant="outline" className="h-14 px-8 rounded-xl font-bold bg-card/60 backdrop-blur-sm border-border/50 hover:bg-card/80 transition-all flex items-center gap-2">
-              <span>Load More Businesses</span>
-              <ChevronDown className="w-5 h-5" />
-            </Button>
           </div>
         )}
       </main>

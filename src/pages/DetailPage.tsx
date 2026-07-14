@@ -171,8 +171,8 @@ const DetailPage = () => {
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image available</div>
             )}
-            {/* Overlay Gradient for text readability - strictly mimicking the HTML linear-gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/20 to-background/95"></div>
+            {/* Flat overlay bar for title readability */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-foreground/80"></div>
           </div>
 
           {/* Business Info Over Hero */}
@@ -180,20 +180,20 @@ const DetailPage = () => {
             <div className="space-y-3 md:space-y-4">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {data.isOpen !== undefined && (
-                  <span className={`px-3 sm:px-4 py-1 sm:py-1.5 ${data.isOpen ? 'bg-success text-white' : 'bg-red-500 text-white'} text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
+                  <span className={`px-3 sm:px-4 py-1 sm:py-1.5 ${data.isOpen ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'} text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
                     {data.isOpen ? "Open Now" : "Closed"}
                   </span>
                 )}
-                <span className="px-3 sm:px-4 py-1 sm:py-1.5 bg-card/60 text-foreground text-[10px] sm:text-xs font-bold rounded-full backdrop-blur-md border border-white/10 uppercase tracking-wider">
+                <span className="px-3 sm:px-4 py-1 sm:py-1.5 bg-card text-foreground text-[10px] sm:text-xs font-bold rounded-full border border-border uppercase tracking-wider">
                   {renderValue(data.category)}
                 </span>
               </div>
               
               <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-tight mb-2">
+                <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-background tracking-tight leading-tight mb-2">
                   {renderValue(data.title)}
                 </h1>
-                <div className="flex items-center text-muted-foreground mt-1 sm:mt-2">
+                <div className="flex items-center text-background/80 mt-1 sm:mt-2">
                   <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary shrink-0" />
                   <span className="text-sm sm:text-base lg:text-lg line-clamp-1">{renderValue(data.address)}</span>
                 </div>
@@ -203,7 +203,7 @@ const DetailPage = () => {
             {/* Quick Actions */}
             <div className="flex flex-wrap md:flex-nowrap gap-3 w-full md:w-auto mt-4 md:mt-0">
               <Button 
-                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-xl gap-2 shadow-[0_0_20px_rgba(192,193,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all"
+                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
                 onClick={() => {
                   if(data.whatsapp) window.open(`https://wa.me/${renderValue(data.whatsapp).replace(/\D/g, "")}`, '_blank');
                   else if(data.phone) window.open(`tel:${renderValue(data.phone)}`, '_self');
@@ -214,7 +214,7 @@ const DetailPage = () => {
               </Button>
               <Button 
                 variant="outline" 
-                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-xl gap-2 bg-card/40 backdrop-blur-md border-border/50 hover:bg-card/80 active:scale-95 transition-all"
+                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-full gap-2 bg-card border-border text-foreground hover:bg-muted"
               >
                 <FileText className="w-5 h-5" />
                 Request Quote

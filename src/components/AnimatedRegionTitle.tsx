@@ -35,7 +35,7 @@ const AnimatedRegionTitle = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.45, ease: 'easeInOut' }}
-            className="block text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
+            className="block text-3xl md:text-5xl font-bold text-primary"
           >
             {orderedLocations[index]}
           </motion.span>

@@ -15,6 +15,7 @@ import SEO from "@/components/SEO";
 import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import ImageUpload from "@/components/ImageUpload";
 import { X } from "lucide-react";
+import StampIcon from "@/components/StampIcon";
 
 const categories = [
   "Restaurant", "Hotel", "Event Venue", "Shopping", "Entertainment", 
@@ -120,23 +121,22 @@ const BusinessListingPage = () => {
         canonicalUrl={`${window.location.origin}/business-listing`}
       />
       {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
-        <div className="px-4">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate('/explore')}
+      <div className="border-b border-border bg-background">
+        <div className="px-4 py-8 max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-muted mb-4"
+            onClick={() => navigate("/explore")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Building2 className="h-6 w-6" />
-            </div>
+          <div className="flex items-center gap-4 group">
+            <StampIcon icon={Building2} tone="primary" size="md" />
             <div>
-              <h1 className="text-2xl font-bold">Business Listing</h1>
-              <p className="text-white/90">List your business on CititourNG</p>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Business</span>
+              <h1 className="font-display text-3xl font-extrabold">Business Listing</h1>
+              <p className="text-muted-foreground">List your business on CitiTour</p>
             </div>
           </div>
         </div>
@@ -145,7 +145,7 @@ const BusinessListingPage = () => {
       <div className="px-4 py-6 max-w-4xl mx-auto">
         {/* Business Information Form */}
         <div className="space-y-6">
-          <Card className="bg-white border shadow-sm dark:bg-transparent dark:border-0 dark:shadow-none">
+          <Card className="bg-card border border-border shadow-soft">
             <CardHeader>
               <CardTitle>Business Information</CardTitle>
             </CardHeader>
@@ -159,14 +159,14 @@ const BusinessListingPage = () => {
                       placeholder="Enter your business name"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
 
                   <div>
                     <Label className="font-medium" htmlFor="category">Category *</Label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="bg-white border border-gray-200 shadow-sm dark:bg-background dark:border-input dark:shadow-none">
+                      <SelectTrigger className="bg-background border border-border">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -186,7 +186,7 @@ const BusinessListingPage = () => {
                       placeholder="+1234567890"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
 
@@ -197,7 +197,7 @@ const BusinessListingPage = () => {
                       placeholder="https://yourwebsite.com"
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
                 </div>
@@ -210,7 +210,7 @@ const BusinessListingPage = () => {
                       placeholder="Enter your business address"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
 
@@ -221,14 +221,14 @@ const BusinessListingPage = () => {
                       placeholder="e.g., Mon-Fri: 9AM-5PM"
                       value={hours}
                       onChange={(e) => setHours(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
 
                   <div>
                     <Label className="font-medium" htmlFor="priceRange">Price Range</Label>
                     <Select value={priceRange} onValueChange={setPriceRange}>
-                      <SelectTrigger className="bg-white border border-gray-200 shadow-sm dark:bg-background dark:border-input dark:shadow-none">
+                      <SelectTrigger className="bg-background border border-border">
                         <SelectValue placeholder="Select price range" />
                       </SelectTrigger>
                       <SelectContent>
@@ -247,7 +247,7 @@ const BusinessListingPage = () => {
                       placeholder="contact@yourbusiness.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                      className="bg-background border border-border"
                     />
                   </div>
                 </div>
@@ -255,7 +255,7 @@ const BusinessListingPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border shadow-sm dark:bg-transparent dark:border-0 dark:shadow-none">
+          <Card className="bg-card border border-border shadow-soft">
             <CardHeader>
               <CardTitle>Business Description</CardTitle>
             </CardHeader>
@@ -267,12 +267,12 @@ const BusinessListingPage = () => {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                className="bg-background border border-border"
               />
             </CardContent>
           </Card>
 
-          <Card className="bg-white border shadow-sm dark:bg-transparent dark:border-0 dark:shadow-none">
+          <Card className="bg-card border border-border shadow-soft">
             <CardHeader>
               <CardTitle>Tags</CardTitle>
             </CardHeader>
@@ -284,7 +284,7 @@ const BusinessListingPage = () => {
                   placeholder="e.g., italian, seafood, family-friendly"
                   value={tagsRaw}
                   onChange={(e) => setTagsRaw(e.target.value)}
-                  className="bg-white border border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary dark:bg-background dark:border-input dark:shadow-none dark:focus-visible:ring-ring dark:focus-visible:border-input"
+                  className="bg-background border border-border"
                 />
                 <p className="text-xs text-muted-foreground">
                   Add comma-separated tags to help people find your business. Examples: "breakfast", "wifi", "pet-friendly", "cashless".
@@ -293,7 +293,7 @@ const BusinessListingPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border shadow-sm dark:bg-transparent dark:border-0 dark:shadow-none">
+          <Card className="bg-card border border-border shadow-soft">
             <CardHeader>
               <CardTitle>Business Images</CardTitle>
             </CardHeader>
@@ -354,7 +354,7 @@ const BusinessListingPage = () => {
               <Button variant="outline" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
                 Cancel
               </Button>
-              <Button className="bg-gradient-primary hover:opacity-90" onClick={handleSubmit} disabled={isSubmitting}>
+              <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? "Submitting..." : "Submit Listing"}
               </Button>
             </div>

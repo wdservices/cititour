@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MapPin, Star, Filter, Grid, List, Search } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Star, Grid, List, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ListingCard from "@/components/ListingCard";
+import StampIcon from "@/components/StampIcon";
+import { getMockImage } from "@/lib/mockImages";
 import hotelLuxury from "@/assets/hotel-luxury.jpg";
 import restaurantFine from "@/assets/restaurant-fine.jpg";
 import eventMusic from "@/assets/event-music.jpg";
@@ -15,60 +15,48 @@ import attractionGarden from "@/assets/attraction-garden.jpg";
 const favourites = [
   {
     id: "1",
-    title: "Garden City Grand Hotel",
-    description: "Luxury 5-star hotel in the heart of Garden City with world-class amenities and spa services.",
+    title: "Eko Hotels & Suites",
+    description: "Waterfront stays in Victoria Island with spa and lagoon views.",
     image: hotelLuxury,
     category: "Hotels",
     rating: 4.9,
-    price: "$200-400/night",
-    location: "Downtown Garden City",
-    phone: "+1234567890",
-    website: "https://example.com",
+    price: "₦85,000+/night",
+    location: "Victoria Island, Lagos",
     isOpen: true,
-    savedDate: "2024-01-15"
   },
   {
     id: "2",
-    title: "Garden Bistro",
-    description: "Fine dining restaurant specializing in modern European cuisine with fresh ingredients.",
+    title: "Nkoyo",
+    description: "Modern Nigerian tasting menus in a warm, design-forward room.",
     image: restaurantFine,
-    category: "Restaurants", 
+    category: "Restaurants",
     rating: 4.8,
-    price: "$40-80",
-    location: "Garden City Center",
-    phone: "+1234567891",
-    website: "https://example.com",
+    price: "₦15,000–40,000",
+    location: "Ikoyi, Lagos",
     isOpen: true,
-    savedDate: "2024-01-10"
   },
   {
     id: "3",
-    title: "Garden City Music Festival",
-    description: "Annual music festival featuring local and international artists with amazing atmosphere.",
+    title: "Detty December Live",
+    description: "Afrobeats nights and pop-up concerts across the city.",
     image: eventMusic,
     category: "Events",
     rating: 4.8,
-    price: "$25-50",
-    location: "Central Park, Garden City",
-    phone: "+1234567892",
-    website: "https://example.com",
+    price: "₦5,000–25,000",
+    location: "Lagos Island",
     isOpen: true,
-    savedDate: "2024-01-08"
   },
   {
     id: "4",
-    title: "Botanical Gardens",
-    description: "Stunning botanical gardens featuring rare plants and peaceful walking trails.",
+    title: "Lekki Conservation Centre",
+    description: "Canopy walkway and nature trails on the Lekki peninsula.",
     image: attractionGarden,
     category: "Attractions",
     rating: 4.9,
-    price: "$8-15",
-    location: "Garden City Park", 
-    phone: "+1234567893",
-    website: "https://example.com",
+    price: "₦2,000–5,000",
+    location: "Lekki, Lagos",
     isOpen: true,
-    savedDate: "2024-01-05"
-  }
+  },
 ];
 
 const categories = ["All", "Hotels", "Restaurants", "Events", "Attractions", "Shopping", "Lifestyle"];
@@ -79,50 +67,48 @@ const FavouritesPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filteredFavourites = favourites.filter(item => {
-    const matchesSearch = (item.title?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-                         (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+  const filteredFavourites = favourites.filter((item) => {
+    const matchesSearch =
+      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const handleItemClick = (itemId: string) => {
-    const item = favourites.find(f => f.id === itemId);
+    const item = favourites.find((f) => f.id === itemId);
     if (item) {
-      navigate(`/${(item.category || 'others').toLowerCase()}/${itemId}`);
+      navigate(`/${(item.category || "others").toLowerCase()}/${itemId}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
-        <div className="px-4">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate('/explore')}
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="border-b border-border bg-background">
+        <div className="px-4 py-8 max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-muted mb-4"
+            onClick={() => navigate("/explore")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Heart className="h-6 w-6" />
-            </div>
+          <div className="flex items-center gap-4 group">
+            <StampIcon icon={Heart} tone="accent" size="md" />
             <div>
-              <h1 className="text-2xl font-bold">My Favourites</h1>
-              <p className="text-white/90">{favourites.length} saved places</p>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Saved</span>
+              <h1 className="font-display text-3xl font-extrabold">My Favourites</h1>
+              <p className="text-muted-foreground">{favourites.length} saved places</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="px-4 py-4 bg-white border-b sticky top-0 z-10">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="px-4 py-4 bg-card border-b border-border sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search your favourites..."
               value={searchTerm}
@@ -130,7 +116,6 @@ const FavouritesPage = () => {
               className="pl-10"
             />
           </div>
-          
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="All Categories" />
@@ -143,34 +128,24 @@ const FavouritesPage = () => {
               ))}
             </SelectContent>
           </Select>
-
           <div className="flex gap-2">
-            <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("grid")}
-            >
+            <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")}>
               <Grid className="h-4 w-4" />
             </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-            >
+            <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")}>
               <List className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-6">
-        {/* Category Filter Pills */}
+      <div className="px-4 py-6 max-w-6xl mx-auto">
         <div className="flex flex-wrap gap-2 mb-6">
           {categories.map((category) => (
             <Badge
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
-              className="cursor-pointer"
+              className="cursor-pointer rounded-full"
               onClick={() => setSelectedCategory(category)}
             >
               {category}
@@ -178,67 +153,83 @@ const FavouritesPage = () => {
           ))}
         </div>
 
-        {/* Results */}
         {filteredFavourites.length > 0 ? (
-          <div className={
-            viewMode === "grid" 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-          }>
-            {filteredFavourites.map((item) => (
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+            {filteredFavourites.map((item) =>
               viewMode === "grid" ? (
-                <ListingCard
+                <button
                   key={item.id}
-                  {...item}
+                  type="button"
                   onClick={() => handleItemClick(item.id)}
-                />
-              ) : (
-                <Card key={item.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
-                  <div className="flex" onClick={() => handleItemClick(item.id)}>
-                    <div className="w-48 h-32 flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
+                  className="text-left rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-card transition-shadow"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img src={item.image || getMockImage(item.category)} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-display font-bold text-lg leading-tight">{item.title}</h3>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                        <span className="text-sm font-medium">{item.rating}</span>
+                      </div>
                     </div>
-                    <div className="flex-1 p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-lg">{item.title}</h3>
-                          <p className="text-sm text-muted-foreground">{item.category}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">{item.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                        {item.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{item.location}</span>
-                        </div>
-                        <span className="font-semibold text-primary">{item.price}</span>
-                      </div>
+                    <p className="text-xs text-muted-foreground mb-2">{item.category}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground truncate">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        {item.location}
+                      </span>
+                      <span className="text-sm font-semibold text-accent shrink-0">{item.price}</span>
                     </div>
                   </div>
-                </Card>
+                </button>
+              ) : (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleItemClick(item.id)}
+                  className="w-full flex text-left rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-card transition-shadow"
+                >
+                  <div className="w-40 h-28 shrink-0">
+                    <img src={item.image || getMockImage(item.category)} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="flex-1 p-4 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="min-w-0">
+                        <h3 className="font-display font-bold truncate">{item.title}</h3>
+                        <p className="text-xs text-muted-foreground">{item.category}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                        <span className="text-sm">{item.rating}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{item.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground truncate">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {item.location}
+                      </span>
+                      <span className="font-semibold text-accent">{item.price}</span>
+                    </div>
+                  </div>
+                </button>
               )
-            ))}
+            )}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-semibold mb-2">No favourites found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || selectedCategory !== "All" 
+          <div className="text-center py-16 group">
+            <div className="flex justify-center mb-5">
+              <StampIcon icon={Heart} tone="muted" size="lg" />
+            </div>
+            <h3 className="font-display text-lg font-bold mb-2">No favourites found</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              {searchTerm || selectedCategory !== "All"
                 ? "Try adjusting your search or filters"
-                : "Start exploring and save places you love!"}
+                : "Start exploring and save places you love."}
             </p>
-            <Button onClick={() => navigate("/")} className="bg-gradient-primary hover:opacity-90">
+            <Button onClick={() => navigate("/explore")} className="rounded-full bg-primary text-primary-foreground">
               Discover Places
             </Button>
           </div>

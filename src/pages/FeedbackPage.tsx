@@ -82,7 +82,7 @@ const FeedbackPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
+      <div className="bg-primary text-white py-8">
         <div className="px-4">
           <Button 
             variant="ghost" 
@@ -210,7 +210,7 @@ const FeedbackPage = () => {
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90">
+                  <Button type="submit" className="w-full bg-primary hover:opacity-90">
                     <Send className="h-4 w-4 mr-2" />
                     Submit Feedback
                   </Button>

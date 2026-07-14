@@ -64,7 +64,7 @@ export default function StatePage() {
       ) : (
         <>
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-warm -z-10" />
+            <div className="absolute inset-0 bg-muted -z-10" />
             <div className="container mx-auto px-4 py-20 md:py-28">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-semibold uppercase tracking-wider mb-6">

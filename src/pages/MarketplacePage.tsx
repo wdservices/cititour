@@ -452,12 +452,12 @@ const MarketplacePage = () => {
                       e.stopPropagation();
                       toggleLike(item.id);
                     }}
-                    className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-red-400 transition-colors"
+                    className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
                   >
                     <Heart
                       className={`w-4 h-4 ${
                         likedIds.has(item.id)
-                          ? "fill-red-500 text-red-500"
+                          ? "fill-destructive text-destructive"
                           : ""
                       }`}
                     />
@@ -479,12 +479,17 @@ const MarketplacePage = () => {
                   <h3 className="font-semibold text-sm md:text-base text-foreground truncate">
                     {item.title}
                   </h3>
+                  {(item as any).verified && (
+                    <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-success/15 text-success">
+                      Verified seller
+                    </span>
+                  )}
                   <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
                     <MapPin className="w-3 h-3 shrink-0" />
                     <span className="truncate">{item.location}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-sm md:text-base text-primary">
+                    <span className="font-bold text-sm md:text-base text-accent">
                       {item.price}
                     </span>
                     <button className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">

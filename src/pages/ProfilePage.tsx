@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { getUserProfile, updateUserProfile } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRegion } from "@/contexts/RegionContext";
+import StampIcon from "@/components/StampIcon";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -134,55 +135,57 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
-        <div className="px-4 max-w-4xl mx-auto relative">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:bg-white/20 mb-4"
-            onClick={() => navigate('/explore')}
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Ivory header band */}
+      <div className="border-b border-border bg-background">
+        <div className="px-4 py-8 max-w-4xl mx-auto relative">
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-muted mb-4"
+            onClick={() => navigate("/explore")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          
+
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar className="h-20 w-20 border-4 border-white/30">
-                <AvatarImage src={userAvatar} alt={displayName} />
-                <AvatarFallback className="bg-white/20 text-white text-2xl">
-                  {getInitials(displayName)}
-                </AvatarFallback>
-              </Avatar>
-              <Button 
-                size="icon" 
-                variant="secondary" 
+            <div className="relative group">
+              {userAvatar ? (
+                <Avatar className="h-20 w-20 border-2 border-dashed border-primary/50">
+                  <AvatarImage src={userAvatar} alt={displayName} />
+                  <AvatarFallback className="bg-muted text-foreground text-2xl">
+                    {getInitials(displayName)}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <StampIcon icon={User} tone="primary" size="lg" />
+              )}
+              <Button
+                size="icon"
+                variant="secondary"
                 className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
               >
                 <Camera className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold">{displayName}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="font-display text-2xl font-extrabold truncate">{displayName}</h1>
                 {isEmailVerified && (
-                  <Badge className="bg-green-500 hover:bg-green-600">
+                  <Badge className="bg-success/15 text-success border-0 hover:bg-success/20">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Verified
                   </Badge>
                 )}
               </div>
-              <p className="text-white/90 mb-2">{userEmail}</p>
-              {/* Removed Member Since / Provider line for a cleaner header */}
+              <p className="text-muted-foreground mb-2 truncate">{userEmail}</p>
             </div>
           </div>
 
-          {/* Edit button positioned inside the header box */}
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="outline"
             size="sm"
-            className="absolute top-4 right-4"
+            className="absolute top-4 right-4 rounded-full"
             onClick={() => setIsEditing(!isEditing)}
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -206,11 +209,11 @@ const ProfilePage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsList className="w-full justify-start gap-6 bg-transparent border-b border-border rounded-none h-auto p-0">
+            <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-1 pb-3">Overview</TabsTrigger>
+            <TabsTrigger value="preferences" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-1 pb-3">Bookings</TabsTrigger>
+            <TabsTrigger value="privacy" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-1 pb-3">Reviews</TabsTrigger>
+            <TabsTrigger value="notifications" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-1 pb-3">Security</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}

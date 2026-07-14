@@ -62,7 +62,7 @@ const ShareAppPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-primary text-white py-8">
+      <div className="bg-primary text-white py-8">
         <div className="px-4">
           <Button 
             variant="ghost" 

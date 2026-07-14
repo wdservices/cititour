@@ -102,8 +102,15 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         {/* Header with Image */}
-        <div className="relative h-64 bg-gradient-to-br from-primary/70 to-accent/70">
-          <div className="absolute inset-0 bg-black/20" />
+        <div className="relative h-64 bg-primary overflow-hidden">
+          {event.image && (
+            <img
+              src={event.image}
+              alt={event.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-black/30" />
           <Button
             variant="ghost"
             size="icon"
@@ -150,7 +157,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
           <div className="flex items-center gap-3 mb-6">
             <Button
               onClick={handleBookNow}
-              className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
+              className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
             >
               <Ticket className="w-4 h-4 mr-2" />
               Book Now
@@ -158,7 +165,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
             <Button
               variant="outline"
               onClick={handleLike}
-              className={isLiked ? 'text-red-500 border-red-500' : ''}
+              className={isLiked ? 'text-destructive border-destructive' : ''}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
             </Button>
@@ -195,7 +202,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
               <div>
                 <h3 className="text-lg font-semibold mb-3">Organizer</h3>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -358,7 +365,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
                 {/* Complete Payment Button */}
                 <Button
                   onClick={handlePayment}
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                  className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Pay {event.currency} {(event.price + 500).toLocaleString()}

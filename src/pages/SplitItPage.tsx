@@ -3,12 +3,13 @@ import { motion } from "framer-motion";
 import { Receipt, Users, Split, Send, Sparkles, Camera, Calculator, Share2, ArrowRight } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import StampIcon from "@/components/StampIcon";
 
 const steps = [
-  { icon: Camera, title: "Snap the receipt", body: "One photo of the bill — no manual entry." },
-  { icon: Users, title: "Tag who ordered what", body: "Add friends by name or phone. Assign items in seconds." },
-  { icon: Calculator, title: "Fair math, done", body: "VAT, service charge and tips are split proportionally." },
-  { icon: Share2, title: "Share and settle", body: "Everyone pays in-app or via a shareable payment link." },
+  { icon: Camera, title: "Snap the receipt", body: "One photo of the bill — no manual entry.", tone: "primary" as const, rotate: "-rotate-6" as const },
+  { icon: Users, title: "Tag who ordered what", body: "Add friends by name or phone. Assign items in seconds.", tone: "accent" as const, rotate: "rotate-3" as const },
+  { icon: Calculator, title: "Fair math, done", body: "VAT, service charge and tips are split proportionally.", tone: "success" as const, rotate: "-rotate-3" as const },
+  { icon: Share2, title: "Share and settle", body: "Everyone pays in-app or via a shareable payment link.", tone: "primary-dark" as const, rotate: "rotate-6" as const },
 ];
 
 const useCases = [
@@ -68,7 +69,7 @@ export default function SplitItPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-warm -z-10" />
+        <div className="absolute inset-0 bg-muted -z-10" />
         <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-semibold uppercase tracking-wider mb-6">
@@ -141,10 +142,8 @@ export default function SplitItPage() {
               <motion.div key={s.title}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="p-6 rounded-2xl bg-card border border-border shadow-soft">
-                <div className="w-12 h-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center mb-4">
-                  <s.icon className="w-6 h-6" />
-                </div>
+                className="group p-6 rounded-2xl bg-card border border-border shadow-soft">
+                <StampIcon icon={s.icon} tone={s.tone} size="md" rotate={s.rotate} className="mb-4" />
                 <div className="text-xs font-mono text-muted-foreground mb-2">STEP {String(i + 1).padStart(2, "0")}</div>
                 <h3 className="font-display text-xl font-bold mb-2">{s.title}</h3>
                 <p className="text-sm text-muted-foreground">{s.body}</p>
@@ -161,7 +160,7 @@ export default function SplitItPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {useCases.map((u) => (
               <div key={u.title} className="p-6 rounded-2xl bg-card border border-border">
-                <Split className={`w-6 h-6 mb-4 ${u.tone === 'coral' ? 'text-accent' : u.tone === 'palm' ? 'text-[hsl(var(--success))]' : 'text-primary'}`} />
+                <Split className={`w-6 h-6 mb-4 ${u.tone === 'coral' ? 'text-accent' : u.tone === 'palm' ? 'text-success' : 'text-primary'}`} />
                 <h3 className="font-display text-lg font-bold mb-2">{u.title}</h3>
                 <p className="text-sm text-muted-foreground">{u.body}</p>
               </div>

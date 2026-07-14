@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Menu, Search, Bell, Moon, Sun, Calendar, User } from "lucide-react";
+import { Menu, Search, Bell, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
-import { useTheme } from "@/contexts/ThemeContext";
 import { useRegion } from "@/contexts/RegionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import SideMenu from "./SideMenu";
@@ -14,7 +13,6 @@ import SideMenu from "./SideMenu";
 const AppHeader = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
   const { brandName } = useRegion();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -29,9 +27,9 @@ const AppHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-soft">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-3 py-2 md:px-4 md:py-3">
         {/* Left: Menu & Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0">
@@ -50,8 +48,8 @@ const AppHeader = () => {
           </Sheet>
 
           <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate("/")}>
-            <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-8 w-auto object-contain" />
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-4 flex items-center mt-0.5">Explore</span>
+            <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-7 md:h-8 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
+            <span className="hidden md:inline text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-4 flex items-center mt-0.5">Explore</span>
           </div>
         </div>
 
@@ -70,14 +68,14 @@ const AppHeader = () => {
                     navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                   }
                 }}
-                className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors rounded-full w-full"
+                className="pl-10 pr-4 bg-background border-border focus:bg-card focus:border-primary transition-colors rounded-full w-full h-11"
               />
             </div>
           </div>
         )}
 
         {/* Right: Nav Links + Actions */}
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex items-center gap-1">
           {/* Nav Links — visible on md+ */}
           <nav className="hidden md:flex items-center gap-1 mr-2">
             <Button
@@ -135,27 +133,10 @@ const AppHeader = () => {
             </Button>
           )}
 
-          {/* Theme Toggle */}
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive rounded-full flex items-center justify-center border-2 border-background">
-              <span className="text-[10px] text-white font-bold">3</span>
-            </div>
-          </Button>
-
           {/* User Avatar */}
           <button
             onClick={() => navigate("/profile")}
-            className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/30 hover:border-primary transition-colors flex items-center justify-center bg-muted shrink-0 ml-1"
+            className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/30 hover:border-primary transition-colors flex items-center justify-center bg-muted shrink-0"
             aria-label="Go to profile"
           >
             {user?.photoURL ? (
@@ -174,7 +155,7 @@ const AppHeader = () => {
 
       {/* Mobile Search Bar (Landing & Explore) */}
       {showGlobalSearch && (
-        <div className="md:hidden px-4 pb-3">
+        <div className="md:hidden px-3 pb-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -187,7 +168,7 @@ const AppHeader = () => {
                   navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
                 }
               }}
-              className="pl-10 pr-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-900 focus:border-primary transition-colors"
+              className="pl-10 pr-4 bg-background border-border focus:bg-card focus:border-primary transition-colors h-11"
             />
           </div>
         </div>

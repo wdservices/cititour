@@ -1,143 +1,218 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Search, SlidersHorizontal, Star, MapPin, Phone, Globe, MessageCircle, ChevronDown, CalendarDays } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Calendar, MapPin, Clock, Users, Ticket, Heart, Share2, Star, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import SEO from "@/components/SEO";
+import EventDetailModal from '../components/EventDetailModal';
+import { getMockImage } from '@/lib/mockImages';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-type EventItem = {
+interface Event {
   id: string;
   title: string;
   description: string;
+  date: string;
+  time: string;
+  location: string;
+  price: number;
+  currency: string;
   image: string;
-  images?: string[];
   category: string;
-  rating?: number;
-  price?: string;
-  location?: string;
-  phone?: string;
-  website?: string;
-  whatsapp?: string;
-  isOpen?: boolean;
-  tags?: string[];
-};
+  organizer: string;
+  attendees: number;
+  maxAttendees: number;
+  rating: number;
+  reviews: number;
+  isFeatured?: boolean;
+  tags: string[];
+}
 
 const EventsPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [likedEvents, setLikedEvents] = useState<Set<string>>(new Set());
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const categories = ['All', 'Food & Drink', 'Technology', 'Music & Entertainment', 'Arts & Culture', 'Business', 'Sports & Recreation'];
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        // --- TEMPORARY MIGRATION SCRIPT ---
-        try {
-          const oldEventsSnap = await getDocs(collection(db, 'events'));
-          for (const oldDoc of oldEventsSnap.docs) {
-            const data = oldDoc.data();
-            const newRef = doc(db, 'businesses', oldDoc.id);
-            await setDoc(newRef, {
-              ...data,
-              category: "Event",
-              tags: data.category ? [data.category] : [],
-              isActive: true,
-            }, { merge: true });
-            
-            // Migrate tickets subcollection
-            const ticketsSnap = await getDocs(collection(db, 'events', oldDoc.id, 'tickets'));
-            for (const ticketDoc of ticketsSnap.docs) {
-              await setDoc(doc(db, 'businesses', oldDoc.id, 'tickets', ticketDoc.id), ticketDoc.data(), { merge: true });
-            }
-          }
-          console.log("Migration complete");
-        } catch (e) {
-          console.error("Migration failed", e);
-        }
-        // --- END TEMPORARY MIGRATION SCRIPT ---
-
-        const snapshot = await getDocs(collection(db, "businesses"));
-        const eventsData = snapshot.docs
-          .map(doc => {
-            const d = doc.data() as any;
-            
-            // Auto-delist logic: 24 hours after endDate
-            let isExpired = false;
-            if (d.endDate) {
-              const end = new Date(d.endDate).getTime();
-              const now = new Date().getTime();
-              if (now > end + 86400000) { // 24 hours in ms
-                isExpired = true;
-              }
-            }
-
-            return {
-              id: doc.id,
-              title: String(d.title || "Untitled Event"),
-              description: String(d.description || ""),
-              image: String(d.imageUrl || d.image || ""),
-              category: String(d.category || "Event"),
-              rating: Number(d.rating ?? 4.5),
-              price: String(d.priceRange || d.price || ""),
-              location: String(d.location || d.address || ""),
-              phone: String(d.phone || ""),
-              website: String(d.website || ""),
-              whatsapp: String(d.whatsapp || d.phone || ""),
-              isOpen: Boolean(d.isActive ?? d.isOpen ?? true),
-              isExpired,
-            } as EventItem & { isExpired: boolean };
-          })
-          .filter(event => {
-            if (event.isExpired) return false;
-            const cat = event.category.toLowerCase();
-            return cat === "event" || cat === "events" || cat === "event venue";
-          });
-        setEvents(eventsData);
-      } catch (err) {
-        setError("Failed to fetch events.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+    // For now, use mock data to show all 6 events
+    const mockEvents: Event[] = [
+      {
+        id: '1',
+        title: 'Lagos Food & Wine Festival',
+        description: 'Experience the finest culinary delights from top chefs across Nigeria. Live cooking demonstrations, wine tasting, and gourmet food sampling.',
+        date: '2024-06-15',
+        time: '12:00 PM',
+        location: 'Eko Atlantic, Lagos',
+        price: 5000,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
+        category: 'Food & Drink',
+        organizer: 'Lagos Culinary Guild',
+        attendees: 245,
+        maxAttendees: 500,
+        rating: 4.8,
+        reviews: 89,
+        isFeatured: true,
+        tags: ['food', 'wine', 'festival', 'tasting']
+      },
+      {
+        id: '2',
+        title: 'Tech Summit Abuja 2024',
+        description: 'Connect with tech leaders, innovators, and entrepreneurs. Keynote speeches, panel discussions, and networking opportunities.',
+        date: '2024-07-20',
+        time: '9:00 AM',
+        location: 'Abuja International Conference Center',
+        price: 15000,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
+        category: 'Technology',
+        organizer: 'TechHub Nigeria',
+        attendees: 180,
+        maxAttendees: 300,
+        rating: 4.6,
+        reviews: 67,
+        tags: ['tech', 'conference', 'networking', 'innovation']
+      },
+      {
+        id: '3',
+        title: 'Afrobeats Night Live',
+        description: 'An unforgettable night of live Afrobeats music featuring top Nigerian artists. Dance, enjoy, and experience the best of Nigerian music culture.',
+        date: '2024-06-30',
+        time: '8:00 PM',
+        location: 'Eko Hotels & Suites, Lagos',
+        price: 7500,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
+        category: 'Music & Entertainment',
+        organizer: 'Beat Entertainment',
+        attendees: 320,
+        maxAttendees: 450,
+        rating: 4.9,
+        reviews: 124,
+        isFeatured: true,
+        tags: ['music', 'afrobeats', 'live', 'concert']
+      },
+      {
+        id: '4',
+        title: 'Art Exhibition: Nigerian Masters',
+        description: 'Celebrate Nigerian contemporary art with works from renowned artists. Gallery tours, artist meet-and-greets, and art workshops.',
+        date: '2024-07-10',
+        time: '10:00 AM',
+        location: 'Nike Art Gallery, Lagos',
+        price: 2000,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1531243269054-5ebf6f34081e?w=800&q=80',
+        category: 'Arts & Culture',
+        organizer: 'Nigerian Artists Association',
+        attendees: 89,
+        maxAttendees: 150,
+        rating: 4.7,
+        reviews: 45,
+        tags: ['art', 'exhibition', 'culture', 'gallery']
+      },
+      {
+        id: '5',
+        title: 'Entrepreneurship Workshop',
+        description: 'Learn from successful Nigerian entrepreneurs. Business strategies, funding opportunities, and growth hacking techniques.',
+        date: '2024-08-05',
+        time: '2:00 PM',
+        location: 'Co-Creation Hub, Abuja',
+        price: 3500,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80',
+        category: 'Business',
+        organizer: 'Startup Nigeria',
+        attendees: 67,
+        maxAttendees: 100,
+        rating: 4.5,
+        reviews: 34,
+        tags: ['business', 'workshop', 'entrepreneurship', 'learning']
+      },
+      {
+        id: '6',
+        title: 'Beach Volleyball Tournament',
+        description: 'Join the exciting beach volleyball competition at Tarkwa Bay. Professional players, amateur teams, and family fun activities.',
+        date: '2024-07-25',
+        time: '10:00 AM',
+        location: 'Tarkwa Bay Beach, Lagos',
+        price: 1000,
+        currency: 'NGN',
+        image: 'https://images.unsplash.com/photo-1461896836934-bd45ba8f8e8b?w=800&q=80',
+        category: 'Sports & Recreation',
+        organizer: 'Lagos Sports Club',
+        attendees: 156,
+        maxAttendees: 200,
+        rating: 4.4,
+        reviews: 28,
+        tags: ['sports', 'volleyball', 'beach', 'tournament']
       }
-    };
-    fetchEvents();
+    ];
+    setEvents(mockEvents);
+    setLoading(false);
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter((item) => {
-      const fields = [
-        item.title,
-        item.description,
-        item.category,
-        item.location || "",
-        item.price || "",
-        ...(Array.isArray(item.images) ? item.images.join(",") : ""),
-        ...(Array.isArray(item.tags) ? item.tags.join(",") : ""),
-      ]
-        .filter(Boolean)
-        .map((s) => s.toLowerCase());
-      return fields.some((f) => f.includes(q));
-    });
-  }, [events, searchTerm]);
+  const filteredEvents = events.filter(event => {
+    const matchesCategory = selectedCategory === 'All' || event.category === selectedCategory;
+    const matchesSearch = searchTerm.trim() === '' || 
+      (event.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (event.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (event.location || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
-  const handleEventClick = (eventId: string) => {
-    navigate(`/events/${eventId}`);
-  };
-
-  const renderValue = (val: any): string => {
-    if (val === null || val === undefined) return "";
-    if (typeof val === "object") {
-      if (val._lat !== undefined && val._long !== undefined) {
-        return `${val._lat.toFixed(4)}, ${val._long.toFixed(4)}`;
+  const handleLikeEvent = (eventId: string) => {
+    setLikedEvents(prev => {
+      const newLikes = new Set(prev);
+      if (newLikes.has(eventId)) {
+        newLikes.delete(eventId);
+      } else {
+        newLikes.add(eventId);
       }
-      return JSON.stringify(val);
-    }
-    return String(val);
+      return newLikes;
+    });
   };
+
+  const handleViewEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const handleBookEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const handleShareEvent = (event: Event) => {
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: event.description,
+        url: window.location.origin + `/events/${event.id}`
+      });
+    } else {
+      navigator.clipboard.writeText(`${event.title} - ${window.location.origin}/events/${event.id}`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground animate-pulse">Loading events...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,155 +222,220 @@ const EventsPage = () => {
         keywords={["events", "Nigeria", "parties", "concerts", "gatherings"]}
         canonicalUrl={`${window.location.origin}/events`}
       />
-      
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        {/* Page Header */}
-        <header className="mb-8 lg:mb-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
-                <CalendarDays className="w-8 h-8 text-primary" />
-                All Events
-              </h1>
-              <p className="text-muted-foreground text-base lg:text-lg">Discover curated events and experiences</p>
-            </div>
-            
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="flex-1 md:w-80 flex items-center bg-card/60 backdrop-blur-sm rounded-xl px-4 py-3 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all shadow-sm">
-                <Search className="text-muted-foreground w-5 h-5 mr-3 shrink-0" />
-                <input 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search events..." 
-                  className="bg-transparent border-none focus:outline-none focus:ring-0 text-foreground w-full text-base placeholder:text-muted-foreground/70"
-                />
+
+      {/* Blue Header */}
+      <div className="bg-gradient-to-br from-primary via-primary to-primary/80 text-white py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Button
+            variant="ghost"
+            className="text-white hover:bg-white/20 mb-4 -ml-2"
+            onClick={() => navigate('/explore')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Calendar className="h-7 w-7" />
               </div>
-              <button className="flex items-center justify-center p-3.5 bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl hover:bg-card/80 transition-colors shadow-sm">
-                <SlidersHorizontal className="text-foreground w-5 h-5" />
-              </button>
+              <div>
+                <h1 className="text-3xl font-display font-extrabold">Events</h1>
+                <p className="text-white/80 mt-1">Discover amazing events happening around you</p>
+              </div>
             </div>
           </div>
-        </header>
+        </div>
+      </div>
 
-        {/* Loading / Error States */}
-        {loading && (
-          <div className="flex justify-center py-20">
-            <p className="text-muted-foreground animate-pulse">Loading events...</p>
-          </div>
-        )}
-        
-        {error && (
-          <div className="text-center py-20">
-            <p className="text-red-500 bg-red-500/10 inline-block px-4 py-2 rounded-lg">{error}</p>
-          </div>
-        )}
+      <div className="container mx-auto px-4 py-8">
 
-        {/* Listings Stack */}
-        {!loading && !error && (
-          <section className="flex flex-col gap-6">
-            {filtered.map((event) => (
-              <div 
-                key={event.id}
-                onClick={() => handleEventClick(event.id)}
-                className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden flex flex-col md:flex-row hover:bg-card/60 transition-all duration-300 shadow-card hover:shadow-primary/5 cursor-pointer"
-              >
-                {/* Image Section */}
-                <div className="md:w-[320px] lg:w-[380px] shrink-0 relative overflow-hidden aspect-video md:aspect-auto h-48 md:h-auto">
-                  <img 
-                    src={renderValue(event.image)} 
-                    alt={renderValue(event.title)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        {/* Search Bar */}
+        <div className="max-w-md mx-auto mb-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Category Filter */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="flex flex-wrap justify-center gap-2 mb-12"
+        >
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              onClick={() => setSelectedCategory(category)}
+              className={`rounded-full ${
+                selectedCategory === category
+                  ? 'bg-primary text-white'
+                  : 'hover:border-primary'
+              }`}
+            >
+              {category}
+            </Button>
+          ))}
+        </motion.div>
+
+        {/* Events Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEvents.map((event, index) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -4 }}
+            >
+              <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={() => handleViewEvent(event)}>
+                {/* Event Image */}
+                <div className="relative h-48 overflow-hidden bg-primary/10">
+                  <img
+                    src={event.image || getMockImage(event.category)}
+                    alt={event.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1.5 bg-accent text-white font-bold text-[10px] sm:text-xs uppercase tracking-wider rounded-full shadow-lg border border-white/10">
-                      {renderValue(event.category || "Event")}
-                    </span>
+                  
+                  {/* Featured Badge */}
+                  {event.isFeatured && (
+                    <Badge className="absolute top-3 left-3 bg-primary text-white">
+                      Featured
+                    </Badge>
+                  )}
+
+                  {/* Price Badge */}
+                  <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full">
+                    {event.currency || 'NGN'} {event.price != null ? event.price.toLocaleString() : '0'}
+                  </div>
+
+                  {/* Attendees Overlay */}
+                  <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-full flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    <span className="text-xs">{event.attendees || 0}/{event.maxAttendees || 0}</span>
                   </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 p-5 lg:p-7 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-2 gap-4">
-                      <h3 className="text-xl lg:text-2xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                        {renderValue(event.title)}
-                      </h3>
-                      {event.rating != null && event.rating > 0 && (
-                        <div className="flex items-center gap-1 bg-background/50 backdrop-blur-sm border border-border/30 px-2 py-1 rounded-lg shrink-0">
-                          <Star className="text-yellow-400 fill-yellow-400 w-4 h-4" />
-                          <span className="font-bold text-foreground text-sm">{renderValue(event.rating)}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-muted-foreground text-sm lg:text-base line-clamp-2 mb-4 leading-relaxed">
-                      {renderValue(event.description)}
-                    </p>
-                    
-                    {event.location && (
-                      <div className="flex items-center text-muted-foreground mb-6">
-                        <MapPin className="text-primary w-4 h-4 mr-2 shrink-0" />
-                        <span className="text-sm line-clamp-1">{renderValue(event.location)}</span>
-                      </div>
-                    )}
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">
+                    {event.title || 'Untitled Event'}
+                  </CardTitle>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location || 'Location TBA'}</span>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-3 mt-auto">
-                    {event.phone && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(`tel:${renderValue(event.phone)}`, '_self'); }}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 h-11 px-6 rounded-xl font-bold transition-all shadow-none hover:shadow-[0_0_15px_rgba(192,193,255,0.4)]"
-                      >
-                        <Phone className="w-5 h-5" />
-                        <span>Call</span>
-                      </Button>
-                    )}
-                    {event.website && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(renderValue(event.website), '_blank'); }}
-                        variant="outline" 
-                        className="h-11 w-12 p-0 rounded-xl border-border/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all bg-transparent"
-                        aria-label="Website"
-                      >
-                        <Globe className="w-5 h-5" />
-                      </Button>
-                    )}
-                    {event.whatsapp && (
-                      <Button 
-                        onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${renderValue(event.whatsapp).replace(/\D/g, "")}`, '_blank'); }}
-                        variant="outline" 
-                        className="h-11 w-12 p-0 rounded-xl border-border/50 text-muted-foreground hover:text-green-500 hover:border-green-500/50 transition-all bg-transparent"
-                        aria-label="WhatsApp"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                      </Button>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>{event.date ? new Date(event.date).toLocaleDateString() : 'Date TBA'}</span>
+                    {event.time && (
+                      <>
+                        <Clock className="w-4 h-4 ml-2" />
+                        <span>{event.time}</span>
+                      </>
                     )}
                   </div>
                 </div>
               </div>
-            ))}
-          </section>
-        )}
+
+              {/* Rating */}
+              {event.rating != null && (
+                <div className="flex items-center gap-1 mb-2">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="text-sm font-medium">{event.rating}</span>
+                  <span className="text-sm text-muted-foreground">({event.reviews || 0} reviews)</span>
+                </div>
+              )}
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1 mb-3">
+                {(event.tags || []).slice(0, 3).map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                {event.description || 'No description available'}
+              </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookEvent(event);
+                      }}
+                      className="flex-1 bg-primary hover:opacity-90"
+                    >
+                      <Ticket className="w-4 h-4 mr-2" />
+                      Book Now
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLikeEvent(event.id);
+                      }}
+                      className={likedEvents.has(event.id) ? 'text-red-500 border-red-500' : ''}
+                    >
+                      <Heart className={`w-4 h-4 ${likedEvents.has(event.id) ? 'fill-current' : ''}`} />
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareEvent(event);
+                      }}
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Organizer Info */}
+              <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                {event.organizer ? `Organized by ${event.organizer}` : 'Organizer TBA'}
+              </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
 
         {/* Empty State */}
-        {!loading && !error && filtered.length === 0 && (
-          <div className="text-center py-20 bg-card/30 rounded-2xl border border-border/50 border-dashed">
+        {filteredEvents.length === 0 && (
+          <div className="text-center py-20">
             <p className="text-muted-foreground text-lg">No events found matching your search.</p>
           </div>
         )}
+      </div>
 
-        {/* Load More (Mock) */}
-        {!loading && !error && filtered.length > 0 && (
-          <div className="mt-12 flex justify-center">
-            <Button variant="outline" className="h-14 px-8 rounded-xl font-bold bg-card/60 backdrop-blur-sm border-border/50 hover:bg-card/80 transition-all flex items-center gap-2">
-              <span>Load More Events</span>
-              <ChevronDown className="w-5 h-5" />
-            </Button>
-          </div>
-        )}
-      </main>
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        event={selectedEvent}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedEvent(null);
+        }}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { MapPin, Star, Heart, ArrowRight, Loader2 } from "lucide-react";
 import CategoryGrid from "@/components/CategoryGrid";
 import HeroSlider from "@/components/HeroSlider";
 import SEO from "@/components/SEO";
+import { getMockImage } from "@/lib/mockImages";
 
 type BusinessItem = {
   id: string;
@@ -89,7 +90,7 @@ const CategoriesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+    <div className="min-h-screen bg-background">
       <SEO
         title="Explore Categories | CititourNG"
         description="Discover restaurants, hotels, events, attractions, lifestyle, shopping, and more across Nigeria."
@@ -180,7 +181,7 @@ const CategoriesPage = () => {
                   {/* Square Image */}
                   <div className="relative aspect-square overflow-hidden">
                     <img
-                      src={renderValue(biz.image)}
+                      src={renderValue(biz.image) || getMockImage(biz.category)}
                       alt={renderValue(biz.title)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

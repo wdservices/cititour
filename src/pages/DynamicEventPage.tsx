@@ -238,7 +238,7 @@ const DynamicEventPage = () => {
                       variant="outline"
                       size="icon"
                       onClick={handleLike}
-                      className={isLiked ? 'text-red-500 border-red-500' : ''}
+                      className={isLiked ? 'text-destructive border-destructive' : ''}
                     >
                       <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                     </Button>
@@ -250,7 +250,7 @@ const DynamicEventPage = () => {
 
                 {/* Event Image */}
                 {event.imageUrl && (
-                  <div className="w-full h-64 bg-gradient-to-br from-primary/70 to-accent/70 rounded-lg mb-6 flex items-center justify-center">
+                  <div className="w-full h-64 bg-primary rounded-lg mb-6 flex items-center justify-center">
                     <img 
                       src={event.imageUrl} 
                       alt={event.title}
@@ -412,7 +412,7 @@ const DynamicEventPage = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Status</span>
-                    <Badge className={event.isActive ? 'bg-green-500' : 'bg-yellow-500'}>
+                    <Badge className={event.isActive ? 'bg-success text-success-foreground' : 'bg-primary text-primary-foreground'}>
                       {event.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
@@ -496,7 +496,7 @@ const DynamicEventPage = () => {
 
               <Button
                 onClick={handlePayment}
-                className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:opacity-90 font-bold text-base shadow-lg shadow-primary/20"
+                className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-base shadow-lg shadow-primary/20"
               >
                 <CreditCard className="w-5 h-5 mr-2" />
                 Pay ₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}

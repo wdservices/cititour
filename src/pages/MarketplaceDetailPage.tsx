@@ -2,11 +2,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Heart, Share2, MapPin, ShoppingCart, 
   MessageCircle, Star, Shield, CheckCircle2,
-  ShieldCheck, Truck, RefreshCcw 
+  ShieldCheck, Truck, RefreshCcw, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import SEO from "@/components/SEO";
+import StampIcon from "@/components/StampIcon";
 
 /* Extended static listings matching the HTML design details */
 const listings = [
@@ -184,11 +185,11 @@ const MarketplaceDetailPage = () => {
               variant="ghost"
               size="icon"
               onClick={() => setLiked(!liked)}
-              className="rounded-full hover:text-red-500 hover:bg-red-500/10 transition-colors"
+              className="rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Heart
                 className={`h-5 w-5 ${
-                  liked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                  liked ? "fill-destructive text-destructive" : "text-muted-foreground"
                 }`}
               />
             </Button>
@@ -209,13 +210,13 @@ const MarketplaceDetailPage = () => {
             <Button
               variant="outline"
               className={`gap-2 transition-colors ${
-                  liked ? "border-red-500/50 bg-red-500/10 text-red-500" : ""
+                  liked ? "border-destructive/50 bg-destructive/10 text-destructive" : ""
                 }`}
               onClick={() => setLiked(!liked)}
             >
               <Heart
                 className={`h-4 w-4 ${
-                  liked ? "fill-red-500 text-red-500" : ""
+                  liked ? "fill-destructive text-destructive" : ""
                 }`}
               />
               {liked ? "Saved" : "Save"}
@@ -236,7 +237,7 @@ const MarketplaceDetailPage = () => {
                 alt={item.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none"></div>
+              <div className="absolute inset-0 pointer-events-none"></div>
             </div>
             
             {/* Thumbnails */}
@@ -250,7 +251,7 @@ const MarketplaceDetailPage = () => {
                       onClick={() => setMainImageIdx(idx)}
                       className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all relative ${
                         mainImageIdx === idx 
-                          ? "border-2 border-primary shadow-[0_0_15px_rgba(192,193,255,0.2)]" 
+                          ? "border-2 border-primary" 
                           : "border border-border/50 hover:border-primary/50"
                       }`}
                     >
@@ -300,32 +301,30 @@ const MarketplaceDetailPage = () => {
               <p className="text-[10px] lg:text-xs font-bold text-muted-foreground mb-1.5 uppercase tracking-widest">
                 Market Price
               </p>
-              <div className="text-3xl lg:text-[40px] font-extrabold text-primary leading-none tracking-tight">
+              <div className="text-3xl lg:text-[40px] font-extrabold text-accent leading-none tracking-tight">
                 {item.price}
               </div>
               <div className="mt-4 lg:mt-5 flex items-center gap-2 text-success font-medium text-xs lg:text-sm bg-success/10 w-fit px-3 py-1.5 rounded-lg border border-success/20">
                 <ShieldCheck className="w-4 h-4 lg:w-4 lg:h-4" />
-                Secure payment through Urban Pulse
+                Secure payment through CitiTour
               </div>
             </div>
 
             {/* Seller Profile Card */}
-            <div className="p-4 rounded-xl bg-card/40 border border-border/50 flex items-center justify-between group transition-all hover:bg-card/80 hover:shadow-md cursor-pointer">
+            <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between group transition-all hover:shadow-soft">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                  <Shield className="w-6 h-6 lg:w-7 lg:h-7" />
-                </div>
+                <StampIcon icon={User} tone="primary" size="md" />
                 <div>
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <h3 className="font-semibold text-base lg:text-lg text-foreground leading-none">
-                      {item.seller.name}
-                    </h3>
+                    <h3 className="font-display font-bold text-foreground">{item.seller.name}</h3>
                     {item.seller.verified && (
-                      <CheckCircle2 className="w-4 h-4 text-primary fill-primary/20" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-success/15 text-success">
+                        Verified
+                      </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-sm lg:text-sm">
-                    <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 mb-0.5" />
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="w-3.5 h-3.5 text-primary fill-primary mb-0.5" />
                     <span className="font-bold text-foreground">{item.seller.rating}</span>
                     <span className="text-muted-foreground">({item.seller.reviews} reviews)</span>
                   </div>
@@ -357,15 +356,15 @@ const MarketplaceDetailPage = () => {
               )}
             </div>
 
-            {/* CTAs */}
-            <div className="grid grid-cols-2 gap-3 lg:gap-4 mt-auto pt-4 lg:pt-0">
-              <Button className="w-full h-12 lg:h-14 text-sm lg:text-base font-bold rounded-xl shadow-[0_0_20px_rgba(192,193,255,0.2)] hover:scale-[1.02] active:scale-95 transition-all gap-2">
+            {/* Sticky contact CTA */}
+            <div className="sticky bottom-4 grid grid-cols-2 gap-3 lg:gap-4 mt-auto pt-4 lg:pt-0 z-10">
+              <Button className="w-full h-12 lg:h-14 text-sm lg:text-base font-bold rounded-full bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
                 <ShoppingCart className="w-5 h-5" />
                 Buy Now
               </Button>
-              <Button variant="outline" className="w-full h-12 lg:h-14 text-sm lg:text-base font-bold rounded-xl border-2 hover:bg-card active:scale-95 transition-all gap-2">
+              <Button variant="outline" className="w-full h-12 lg:h-14 text-sm lg:text-base font-bold rounded-full border-2 border-border bg-card gap-2">
                 <MessageCircle className="w-5 h-5" />
-                Message
+                Contact seller
               </Button>
             </div>
 
@@ -387,6 +386,32 @@ const MarketplaceDetailPage = () => {
 
           </div>
         </div>
+
+        {/* Related items strip */}
+        <section className="mt-12 pt-10 border-t border-border">
+          <h2 className="font-display text-2xl font-extrabold mb-6">Related items</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {listings
+              .filter((l) => l.id !== item.id && l.category === item.category)
+              .slice(0, 4)
+              .map((rel) => (
+                <button
+                  key={rel.id}
+                  type="button"
+                  onClick={() => navigate(`/marketplace/${rel.id}`)}
+                  className="text-left rounded-2xl bg-card border border-border overflow-hidden shadow-soft hover:shadow-card transition-shadow"
+                >
+                  <div className="aspect-square overflow-hidden">
+                    <img src={rel.images[0]} alt={rel.title} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm truncate">{rel.title}</h3>
+                    <p className="text-accent font-bold text-sm mt-1">{rel.price}</p>
+                  </div>
+                </button>
+              ))}
+          </div>
+        </section>
       </main>
     </div>
   );

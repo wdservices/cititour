@@ -3,10 +3,11 @@ import { motion } from "framer-motion";
 import { Building2, TrendingUp, ShieldCheck, BarChart3, Check, ArrowRight } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import StampIcon from "@/components/StampIcon";
 
 const plans = [
   {
-    name: "Starter",
+    name: "Basic",
     price: "\u20a60",
     period: "/mo",
     tag: "Get discovered",
@@ -19,7 +20,7 @@ const plans = [
     price: "\u20a615,000",
     period: "/mo",
     tag: "Top of search",
-    features: ["Everything in Starter", "Featured placement", "3 category badges", "Priority reviews", "Direct booking"],
+    features: ["Everything in Basic", "Featured placement", "3 category badges", "Priority reviews", "Direct booking"],
     cta: "Go featured",
     highlighted: true,
   },
@@ -35,9 +36,9 @@ const plans = [
 ];
 
 const value = [
-  { icon: TrendingUp, title: "Reach across Nigeria", body: "Indexed on Google. Featured across Lagos, Abuja and Port Harcourt city pages." },
-  { icon: ShieldCheck, title: "Verified trust", body: "Every business gets a verified badge. Real reviews from real diners and guests." },
-  { icon: BarChart3, title: "Own the analytics", body: "See page views, saves, direct bookings and review sentiment — updated live." },
+  { icon: TrendingUp, title: "Reach across Nigeria", body: "Indexed on Google. Featured across Lagos, Abuja and Port Harcourt city pages.", tone: "primary" as const },
+  { icon: ShieldCheck, title: "Verified trust", body: "Every business gets a verified badge. Real reviews from real diners and guests.", tone: "success" as const },
+  { icon: BarChart3, title: "Own the analytics", body: "See page views, saves, direct bookings and review sentiment — updated live.", tone: "accent" as const },
 ];
 
 export default function ListYourBusinessPage() {
@@ -58,7 +59,7 @@ export default function ListYourBusinessPage() {
       </header>
 
       <section className="py-20 md:py-28 border-b border-border relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-warm -z-10" />
+        <div className="absolute inset-0 bg-muted -z-10" />
         <div className="container mx-auto px-4 max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/15 text-accent text-xs font-semibold uppercase tracking-wider mb-6">
             <Building2 className="w-3.5 h-3.5" /> For businesses
@@ -83,8 +84,8 @@ export default function ListYourBusinessPage() {
               <motion.div key={v.title}
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-2xl bg-card border border-border shadow-soft">
-                <v.icon className="w-8 h-8 text-primary mb-4" />
+                className="group p-8 rounded-2xl bg-card border border-border shadow-soft flex flex-col items-start">
+                <StampIcon icon={v.icon} tone={v.tone} size="md" className="mb-4" />
                 <h3 className="font-display text-2xl font-bold mb-2">{v.title}</h3>
                 <p className="text-muted-foreground">{v.body}</p>
               </motion.div>
@@ -112,7 +113,7 @@ export default function ListYourBusinessPage() {
                 <ul className="space-y-3 flex-1 mb-6">
                   {p.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${p.highlighted ? 'text-primary' : 'text-[hsl(var(--success))]'}`} />
+                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${p.highlighted ? 'text-primary' : 'text-success'}`} />
                       <span>{f}</span>
                     </li>
                   ))}

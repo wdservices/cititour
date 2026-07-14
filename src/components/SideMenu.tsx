@@ -110,7 +110,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-gradient-primary">
+      <div className="flex items-center justify-between p-6 bg-primary">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Avatar className="h-12 w-12 border-2 border-white/30">
             <AvatarImage src={userAvatar} alt={displayName} />
@@ -156,7 +156,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
                     }}
                     onClick={() => handleMenuItemClick(item.title)}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-primary/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -192,7 +192,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
         
         {/* Company Branding */}
         <div className="mt-4 flex flex-col items-center gap-1 justify-center">
-          <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-6 w-auto object-contain" />
+          <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-6 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
           <p className="text-[10px] text-muted-foreground/60 mt-1">
             By Bluewaves Technologies
           </p>

@@ -2,6 +2,7 @@ import { MapPin, Star, Phone, Globe, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getMockImage } from "@/lib/mockImages";
 
 interface ListingCardProps {
   id: string;
@@ -46,7 +47,7 @@ const ListingCard = ({
     <Card className="overflow-hidden cursor-pointer group hover:shadow-card transition-all duration-300 animate-fade-in">
       <div className="relative h-48 overflow-hidden" onClick={onClick}>
         <img 
-          src={renderValue(image)} 
+          src={renderValue(image) || getMockImage(category)} 
           alt={renderValue(title)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />

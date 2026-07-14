@@ -14,7 +14,7 @@ const NotFound = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center animate-fade-in">
         {/* 404 Icon */}
-        <div className="w-32 h-32 mx-auto mb-8 bg-gradient-primary rounded-3xl flex items-center justify-center shadow-hero">
+        <div className="w-32 h-32 mx-auto mb-8 bg-primary rounded-3xl flex items-center justify-center shadow-hero">
           <span className="text-6xl text-primary-foreground font-bold">404</span>
         </div>
 
@@ -29,7 +29,7 @@ const NotFound = () => {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button 
-            className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-soft"
+            className="w-full bg-primary hover:opacity-90 text-primary-foreground shadow-soft"
             onClick={() => window.history.back()}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

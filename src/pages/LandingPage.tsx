@@ -1,12 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Sparkles, MapPin, Calendar, Hotel, ShoppingBag, Utensils, ArrowRight, Star, Users, Shield, Sun, Moon, Heart, MessageCircle, Share2, ThumbsUp, Search } from 'lucide-react';
+import { Sparkles, MapPin, Calendar, Hotel, ShoppingBag, Utensils, ArrowRight, Star, Users, Shield, Heart, MessageCircle, Share2, ThumbsUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate, Link } from 'react-router-dom';
 import AnimatedRegionTitle from '@/components/AnimatedRegionTitle';
 import { useRegion } from '@/contexts/RegionContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import EventsSection from '@/components/EventsSection';
 import heroCity from '@/assets/hero-cityscape.jpg';
@@ -17,7 +16,6 @@ import heroHotel from '@/assets/hero-hotel.jpg';
 const LandingPage = () => {
   const navigate = useNavigate();
   const { brandName } = useRegion();
-  const { theme, toggleTheme } = useTheme();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -103,9 +101,9 @@ const LandingPage = () => {
   const statIconColors = ['text-primary', 'text-accent', 'text-success', 'text-primary-dark'];
 
   return (
-    <div className="min-h-screen relative bg-white dark:bg-background text-foreground">
+    <div className="min-h-screen relative bg-background text-foreground">
       {/* Light theme global gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-background to-muted/40 dark:hidden -z-20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-card via-background to-muted/40 -z-20" />
       {/* Hero Section */}
       <section
         className="relative overflow-hidden"
@@ -185,53 +183,38 @@ const LandingPage = () => {
           >
             {/* Logo on the Left */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-              <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-10 w-auto object-contain" />
+              <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-16 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-5 flex items-center mt-0.5">Concierge</span>
             </div>
 
             {/* Actions on the Right */}
-            <div className="flex items-center gap-2">
-            {/* Events Button */}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                const eventsSection = document.getElementById('events');
-                if (eventsSection) {
-                  eventsSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                  navigate('/events');
-                }
-              }}
-              className="flex items-center gap-2 rounded-full border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all duration-200 text-foreground"
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Events</span>
-            </Button>
-            
-            {/* Theme Toggle */}
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={toggleTheme} 
-              className="rounded-full border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all duration-200"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
-            
-            {/* Sign In Button - enhanced visibility */}
-            <Button 
-              onClick={() => navigate('/auth?force=true')}
-              className="relative overflow-hidden rounded-full bg-gradient-to-r from-primary to-accent text-white px-6 py-2 hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 group"
-            >
-              <span className="font-semibold">Sign In</span>
-              <span className="pointer-events-none absolute inset-y-0 left-[-30%] w-[60%] translate-x-[-100%] group-hover:translate-x-[250%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-            </Button>
-            </div>
+        <div className="flex items-center gap-2">
+        {/* Events Button */}
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => {
+            const eventsSection = document.getElementById('events');
+            if (eventsSection) {
+              eventsSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              navigate('/events');
+            }
+          }}
+          className="flex items-center gap-2 rounded-full border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all duration-200 text-foreground"
+        >
+          <Calendar className="h-4 w-4" />
+          <span className="hidden sm:inline font-medium">Events</span>
+        </Button>
+        
+        {/* Sign In Button - enhanced visibility */}
+        <Button 
+          onClick={() => navigate('/auth?force=true')}
+          className="rounded-full bg-primary text-white px-6 py-2 hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+        >
+          <span className="font-semibold">Sign In</span>
+        </Button>
+        </div>
           </motion.nav>
 
           {/* Mobile Search Bar */}
@@ -266,7 +249,7 @@ const LandingPage = () => {
                   className="flex justify-center md:justify-start mb-6"
                 >
                   <div className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full bg-primary/10 border border-dashed border-primary/40 backdrop-blur-md">
-                    <img src="/cititour_logo.png" alt="CitiTour Logo" className="h-7 w-7 rounded-full object-contain bg-background p-0.5" />
+                    <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-7 w-7 rounded-full object-contain bg-background p-0.5" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
                     <span className="text-xs font-bold uppercase tracking-wider text-primary">CitiTour Premium Concierge</span>
                   </div>
                 </motion.div>
@@ -307,12 +290,11 @@ const LandingPage = () => {
                 <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
                   <Button
                     size="lg"
-                    className="relative overflow-hidden text-lg px-8 py-5 rounded-full bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 group shadow-soft"
+                    className="text-lg px-8 py-5 rounded-full bg-primary text-white hover:bg-primary/90 shadow-soft"
                     onClick={() => navigate('/auth?force=true')}
                   >
                     Get Started
                     <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    <span className="pointer-events-none absolute inset-y-0 left-[-30%] w-[60%] translate-x-[-100%] group-hover:translate-x-[250%] transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
                   </Button>
 
                   <div className="flex items-center gap-6 text-sm">

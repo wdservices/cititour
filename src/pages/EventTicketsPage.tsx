@@ -4,7 +4,7 @@ import {
   Plus, Calendar, MapPin, Share2, Copy, QrCode, Filter, Settings, 
   Search, Edit3, User, BarChart, Trash2, Home, Compass, Bookmark, 
   Users, Bell, HelpCircle, ArrowUpRight, TrendingUp, CheckCircle, 
-  Star, Info
+  Star, Info, ArrowLeft, Ticket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -353,16 +353,46 @@ const EventTicketsPage = () => {
   const capacityPercent = totalCapacity > 0 ? Math.round((totalTicketsSold / totalCapacity) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden px-4 md:px-12 py-8 pb-16">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       
       <SEO title="Event Tickets | TourPH" description="Manage your event registrations and listings." />
 
-      {/* Page Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pt-4">
-        <div>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">Analytics Dashboard</h2>
-          {/* Theme-compliant Navigation Tabs */}
-          <nav className="flex gap-6 mt-3">
+      {/* Blue Header */}
+      <div className="bg-gradient-to-br from-primary via-primary to-primary/80 text-white py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Button
+            variant="ghost"
+            className="text-white hover:bg-white/20 mb-4 -ml-2"
+            onClick={() => navigate('/explore')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Ticket className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-display font-extrabold">Event Ticketing</h1>
+                <p className="text-white/80 mt-1">Manage your events and ticket sales</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="bg-white text-primary font-bold px-6 py-2.5 rounded-xl hover:bg-white/90 transition-all flex items-center gap-2 shadow-lg shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Event</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search and Tabs */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <nav className="flex gap-6">
             <button 
               onClick={() => setActiveTab('overview')}
               className={`text-sm font-bold relative pb-1 transition-all ${activeTab === 'overview' ? 'text-primary after:content-[""] after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full' : 'text-muted-foreground hover:text-foreground'}`}
@@ -382,10 +412,7 @@ const EventTicketsPage = () => {
               Attendance
             </button>
           </nav>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:flex-none">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input 
               value={searchTerm}
@@ -395,17 +422,9 @@ const EventTicketsPage = () => {
               type="text"
             />
           </div>
-          <button 
-            onClick={() => setCreateOpen(true)}
-            className="bg-primary text-primary-foreground font-bold px-6 py-2.5 rounded-full hover:opacity-90 transition-all flex items-center gap-2 shadow-md shadow-primary/20 shrink-0"
-          >
-            <Plus className="w-4 h-4 shrink-0" />
-            <span>Create Event</span>
-          </button>
         </div>
-      </div>
 
-      {/* Analytics Header Stats */}
+        {/* Analytics Header Stats */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-start">
@@ -741,6 +760,8 @@ const EventTicketsPage = () => {
           </div>
         </section>
       )}
+
+      </div>
 
       {/* CREATE EVENT DIALOG */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

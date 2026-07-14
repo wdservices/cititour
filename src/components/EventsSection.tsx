@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EventDetailModal from './EventDetailModal';
+import { getMockImage } from '@/lib/mockImages';
 
 interface Event {
   id: string;
@@ -36,7 +37,7 @@ const mockEvents: Event[] = [
     location: 'Eko Atlantic, Lagos',
     price: 5000,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
     category: 'Food & Drink',
     organizer: 'Lagos Culinary Guild',
     attendees: 245,
@@ -55,7 +56,7 @@ const mockEvents: Event[] = [
     location: 'Abuja International Conference Center',
     price: 15000,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
     category: 'Technology',
     organizer: 'TechHub Nigeria',
     attendees: 180,
@@ -73,7 +74,7 @@ const mockEvents: Event[] = [
     location: 'Eko Hotels & Suites, Lagos',
     price: 7500,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
     category: 'Music & Entertainment',
     organizer: 'Beat Entertainment',
     attendees: 320,
@@ -92,7 +93,7 @@ const mockEvents: Event[] = [
     location: 'Nike Art Gallery, Lagos',
     price: 2000,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1531243269054-5ebf6f34081e?w=800&q=80',
     category: 'Arts & Culture',
     organizer: 'Nigerian Artists Association',
     attendees: 89,
@@ -110,7 +111,7 @@ const mockEvents: Event[] = [
     location: 'Co-Creation Hub, Abuja',
     price: 3500,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80',
     category: 'Business',
     organizer: 'Startup Nigeria',
     attendees: 67,
@@ -128,7 +129,7 @@ const mockEvents: Event[] = [
     location: 'Tarkwa Bay Beach, Lagos',
     price: 1000,
     currency: 'NGN',
-    image: '/api/placeholder/400/250',
+    image: 'https://images.unsplash.com/photo-1461896836934-bd45ba8f8e8b?w=800&q=80',
     category: 'Sports & Recreation',
     organizer: 'Lagos Sports Club',
     attendees: 156,
@@ -196,7 +197,7 @@ const EventsSection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
             Upcoming Events
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -218,10 +219,10 @@ const EventsSection = () => {
               variant={selectedCategory === category ? "default" : "outline"}
               onClick={() => setSelectedCategory(category)}
               className={`rounded-full ${
-                selectedCategory === category
-                  ? 'bg-gradient-to-r from-primary to-accent text-white'
-                  : 'hover:border-primary'
-              }`}
+                  selectedCategory === category
+                    ? 'bg-primary text-white'
+                    : 'hover:border-primary'
+                }`}
             >
               {category}
             </Button>
@@ -242,13 +243,15 @@ const EventsSection = () => {
               <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={() => handleViewEvent(event)}>
                 {/* Event Image */}
                 <div className="relative h-48 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-primary/70 to-accent/70 flex items-center justify-center">
-                    <Calendar className="w-16 h-16 text-white/50" />
-                  </div>
+                  <img
+                    src={event.image || getMockImage(event.category)}
+                    alt={event.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   
                   {/* Featured Badge */}
                   {event.isFeatured && (
-                    <Badge className="absolute top-3 left-3 bg-gradient-to-r from-primary to-primary-dark text-white">
+                    <Badge className="absolute top-3 left-3 bg-primary text-white">
                       Featured
                     </Badge>
                   )}
@@ -309,12 +312,12 @@ const EventsSection = () => {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBookEvent(event);
-                      }}
-                      className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                    >
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBookEvent(event);
+                    }}
+                    className="flex-1 bg-primary hover:opacity-90"
+                  >
                       <Ticket className="w-4 h-4 mr-2" />
                       Book Now
                     </Button>

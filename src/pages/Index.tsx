@@ -30,7 +30,7 @@ const Index = () => {
               className="text-center"
             >
               <div className="flex justify-center mb-6">
-                <div className="w-14 h-14 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-hero">
+                <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-hero">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
               </div>
@@ -82,7 +82,7 @@ const Index = () => {
               <div className="mt-8 flex gap-3 justify-center">
                 <button
                   onClick={() => navigate('/events')}
-                  className="px-5 py-3 rounded-xl bg-gradient-primary text-white font-medium shadow-soft hover:opacity-90 transition"
+                  className="px-5 py-3 rounded-xl bg-primary text-white font-medium shadow-soft hover:opacity-90 transition"
                 >
                   Explore Events
                 </button>

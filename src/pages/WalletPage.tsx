@@ -2,13 +2,9 @@ import React, { useState } from "react";
 import { ArrowLeft, Plus, Minus, CreditCard, Smartphone, Building, History, TrendingUp, Megaphone, Ticket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { useWallet, PaymentMethod } from "@/contexts/WalletContext";
@@ -40,23 +36,12 @@ const WalletPage = () => {
     { id: "bank", name: "Bank Transfer", type: "bank", icon: Building, description: "Online banking" },
   ];
 
-  const quickActions = [
-    { 
-      id: "run-ads", 
-      title: "Run Ads", 
-      description: "Promote your business", 
-      icon: Megaphone, 
-      route: "/run-ads",
-      minAmount: 50 
-    },
-    { 
-      id: "event-tickets", 
-      title: "Event Tickets", 
-      description: "Promote events", 
-      icon: Ticket, 
-      route: "/event-tickets",
-      minAmount: 25 
-    },
+  const stampActions = [
+    { id: "add", title: "Add Money", icon: Plus, tone: "primary" as const, rotate: "-rotate-6" as const, onClick: () => setShowFundDialog(true) },
+    { id: "send", title: "Withdraw", icon: Minus, tone: "accent" as const, rotate: "rotate-3" as const, onClick: () => setShowWithdrawDialog(true) },
+    { id: "history", title: "History", icon: History, tone: "success" as const, rotate: "-rotate-3" as const, onClick: () => document.getElementById("wallet-history")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "run-ads", title: "Run Ads", icon: Megaphone, tone: "primary-dark" as const, rotate: "rotate-6" as const, onClick: () => handleQuickAction({ id: "run-ads", title: "Run Ads", description: "Promote your business", icon: Megaphone, route: "/run-ads", minAmount: 50 }) },
+    { id: "event-tickets", title: "Tickets", icon: Ticket, tone: "primary" as const, rotate: "-rotate-3" as const, onClick: () => handleQuickAction({ id: "event-tickets", title: "Event Tickets", description: "Promote events", icon: Ticket, route: "/event-tickets", minAmount: 25 }) },
   ];
 
   const handleFundWallet = async () => {
@@ -167,7 +152,7 @@ const WalletPage = () => {
     }
   };
 
-  const handleQuickAction = (action: typeof quickActions[0]) => {
+  const handleQuickAction = (action: { route: string; minAmount: number; title: string }) => {
     if (balance < action.minAmount) {
       toast({
         title: "Insufficient Balance",
@@ -180,135 +165,113 @@ const WalletPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1C1710] via-[#2A1D12] to-[#0B0E14]">
-      {/* Header */}
-      <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div className="flex items-center gap-4 p-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="border-b border-border bg-background">
+        <div className="flex items-center gap-4 p-4 max-w-3xl mx-auto">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/explore')}
-            className="text-white hover:bg-white/20"
+            className="text-foreground hover:bg-muted"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-white">Wallet</h1>
-            <p className="text-sm text-white/80">Manage your funds</p>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Money</span>
+            <h1 className="font-display text-2xl font-extrabold text-foreground">Wallet</h1>
+            <p className="text-sm text-muted-foreground">Manage your funds</p>
           </div>
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* Wallet Balance Card */}
-        <Card className="bg-success border-0 text-white">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Wallet Balance</span>
-              <TrendingUp className="h-5 w-5" />
-            </CardTitle>
-            <CardDescription className="text-green-100">
-              Available funds for app services
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">
-              ₦{balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setShowFundDialog(true)}
-                variant="secondary"
-                className="flex-1"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Funds
-              </Button>
-              <Button 
-                onClick={() => setShowWithdrawDialog(true)}
-                variant="outline"
-                className="flex-1 bg-white/20 border-white/30 text-white hover:bg-white/30"
-              >
-                <Minus className="w-4 h-4 mr-2" />
-                Withdraw
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="p-4 space-y-8 max-w-3xl mx-auto">
+        {/* Flat marigold balance hero */}
+        <div className="rounded-2xl bg-primary text-primary-foreground border border-border p-6 md:p-8 shadow-soft">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-80">Available balance</span>
+            <TrendingUp className="h-5 w-5 opacity-80" />
+          </div>
+          <div className="font-display text-4xl md:text-5xl font-extrabold mb-6">
+            ₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => setShowFundDialog(true)}
+              className="flex-1 rounded-full bg-foreground text-background hover:bg-foreground/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Money
+            </Button>
+            <Button
+              onClick={() => setShowWithdrawDialog(true)}
+              variant="outline"
+              className="flex-1 rounded-full border-foreground/30 text-primary-foreground bg-transparent hover:bg-foreground/10"
+            >
+              <Minus className="w-4 h-4 mr-2" />
+              Withdraw
+            </Button>
+          </div>
+        </div>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Use your wallet for app services</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                const canUse = balance >= action.minAmount;
-                
+        {/* Stamp-motif quick actions */}
+        <section>
+          <h2 className="font-display text-xl font-bold mb-5">Quick actions</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+            {stampActions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                onClick={action.onClick}
+                className="group flex flex-col items-center gap-3 p-3 rounded-2xl border border-transparent hover:border-border hover:bg-card transition-all"
+              >
+                <StampIcon icon={action.icon} tone={action.tone} size="md" rotate={action.rotate} />
+                <span className="text-xs font-semibold text-foreground text-center">{action.title}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Transaction history — divided list */}
+        <section id="wallet-history" className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
+          <div className="px-5 py-4 border-b border-border">
+            <h2 className="font-display text-xl font-bold flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              Transaction history
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">Your recent wallet activities</p>
+          </div>
+          <div className="divide-y divide-border">
+            {getTransactionHistory().length === 0 ? (
+              <p className="px-5 py-10 text-center text-sm text-muted-foreground">No transactions yet.</p>
+            ) : (
+              getTransactionHistory().map((transaction) => {
+                const status = (transaction as { status?: string }).status;
+                const isCredit = transaction.type === "credit";
+                const pillClass =
+                  status === "pending"
+                    ? "bg-primary/15 text-primary"
+                    : status === "failed"
+                      ? "bg-destructive/15 text-destructive"
+                      : isCredit
+                        ? "bg-success/15 text-success"
+                        : "bg-destructive/15 text-destructive";
                 return (
-                  <Button
-                    key={action.id}
-                    variant="outline"
-                    className={`h-auto p-4 justify-start ${!canUse ? 'opacity-50' : ''}`}
-                    onClick={() => handleQuickAction(action)}
-                    disabled={!canUse}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="text-left flex-1">
-                        <div className="font-medium">{action.title}</div>
-                        <div className="text-sm text-muted-foreground">{action.description}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Min: ₦{action.minAmount}
-                        </div>
+                  <div key={transaction.id} className="px-5 py-4 flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground truncate">{transaction.description}</div>
+                      <div className="text-sm text-muted-foreground mt-0.5">
+                        {transaction.method} · {transaction.date}
                       </div>
                     </div>
-                  </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Transaction History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Transaction History
-            </CardTitle>
-            <CardDescription>Your recent wallet activities</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {getTransactionHistory().map((transaction, index) => (
-                <div key={transaction.id}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge 
-                          variant={transaction.type === "credit" ? "default" : "secondary"}
-                          className={transaction.type === "credit" ? "bg-green-500" : "bg-red-500"}
-                        >
-                          {transaction.type === "credit" ? "+" : "-"}₦{transaction.amount.toFixed(2)}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">{transaction.method}</span>
-                      </div>
-                      <div className="font-medium">{transaction.description}</div>
-                      <div className="text-sm text-muted-foreground">{transaction.date}</div>
-                    </div>
+                    <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full ${pillClass}`}>
+                      {isCredit ? "+" : "-"}₦{transaction.amount.toFixed(2)}
+                    </span>
                   </div>
-                  {index < getTransactionHistory().length - 1 && <Separator className="mt-4" />}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                );
+              })
+            )}
+          </div>
+        </section>
       </div>
 
       {/* Fund Wallet Dialog */}
