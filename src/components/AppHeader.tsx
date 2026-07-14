@@ -101,17 +101,6 @@ const AppHeader = () => {
             >
               Marketplace
             </Button>
-            <Button
-              variant="ghost"
-              className={`text-sm ${
-                isActive("/businesses")
-                  ? "text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => navigate("/businesses")}
-            >
-              Business Place
-            </Button>
           </nav>
 
           {/* Divider between nav links and actions */}
@@ -135,9 +124,9 @@ const AppHeader = () => {
 
           {/* User Avatar */}
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/profile/dashboard")}
             className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/30 hover:border-primary transition-colors flex items-center justify-center bg-muted shrink-0"
-            aria-label="Go to profile"
+            aria-label="Go to dashboard"
           >
             {user?.photoURL ? (
               <img

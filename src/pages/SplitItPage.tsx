@@ -60,7 +60,7 @@ export default function SplitItPage() {
             <Link to="/nigeria/lagos" className="hover:text-primary">Lagos</Link>
             <Link to="/nigeria/abuja" className="hover:text-primary">Abuja</Link>
             <Link to="/nigeria/rivers" className="hover:text-primary">Port Harcourt</Link>
-            <Link to="/list-your-business" className="hover:text-primary">List business</Link>
+            <Link to="/marketplace" className="hover:text-primary">Marketplace</Link>
             <Link to="/blog" className="hover:text-primary">Blog</Link>
           </nav>
           <Button asChild className="rounded-full"><Link to="/auth">Sign in</Link></Button>

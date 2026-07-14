@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Search, Star, MapPin, ChevronRight, ArrowLeft, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { getMockImage } from "@/lib/mockImages";
+import { useRegion } from "@/contexts/RegionContext";
 
 type BusinessItem = {
   id: string;
@@ -72,11 +73,13 @@ const AllBusinessesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { state } = useRegion();
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const snap = await getDocs(collection(db, "businesses"));
+        const q = query(collection(db, "businesses"), where("state", "==", state));
+        const snap = await getDocs(q);
         const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
         const filteredData = data.filter(item => {
           if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") {
@@ -98,7 +101,7 @@ const AllBusinessesPage = () => {
       }
     };
     fetchItems();
-  }, []);
+  }, [state]);
 
   const filtered = useMemo(() => {
     let result = items;

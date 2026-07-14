@@ -1,62 +1,76 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, limit, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, limit, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { MapPin, Star, Heart, ArrowRight, Loader2 } from "lucide-react";
+import { MapPin, Star, Heart, ArrowRight, Loader2, ChevronRight, Store, Calendar, ShoppingBag, Home } from "lucide-react";
 import CategoryGrid from "@/components/CategoryGrid";
 import HeroSlider from "@/components/HeroSlider";
 import SEO from "@/components/SEO";
 import { getMockImage } from "@/lib/mockImages";
+import { useRegion } from "@/contexts/RegionContext";
 
-type BusinessItem = {
+type ListingItem = {
   id: string;
   title: string;
   description: string;
   image: string;
-  images?: string[];
   category: string;
   rating?: number;
   location?: string;
+  price?: string;
 };
 
+const PLACEHOLDER_IMG = "/placeholder.svg";
+
 const CategoriesPage = () => {
-  const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
+  const [businesses, setBusinesses] = useState<ListingItem[]>([]);
+  const [events, setEvents] = useState<ListingItem[]>([]);
+  const [marketplace, setMarketplace] = useState<ListingItem[]>([]);
+  const [properties, setProperties] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const { brandName, state } = useRegion();
 
   useEffect(() => {
-    const fetchBusinesses = async () => {
+    const fetchAll = async () => {
       try {
-        const q = query(collection(db, "businesses"), limit(6));
-        const snap = await getDocs(q);
-        const data = snap.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as any),
-        })) as BusinessItem[];
-        setBusinesses(data);
+        const [bizSnap, mktSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "businesses"), where("state", "==", state), limit(10))),
+          getDocs(query(collection(db, "marketplace"), limit(10))),
+          getDocs(query(collection(db, "house_listings"), limit(10))),
+        ]);
+
+        const bizData = bizSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ListingItem[];
+        const allEvents = bizData.filter((b) => b.category === "Event" || b.category === "Events");
+        const allBusinesses = bizData.filter((b) => b.category !== "Event" && b.category !== "Events");
+
+        setBusinesses(allBusinesses.slice(0, 4));
+        setEvents(allEvents.slice(0, 4));
+        setMarketplace(
+          mktSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
+        );
+        setProperties(
+          propSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
+        );
       } catch (err) {
-        console.error("Error fetching businesses:", err);
+        console.error("Error fetching listings:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchBusinesses();
-  }, []);
+    fetchAll();
+  }, [state]);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
 
-  const pathMap: Record<string, string> = {
+  const bizPathMap: Record<string, string> = {
     Restaurant: "restaurants",
     Hotel: "hotels",
     Shopping: "shopping",
@@ -64,8 +78,6 @@ const CategoriesPage = () => {
     "Fun Places": "fun-places",
     Airbnb: "airbnb",
     Lifestyle: "lifestyle",
-    Event: "events",
-    Events: "events",
     Other: "others",
     "Event Venue": "events",
     Entertainment: "fun-places",
@@ -73,164 +85,218 @@ const CategoriesPage = () => {
     "Business Services": "others",
   };
 
-  const handleBusinessClick = (item: BusinessItem) => {
-    const base = pathMap[item.category] || "others";
+  const handleBizClick = (item: ListingItem) => {
+    const base = bizPathMap[item.category] || "others";
     navigate(`/${base}/${item.id}`);
   };
 
-  const renderValue = (val: any) => {
+  const handleEventClick = (item: ListingItem) => {
+    navigate(`/events/${item.id}`);
+  };
+
+  const handleMktClick = (item: ListingItem) => {
+    navigate(`/marketplace/${item.id}`);
+  };
+
+  const handlePropClick = (item: ListingItem) => {
+    navigate(`/airbnb/${item.id}`);
+  };
+
+  const r = (val: any): string => {
     if (val === null || val === undefined) return "";
     if (typeof val === "object") {
-      if (val._lat !== undefined && val._long !== undefined) {
-        return `${val._lat.toFixed(4)}, ${val._long.toFixed(4)}`;
-      }
+      if (val._lat !== undefined && val._long !== undefined) return `${val._lat.toFixed(4)}, ${val._long.toFixed(4)}`;
       return JSON.stringify(val);
     }
     return String(val);
   };
 
+  const imgSrc = (item: ListingItem) => r(item.image) || getMockImage(item.category) || PLACEHOLDER_IMG;
+
+  const renderRow = (
+    title: string,
+    items: ListingItem[],
+    onCardClick: (item: ListingItem) => void,
+    viewAllPath: string,
+    viewAllLabel: string,
+    emptyIcon: React.ReactNode,
+    cardSubtitle?: (item: ListingItem) => React.ReactNode
+  ) => (
+    <section className="py-6">
+      <div className="px-4 md:px-6 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">{title}</h2>
+        {items.length > 0 && (
+          <button
+            onClick={() => navigate(viewAllPath)}
+            className="flex items-center gap-2 text-primary font-bold text-sm hover:underline transition-all group shrink-0"
+          >
+            {viewAllLabel}
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-7 h-7 text-primary animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="px-4 md:px-6">
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
+            <div className="flex-shrink-0 w-[280px] bg-muted/40 rounded-2xl border border-border/50 flex flex-col items-center justify-center py-12 px-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                {emptyIcon}
+              </div>
+              <p className="text-sm font-semibold text-foreground mb-1">Nothing here yet</p>
+              <p className="text-xs text-muted-foreground">
+                Check back soon — new listings drop regularly.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className="group flex-shrink-0 w-[280px] snap-start bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-card animate-fade-in"
+              style={{ animationDelay: `${index * 0.08}s` }}
+              onClick={() => onCardClick(item)}
+            >
+              <div className="relative aspect-[16/10] overflow-hidden">
+                <img
+                  src={imgSrc(item)}
+                  alt={r(item.title)}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLike(item.id);
+                  }}
+                  className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-red-400 transition-colors"
+                  aria-label={likedIds.has(item.id) ? "Unlike" : "Like"}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${
+                      likedIds.has(item.id) ? "fill-red-500 text-red-500" : ""
+                    }`}
+                  />
+                </button>
+                {item.rating != null && item.rating > 0 && (
+                  <div className="absolute bottom-3 left-3 bg-background/80 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-[11px] font-bold text-foreground">{r(item.rating)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3.5">
+                <h3 className="font-semibold text-sm text-foreground truncate">{r(item.title)}</h3>
+                {item.location && (
+                  <div className="flex items-center gap-1 text-muted-foreground text-xs mt-0.5 mb-1.5">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{r(item.location)}</span>
+                  </div>
+                )}
+                {cardSubtitle ? (
+                  cardSubtitle(item)
+                ) : (
+                  <span className="font-bold text-xs text-primary">{r(item.category)}</span>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {items.length >= 4 && (
+            <button
+              onClick={() => navigate(viewAllPath)}
+              className="flex-shrink-0 w-[280px] snap-start bg-muted/30 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer min-h-[240px]"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <ChevronRight className="w-6 h-6 text-primary" />
+              </div>
+              <span className="font-bold text-sm text-muted-foreground">{viewAllLabel}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Explore Categories | CititourNG"
-        description="Discover restaurants, hotels, events, attractions, lifestyle, shopping, and more across Nigeria."
-        keywords={[
-          "Nigeria",
-          "restaurants",
-          "hotels",
-          "events",
-          "attractions",
-          "lifestyle",
-          "shopping",
-          "travel",
-          "tourism",
-          "fun places",
-        ]}
+        title={`Explore ${brandName} | CititourNG`}
+        description={`Discover businesses, events, marketplace, and properties across Nigeria.`}
+        keywords={["Nigeria", "restaurants", "hotels", "events", "marketplace", "properties"]}
         canonicalUrl={`${window.location.origin}/explore`}
         ogImage="/favicon.ico"
-        structuredData={{
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "Explore Categories",
-          itemListElement: [
-            "Restaurants",
-            "Hotels",
-            "Events",
-            "Fun Places",
-            "Shopping",
-            "Airbnb",
-            "Attractions",
-            "Lifestyle",
-            "Others",
-          ].map((name: string, index: number) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            name: name,
-          })),
-        }}
       />
 
       <main className="pb-12">
-        {/* Hero Carousel */}
         <HeroSlider />
-
-        {/* Category Grid */}
         <CategoryGrid />
 
-        {/* ── Business Listings Section ── */}
-        <section className="px-4 md:px-6 py-10 md:py-14">
-          {/* Section header */}
-          <div className="mb-8 md:mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Business Listings
-              </h2>
-              <p className="text-muted-foreground text-base">
-                Discover and connect with top local businesses
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/businesses")}
-              className="flex items-center gap-2 text-primary font-bold text-sm hover:underline transition-all group"
-            >
-              View Business Place
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
+        <div className="px-4 md:px-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            Discovered in {brandName}
+          </h1>
+          <p className="text-muted-foreground text-sm md:text-base mb-6">
+            Top local businesses, events, and experiences near you
+          </p>
+        </div>
 
-          {/* Business Cards */}
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            </div>
-          ) : businesses.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">
-                No businesses available yet. Check back soon!
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {businesses.map((biz, index) => (
-                <div
-                  key={biz.id}
-                  className="group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-card animate-fade-in"
-                  style={{ animationDelay: `${index * 0.08}s` }}
-                  onClick={() => handleBusinessClick(biz)}
-                >
-                  {/* Square Image */}
-                  <div className="relative aspect-square overflow-hidden">
-                    <img
-                      src={renderValue(biz.image) || getMockImage(biz.category)}
-                      alt={renderValue(biz.title)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* Favorite overlay */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleLike(biz.id);
-                      }}
-                      className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-red-400 transition-colors"
-                      aria-label={likedIds.has(biz.id) ? "Unlike" : "Like"}
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          likedIds.has(biz.id) ? "fill-red-500 text-red-500" : ""
-                        }`}
-                      />
-                    </button>
-                    {/* Rating badge on image */}
-                    {biz.rating != null && biz.rating > 0 && (
-                      <div className="absolute bottom-3 left-3 bg-background/80 backdrop-blur-md px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        <span className="text-[11px] font-bold text-foreground">
-                          {renderValue(biz.rating)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+        {renderRow(
+          "Local Businesses",
+          businesses,
+          handleBizClick,
+          "/businesses",
+          "View All Businesses",
+          <Store className="w-6 h-6 text-primary" />
+        )}
 
-                  {/* Content */}
-                  <div className="p-3.5">
-                    <h3 className="font-semibold text-sm md:text-base text-foreground truncate">
-                      {renderValue(biz.title)}
-                    </h3>
-                    {biz.location && (
-                      <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{renderValue(biz.location)}</span>
-                      </div>
-                    )}
-                    <span className="font-bold text-sm text-primary">
-                      {renderValue(biz.category)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        {renderRow(
+          "Upcoming Events",
+          events,
+          handleEventClick,
+          "/events",
+          "View All Events",
+          <Calendar className="w-6 h-6 text-primary" />,
+          (item) => (
+            <span className="font-bold text-xs text-primary">
+              {item.price ? `₦${item.price}` : "Free"}
+            </span>
+          )
+        )}
+
+        {renderRow(
+          "Marketplace",
+          marketplace,
+          handleMktClick,
+          "/marketplace",
+          "View All Products",
+          <ShoppingBag className="w-6 h-6 text-primary" />,
+          (item) => (
+            <span className="font-bold text-xs text-primary">
+              {item.price || "Price on request"}
+            </span>
+          )
+        )}
+
+        {renderRow(
+          "Properties & Stays",
+          properties,
+          handlePropClick,
+          "/airbnb",
+          "View All Properties",
+          <Home className="w-6 h-6 text-primary" />,
+          (item) => (
+            <span className="font-bold text-xs text-primary">
+              {item.price || "₦0/night"}
+            </span>
+          )
+        )}
       </main>
     </div>
   );

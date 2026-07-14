@@ -1,15 +1,18 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { 
-  ArrowLeft, Star, MapPin, Phone, Globe, MessageCircle, 
+import {
+  ArrowLeft, Star, MapPin, Phone, Globe, MessageCircle,
   Heart, Share2, Ticket, Loader2, Info, Layers, Clock, PhoneCall,
-  MessageSquare, FileText
+  MessageSquare, FileText, Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import SEO from "@/components/SEO";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 type DetailData = {
   title: string;
@@ -35,10 +38,21 @@ type DetailData = {
   isOpen?: boolean;
 };
 
+type ReviewData = {
+  id: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: any;
+};
+
 const DetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   // Extract category from path: /others/abc → "others"
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -46,6 +60,10 @@ const DetailPage = () => {
 
   const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -94,6 +112,59 @@ const DetailPage = () => {
 
     fetchDetail();
   }, [id, categorySlug]);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchReviews = async () => {
+      try {
+        const revQuery = query(collection(db, "reviews"), where("targetId", "==", id));
+        const revSnap = await getDocs(revQuery);
+        const revs = revSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ReviewData[];
+        revs.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setReviews(revs);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
+  const handleSubmitReview = async () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!reviewComment.trim()) {
+      toast({ title: "Please write a review", variant: "destructive" });
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await addDoc(collection(db, "reviews"), {
+        targetId: id,
+        targetType: "business",
+        userId: user.id,
+        userName: user.name || user.email || "Anonymous",
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        createdAt: serverTimestamp(),
+      });
+      toast({ title: "Review submitted!" });
+      setReviewComment("");
+      setReviewRating(5);
+      const revQuery = query(collection(db, "reviews"), where("targetId", "==", id));
+      const revSnap = await getDocs(revQuery);
+      const revs = revSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ReviewData[];
+      revs.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setReviews(revs);
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Failed to submit review", variant: "destructive" });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    : null;
 
   const renderValue = (val: any): string => {
     if (val === null || val === undefined) return "";
@@ -338,6 +409,71 @@ const DetailPage = () => {
 
           </div>
         </div>
+
+        {/* ── Reviews Section ── */}
+        <section className="mt-12 pt-10 border-t border-border px-4 sm:px-0">
+          <h2 className="font-display text-2xl font-extrabold mb-6">
+            Reviews ({reviews.length})
+            {avgRating && (
+              <span className="ml-3 text-lg text-muted-foreground font-normal">
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400 inline -mt-0.5 mr-1" />
+                {avgRating}
+              </span>
+            )}
+          </h2>
+
+          {user && (
+            <div className="bg-card/60 border border-border/50 rounded-2xl p-5 mb-8">
+              <h3 className="font-bold text-sm mb-3">Write a Review</h3>
+              <div className="flex items-center gap-1 mb-3">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button key={s} onClick={() => setReviewRating(s)}>
+                    <Star className={`w-6 h-6 transition-colors ${s <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"}`} />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm font-bold text-muted-foreground">{reviewRating}/5</span>
+              </div>
+              <Textarea
+                placeholder="Share your experience with this business..."
+                rows={3}
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="mb-3"
+              />
+              <Button onClick={handleSubmitReview} disabled={submittingReview} className="rounded-xl font-bold">
+                {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                Submit Review
+              </Button>
+            </div>
+          )}
+
+          {reviews.length === 0 ? (
+            <div className="text-center py-12 bg-card/30 rounded-2xl border border-dashed border-border">
+              <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((rev) => (
+                <div key={rev.id} className="bg-card/60 border border-border/50 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                      {(rev.userName || "A").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-foreground">{rev.userName}</p>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className={`w-3 h-3 ${s <= (rev.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{rev.comment}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

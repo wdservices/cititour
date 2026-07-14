@@ -28,6 +28,7 @@ import BusinessListingPage from "./pages/BusinessListingPage";
 import RunAdsPage from "./pages/RunAdsPage";
 import HouseListingsPage from "./pages/HouseListingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import ProfileDashboard from "./pages/ProfileDashboard";
 import FavouritesPage from "./pages/FavouritesPage";
 import ShareAppPage from "./pages/ShareAppPage";
 import FeedbackPage from "./pages/FeedbackPage";
@@ -88,6 +89,8 @@ const ProtectedRoutes = () => {
         <Route path="/run-ads" element={<RunAdsPage />} />
         <Route path="/house-listings" element={<HouseListingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/dashboard" element={<ProfileDashboard />} />
+        <Route path="/house-listings" element={<Navigate to="/profile/dashboard?tab=listings&action=create&type=property" replace />} />
         <Route path="/favourites" element={<FavouritesPage />} />
         <Route path="/share-app" element={<ShareAppPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
@@ -124,8 +127,13 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/split-it" element={<SplitItPage />} />
-                  <Route path="/list-your-business" element={<ListYourBusinessPage />} />
-                  <Route path="/host-an-event" element={<HostAnEventPage />} />
+                  <Route path="/list-your-business" element={<Navigate to="/profile/dashboard?tab=listings&action=create" replace />} />
+                  <Route path="/host-an-event" element={<Navigate to="/profile/dashboard?tab=events&action=create" replace />} />
+                  <Route path="/add-property" element={<Navigate to="/profile/dashboard?tab=listings&action=create&type=property" replace />} />
+                  <Route path="/add-business" element={<Navigate to="/profile/dashboard?tab=listings&action=create&type=business" replace />} />
+                  <Route path="/create-event" element={<Navigate to="/profile/dashboard?tab=events&action=create" replace />} />
+                  <Route path="/businessplace" element={<Navigate to="/marketplace" replace />} />
+                  <Route path="/business-place" element={<Navigate to="/marketplace" replace />} />
                   <Route path="/nigeria/:stateSlug" element={<StatePage />} />
                   <Route path="/blog" element={<BlogIndexPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />

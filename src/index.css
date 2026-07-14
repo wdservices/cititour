@@ -102,6 +102,14 @@
   .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .bg-ivory { background-color: hsl(var(--background)); }
   .text-ink { color: hsl(var(--foreground)); }
   .bg-marigold { background-color: hsl(var(--primary)); }

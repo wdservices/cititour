@@ -6,6 +6,7 @@ interface RegionContextType {
   region: RegionCode
   brandName: string
   locationName: string
+  state: string
   setRegion: (code: RegionCode) => void
   detectRegion: () => Promise<void>
 }
@@ -50,6 +51,18 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
       case 'PH':
       default:
         return 'Port Harcourt'
+    }
+  }, [region])
+
+  const state = useMemo(() => {
+    switch (region) {
+      case 'LAG': return 'Lagos'
+      case 'ABJ': return 'FCT'
+      case 'KAN': return 'Kano'
+      case 'OWR': return 'Imo'
+      case 'KAD': return 'Kaduna'
+      case 'PH':
+      default: return 'Rivers'
     }
   }, [region])
 
@@ -106,6 +119,7 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
     region,
     brandName,
     locationName,
+    state,
     setRegion,
     detectRegion,
   }

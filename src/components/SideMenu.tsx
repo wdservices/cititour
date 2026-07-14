@@ -10,9 +10,10 @@ import {
   Settings, 
   HelpCircle,
   LogOut,
-  X,
   Ticket,
-  Wallet
+  Wallet,
+  LayoutDashboard,
+  ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -24,27 +25,25 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   {
-    section: "Personal",
+    section: "Discover",
     items: [
       { icon: Home, title: "Explore", description: "Find new places" },
-      { icon: User, title: "Profile", description: "Manage your account" },
-      { icon: Wallet, title: "Wallet", description: "Manage your funds" },
-      { icon: Heart, title: "Favourites", description: "Your saved places" },
+      { icon: Calendar, title: "Events", description: "Local happenings" },
+      { icon: ShoppingBag, title: "Marketplace", description: "Buy & sell" },
     ]
   },
   {
-    section: "Business",
+    section: "Dashboard",
     items: [
-      { icon: Building2, title: "Business Listing", description: "List your business" },
-      { icon: Megaphone, title: "Run Ads", description: "Promote your business" },
-      { icon: Home, title: "House Listings", description: "Airbnb & rentals" },
-      { icon: Ticket, title: "Event Tickets", description: "Sell event tickets" },
+      { icon: LayoutDashboard, title: "My Dashboard", description: "Manage all your listings" },
+      { icon: Heart, title: "Favourites", description: "Your saved places" },
+      { icon: Wallet, title: "Wallet", description: "Manage your funds" },
     ]
   },
   {
     section: "Support",
     items: [
-      { icon: Share, title: "Share TourPH", description: "Invite friends" },
+      { icon: Share, title: "Share CitiTour", description: "Invite friends" },
       { icon: MessageSquare, title: "Feedback", description: "Help us improve" },
       { icon: Settings, title: "Settings & Privacy", description: "Account settings" },
       { icon: HelpCircle, title: "Contact Support", description: "Get help" },
@@ -63,13 +62,11 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
   const handleMenuItemClick = (title: string) => {
     const routeMap: { [key: string]: string } = {
       "Explore": "/explore",
-      "Profile": "/profile",
+      "Events": "/events",
+      "Marketplace": "/marketplace",
+      "My Dashboard": "/profile/dashboard",
+      "Favourites": "/favourites",
       "Wallet": "/wallet",
-      "Favourites": "/favourites", 
-      "Business Listing": "/businesses",
-      "Run Ads": "/run-ads",
-      "House Listings": "/house-listings",
-      "Event Tickets": "/event-tickets",
       "Share App": "/share-app",
       "Feedback": "/feedback",
       "Settings & Privacy": "/settings",
@@ -92,12 +89,10 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
     }
   };
 
-  // Get user display name and email
   const displayName = user?.name || 'User';
   const userEmail = user?.email || '';
   const userAvatar = user?.photoURL || '';
   
-  // Get initials for fallback avatar
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -126,7 +121,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
               </Badge>
             </div>
             <p className="text-sm opacity-90 truncate">{userEmail}</p>
-            <p className="text-xs opacity-75">TourPH Explorer</p>
+            <p className="text-xs opacity-75">CitiTour Explorer</p>
           </div>
         </div>
       </div>
@@ -190,7 +185,6 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
           <span>Logout</span>
         </Button>
         
-        {/* Company Branding */}
         <div className="mt-4 flex flex-col items-center gap-1 justify-center">
           <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-6 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
           <p className="text-[10px] text-muted-foreground/60 mt-1">

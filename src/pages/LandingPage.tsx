@@ -548,8 +548,8 @@ const LandingPage = () => {
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Product</h3>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/split-it" className="hover:text-primary">Split It</Link></li>
-                <li><Link to="/host-an-event" className="hover:text-primary">Host an event</Link></li>
-                <li><Link to="/list-your-business" className="hover:text-primary">List your business</Link></li>
+                <li><Link to="/profile/dashboard?tab=events" className="hover:text-primary">Host an event</Link></li>
+                <li><Link to="/profile/dashboard?tab=listings" className="hover:text-primary">List your business</Link></li>
                 <li><Link to="/blog" className="hover:text-primary">Blog</Link></li>
               </ul>
             </div>
