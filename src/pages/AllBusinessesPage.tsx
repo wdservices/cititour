@@ -83,12 +83,7 @@ const AllBusinessesPage = () => {
         const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
         const filteredData = data.filter(item => {
           if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") {
-            const d = item as any;
-            if (d.endDate) {
-              const end = new Date(d.endDate).getTime();
-              const now = new Date().getTime();
-              if (now > end + 86400000) return false;
-            }
+            return false; // Exclude events from business listing
           }
           return true;
         });

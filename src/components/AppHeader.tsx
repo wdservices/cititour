@@ -47,7 +47,7 @@ const AppHeader = () => {
             </SheetContent>
           </Sheet>
 
-          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate("/")}>
+          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate("/explore")}>
             <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-7 md:h-8 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
             <span className="hidden md:inline text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-4 flex items-center mt-0.5">Explore</span>
           </div>

@@ -275,9 +275,13 @@ const MarketplaceDetailPage = () => {
             <div className="p-5 rounded-2xl bg-card/60 border border-border/50 shadow-xl">
               <p className="text-[10px] font-bold text-muted-foreground mb-1.5 uppercase tracking-widest">Price</p>
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl lg:text-4xl font-extrabold text-accent">{product.price}</span>
-                {product.promoPrice && (
-                  <span className="text-lg font-bold text-primary">{product.promoPrice}</span>
+                {product.promoPrice && Number(product.promoPrice.replace(/[^0-9]/g, '')) < Number(product.price.replace(/[^0-9]/g, '')) ? (
+                  <>
+                    <span className="text-xl font-medium text-muted-foreground line-through">{product.price}</span>
+                    <span className="text-3xl lg:text-4xl font-extrabold text-primary">{product.promoPrice}</span>
+                  </>
+                ) : (
+                  <span className="text-3xl lg:text-4xl font-extrabold text-accent">{product.price}</span>
                 )}
               </div>
               <div className="mt-4 flex items-center gap-2 text-success font-medium text-xs bg-success/10 w-fit px-3 py-1.5 rounded-lg border border-success/20">

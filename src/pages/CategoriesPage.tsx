@@ -26,7 +26,7 @@ const CategoriesPage = () => {
   const navigate = useNavigate();
   const { brandName, state } = useRegion();
 
-  const { data: bizData, isLoading: bizLoading } = useBusinesses(state);
+  const { data: bizData, isLoading: bizLoading } = useBusinesses();
   const { data: mktData, isLoading: mktLoading } = useMarketplaceItems();
   const { data: propData, isLoading: propLoading } = useHouseListings();
 

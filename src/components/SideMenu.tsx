@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRegion } from "@/contexts/RegionContext";
 
 const menuItems = [
   {
@@ -30,6 +31,7 @@ const menuItems = [
       { icon: Home, title: "Explore", description: "Find new places" },
       { icon: Calendar, title: "Events", description: "Local happenings" },
       { icon: ShoppingBag, title: "Marketplace", description: "Buy & sell" },
+      { icon: Building2, title: "Business Place", description: "Shops & services" },
     ]
   },
   {
@@ -58,12 +60,14 @@ interface SideMenuProps {
 const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { brandName } = useRegion();
   
   const handleMenuItemClick = (title: string) => {
     const routeMap: { [key: string]: string } = {
       "Explore": "/explore",
       "Events": "/events",
       "Marketplace": "/marketplace",
+      "Business Place": "/businesses",
       "My Dashboard": "/profile/dashboard",
       "Favourites": "/favourites",
       "Wallet": "/wallet",
@@ -121,7 +125,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
               </Badge>
             </div>
             <p className="text-sm opacity-90 truncate">{userEmail}</p>
-            <p className="text-xs opacity-75">CitiTour Explorer</p>
+            <p className="text-xs opacity-75">{brandName} Explorer</p>
           </div>
         </div>
       </div>
@@ -186,7 +190,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
         </Button>
         
         <div className="mt-4 flex flex-col items-center gap-1 justify-center">
-          <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-6 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
+          <img src="/cititour-logo.png" alt={`${brandName} Logo`} className="h-6 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
           <p className="text-[10px] text-muted-foreground/60 mt-1">
             By Bluewaves Technologies
           </p>

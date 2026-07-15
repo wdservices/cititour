@@ -65,18 +65,13 @@ const DynamicEventPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const snap = await getDoc(doc(db, 'businesses', eventId));
+        const snap = await getDoc(doc(db, 'events', eventId));
         if (!snap.exists()) {
           toast({ title: "Event Not Found", description: "This event may have been removed.", variant: "destructive" });
           navigate('/');
           return;
         }
         const data = snap.data() as any;
-        if (data.category !== "Event" && data.category !== "Events") {
-          toast({ title: "Not an Event", variant: "destructive" });
-          navigate('/');
-          return;
-        }
         setEvent({
           id: snap.id,
           title: fmt(data.title) || 'Untitled Event',

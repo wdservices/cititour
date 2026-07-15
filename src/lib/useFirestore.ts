@@ -85,7 +85,7 @@ export function useBusinesses(state?: string) {
 }
 
 export function useEvents() {
-  return useCollection("businesses", [where("category", "==", "Event")]);
+  return useCollection("events");
 }
 
 export function useHouseListings() {
@@ -98,19 +98,38 @@ export function useMyListings(userId: string | null) {
     queryFn: async () => {
       if (!userId) return { businesses: [], products: [], properties: [], events: [] };
 
-      const [bizSnap, prodSnap, propSnap] = await Promise.all([
-        getDocs(query(collection(db, "businesses"), where("ownerId", "==", userId))),
-        getDocs(query(collection(db, "marketplace"), where("ownerId", "==", userId))),
-        getDocs(query(collection(db, "house_listings"), where("ownerId", "==", userId))),
-      ]);
+      console.log("[useMyListings] fetching for userId:", userId);
+      
+      try {
+        // First, fetch ALL businesses to debug
+        const allBizSnap = await getDocs(collection(db, "businesses"));
+        const allBusinesses = allBizSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+        console.log("[useMyListings] ALL businesses:", allBusinesses.length, allBusinesses.map(b => ({id: b.id, title: b.title, category: b.category, ownerId: b.ownerId})));
+        
+        // Now fetch user's businesses
+        const [bizSnap, prodSnap, propSnap, eventSnap] = await Promise.all([
+          getDocs(query(collection(db, "businesses"), where("ownerId", "==", userId))),
+          getDocs(query(collection(db, "marketplace"), where("ownerId", "==", userId))),
+          getDocs(query(collection(db, "house_listings"), where("ownerId", "==", userId))),
+          getDocs(query(collection(db, "events"), where("ownerId", "==", userId))),
+        ]);
 
-      const allBiz = bizSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
-      return {
-        businesses: allBiz.filter((b: any) => b.category !== "Event" && b.category !== "Events"),
-        events: allBiz.filter((b: any) => b.category === "Event" || b.category === "Events"),
-        products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-        properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-      };
+        const userBiz = bizSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+        console.log("[useMyListings] user's businesses:", userBiz.length, userBiz.map(b => ({id: b.id, title: b.title, category: b.category, ownerId: b.ownerId})));
+        console.log("[useMyListings] products:", prodSnap.docs.length);
+        console.log("[useMyListings] properties:", propSnap.docs.length);
+        console.log("[useMyListings] events:", eventSnap.docs.length);
+        
+        return {
+          businesses: bizSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)).filter((b: any) => b.category !== "Event" && b.category !== "Events"),
+          events: eventSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+        };
+      } catch (error) {
+        console.error("[useMyListings] Error:", error);
+        throw error;
+      }
     },
     enabled: !!userId,
     staleTime: 2 * 60_000,

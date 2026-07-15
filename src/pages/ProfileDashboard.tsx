@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
-import { getDoc } from "firebase/firestore";
+import { getDoc, doc } from "firebase/firestore";
 import { useMyListings, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
 import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
@@ -75,6 +75,11 @@ const ProfileDashboard = () => {
   const [editImageUrl, setEditImageUrl] = useState("");
   const [editImagePublicId, setEditImagePublicId] = useState("");
 
+  // Product-specific edit fields
+  const [editProductPrice, setEditProductPrice] = useState("");
+  const [editPromoPrice, setEditPromoPrice] = useState("");
+  const [editProductCategory, setEditProductCategory] = useState("");
+
   // ── Shared form fields ──
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -118,11 +123,11 @@ const ProfileDashboard = () => {
   const myProperties = (listingsData?.properties || []) as ListingItem[];
   const myEvents = (listingsData?.events || []) as ListingItem[];
 
+  console.log("[Dashboard] myBusinesses:", myBusinesses.length, myBusinesses.map(b => ({id: b.id, title: b.title, category: b.category})));
+
   // ── Event analytics (organized events) ──
   const eventIds = myEvents.map((e) => e.id);
   const { data: allOrders = [] } = useMyEventOrders(user?.id || null, eventIds);
-
-  console.log("[Dashboard] userId:", user?.id, "myEvents:", myEvents.length, "eventIds:", eventIds, "orders:", allOrders.length);
 
   // ── Attended events (events user has tickets for) ──
   const { data: myTicketOrders = [] } = useMyTicketOrders(user?.id || null);
@@ -193,12 +198,15 @@ const ProfileDashboard = () => {
 
   // ── Cached mutations (auto-invalidate queries on success) ──
   const createBusiness = useCreateDoc("businesses");
+  const createEvent = useCreateDoc("events");
   const createProduct = useCreateDoc("marketplace");
   const createProperty = useCreateDoc("house_listings");
   const updateListing = useUpdateDoc("businesses");
+  const updateProduct = useUpdateDoc("marketplace");
   const deleteListing = useDeleteDoc("businesses");
   const deleteProduct = useDeleteDoc("marketplace");
   const deleteProperty = useDeleteDoc("house_listings");
+  const deleteTicketOrder = useDeleteDoc("ticket_orders");
 
   // ── Inherited state from selected business ──
   const selectedBiz = myBusinesses.find((b) => b.id === listAsBizId);
@@ -370,10 +378,9 @@ const ProfileDashboard = () => {
     try {
       const fullLocation = [eventVenue, eventLocation, selectedCity, selectedState].filter(Boolean).join(", ");
       const validTickets = ticketTypes.filter((t) => t.name.trim());
-      await createBusiness.mutateAsync({
+      await createEvent.mutateAsync({
         title,
         description,
-        category: "Event",
         tags: [eventCategory || "General"],
         location: fullLocation,
         state: selectedState,
@@ -407,7 +414,7 @@ const ProfileDashboard = () => {
   const getCollectionForType = (type: string) => {
     switch (type) {
       case "business": return "businesses";
-      case "event": return "businesses";
+      case "event": return "events";
       case "product": return "marketplace";
       case "property": return "house_listings";
       default: return "businesses";
@@ -469,6 +476,12 @@ const ProfileDashboard = () => {
       setEditPhone(raw.phone || "");
       setEditImageUrl(raw.image || "");
       setEditImagePublicId(raw.imagePublicId || "");
+      // Product-specific fields
+      if (type === "product") {
+        setEditProductPrice(String(raw.price || ""));
+        setEditPromoPrice(String(raw.promoPrice || ""));
+        setEditProductCategory(raw.productCategory || raw.category || "");
+      }
       setEditOpen(true);
     } catch (err) {
       console.error(err);
@@ -483,7 +496,6 @@ const ProfileDashboard = () => {
     }
     setEditSaving(true);
     try {
-      const collectionName = getCollectionForType(editTarget.type);
       const fullLocation = [editCity, editState].filter(Boolean).join(", ");
       const updateData: any = {
         title: editTitle.trim(),
@@ -496,7 +508,14 @@ const ProfileDashboard = () => {
         image: editImageUrl,
         location: fullLocation,
       };
-      await updateListing.mutateAsync({ id: editTarget.id, data: updateData });
+      if (editTarget.type === "product") {
+        updateData.price = Number(editProductPrice) || 0;
+        updateData.promoPrice = Number(editPromoPrice) || 0;
+        updateData.productCategory = editProductCategory;
+        await updateProduct.mutateAsync({ id: editTarget.id, data: updateData });
+      } else {
+        await updateListing.mutateAsync({ id: editTarget.id, data: updateData });
+      }
       toast({ title: "Listing updated!" });
       setEditOpen(false);
       setEditTarget(null);
@@ -1222,6 +1241,13 @@ const ProfileDashboard = () => {
                             <p className="text-[10px] font-bold uppercase text-muted-foreground">Qty</p>
                             <p className="font-bold text-sm">{Number(myOrder?.quantity || 1)}</p>
                           </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteTicketOrder.mutate(myOrder.id); }}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                            aria-label="Cancel ticket"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1402,37 +1428,65 @@ const ProfileDashboard = () => {
               </div>
             )}
 
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State</Label>
-              <Select value={editState} onValueChange={(v) => { setEditState(v as NigerianState); setEditCity(""); }}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
-                <SelectContent>
-                  {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {editState && (
-              <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
-                <Select value={editCity} onValueChange={setEditCity}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select area" /></SelectTrigger>
-                  <SelectContent>
-                    {(STATE_CITIES[editState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+            {/* Product-specific fields */}
+            {editTarget?.type === "product" && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦)</Label>
+                  <Input type="number" className="mt-1.5" value={editProductPrice} onChange={(e) => setEditProductPrice(e.target.value)} placeholder="e.g. 50000" />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo Price (₦)</Label>
+                  <Input type="number" className="mt-1.5" value={editPromoPrice} onChange={(e) => setEditPromoPrice(e.target.value)} placeholder="Optional" />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
+                  <Select value={editProductCategory} onValueChange={setEditProductCategory}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {["Electronics", "Fashion", "Home & Garden", "Vehicles", "Property", "Health & Beauty", "Sports", "Books", "Other"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
 
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Street Address</Label>
-              <Input className="mt-1.5" value={editStreetAddress} onChange={(e) => setEditStreetAddress(e.target.value)} />
-            </div>
+            {/* Location fields for business, property, event */}
+            {(editTarget?.type === "business" || editTarget?.type === "property" || editTarget?.type === "event") && (
+              <>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State</Label>
+                  <Select value={editState} onValueChange={(v) => { setEditState(v as NigerianState); setEditCity(""); }}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+                    <SelectContent>
+                      {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone</Label>
-              <Input className="mt-1.5" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
-            </div>
+                {editState && (
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
+                    <Select value={editCity} onValueChange={setEditCity}>
+                      <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select area" /></SelectTrigger>
+                      <SelectContent>
+                        {(STATE_CITIES[editState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Street Address</Label>
+                  <Input className="mt-1.5" value={editStreetAddress} onChange={(e) => setEditStreetAddress(e.target.value)} />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone</Label>
+                  <Input className="mt-1.5" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                </div>
+              </>
+            )}
 
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>

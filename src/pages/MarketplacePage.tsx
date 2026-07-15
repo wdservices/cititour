@@ -284,9 +284,13 @@ const MarketplacePage = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm md:text-base text-accent">{item.price}</span>
-                        {item.promoPrice && (
-                          <span className="font-bold text-sm text-primary">{item.promoPrice}</span>
+                        {item.promoPrice && Number(item.promoPrice.replace(/[^0-9]/g, '')) < Number(item.price.replace(/[^0-9]/g, '')) ? (
+                          <>
+                            <span className="font-medium text-sm md:text-base text-muted-foreground line-through">{item.price}</span>
+                            <span className="font-bold text-base md:text-lg text-primary">{item.promoPrice}</span>
+                          </>
+                        ) : (
+                          <span className="font-bold text-base md:text-lg text-accent">{item.price}</span>
                         )}
                       </div>
                     </div>

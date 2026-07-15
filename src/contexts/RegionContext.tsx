@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-type RegionCode = 'PH' | 'LAG' | 'ABJ' | 'KAN' | 'OWR' | 'KAD'
+type RegionCode = 'LAG' | 'RIV' | 'ABJ' | 'KAN' | 'OWR' | 'KAD'
 
 interface RegionContextType {
   region: RegionCode
@@ -13,7 +13,7 @@ interface RegionContextType {
 
 const RegionContext = createContext<RegionContextType | undefined>(undefined)
 
-const DEFAULT_REGION: RegionCode = 'PH'
+const DEFAULT_REGION: RegionCode = 'RIV'
 
 export function RegionProvider({ children }: { children: React.ReactNode }) {
   const [region, setRegion] = useState<RegionCode>(DEFAULT_REGION)
@@ -30,9 +30,9 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
         return 'TourOWR'
       case 'KAD':
         return 'TourKAD'
-      case 'PH':
+      case 'RIV':
       default:
-        return 'TourPH'
+        return 'TourRIV'
     }
   }, [region])
 
@@ -48,7 +48,7 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
         return 'Owerri'
       case 'KAD':
         return 'Kaduna'
-      case 'PH':
+      case 'RIV':
       default:
         return 'Port Harcourt'
     }
@@ -61,7 +61,7 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
       case 'KAN': return 'Kano'
       case 'OWR': return 'Imo'
       case 'KAD': return 'Kaduna'
-      case 'PH':
+      case 'RIV':
       default: return 'Rivers'
     }
   }, [region])
@@ -88,7 +88,7 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
             } else if (latitude > 6.0 && longitude > 3.0 && longitude < 4.5) {
               setRegion('LAG')
             } else {
-              setRegion('PH')
+              setRegion('RIV')
             }
             resolve()
           },
