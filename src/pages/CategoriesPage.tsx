@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, limit, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { MapPin, Star, Heart, ArrowRight, Loader2, ChevronRight, Store, Calendar, ShoppingBag, Home } from "lucide-react";
 import CategoryGrid from "@/components/CategoryGrid";
 import HeroSlider from "@/components/HeroSlider";
 import SEO from "@/components/SEO";
 import { getMockImage } from "@/lib/mockImages";
 import { useRegion } from "@/contexts/RegionContext";
+import { useBusinesses, useEvents, useMarketplaceItems, useHouseListings, fmt } from "@/lib/useFirestore";
 
 type ListingItem = {
   id: string;
@@ -23,44 +22,41 @@ type ListingItem = {
 const PLACEHOLDER_IMG = "/placeholder.svg";
 
 const CategoriesPage = () => {
-  const [businesses, setBusinesses] = useState<ListingItem[]>([]);
-  const [events, setEvents] = useState<ListingItem[]>([]);
-  const [marketplace, setMarketplace] = useState<ListingItem[]>([]);
-  const [properties, setProperties] = useState<ListingItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { brandName, state } = useRegion();
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [bizSnap, mktSnap, propSnap] = await Promise.all([
-          getDocs(query(collection(db, "businesses"), where("state", "==", state), limit(10))),
-          getDocs(query(collection(db, "marketplace"), limit(10))),
-          getDocs(query(collection(db, "house_listings"), limit(10))),
-        ]);
+  const { data: bizData, isLoading: bizLoading } = useBusinesses(state);
+  const { data: mktData, isLoading: mktLoading } = useMarketplaceItems();
+  const { data: propData, isLoading: propLoading } = useHouseListings();
 
-        const bizData = bizSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ListingItem[];
-        const allEvents = bizData.filter((b) => b.category === "Event" || b.category === "Events");
-        const allBusinesses = bizData.filter((b) => b.category !== "Event" && b.category !== "Events");
+  const loading = bizLoading || mktLoading || propLoading;
 
-        setBusinesses(allBusinesses.slice(0, 4));
-        setEvents(allEvents.slice(0, 4));
-        setMarketplace(
-          mktSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
-        );
-        setProperties(
-          propSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
-        );
-      } catch (err) {
-        console.error("Error fetching listings:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [state]);
+  const businesses = useMemo(() => {
+    if (!bizData) return [];
+    return bizData
+      .filter((b: any) => b.category !== "Event" && b.category !== "Events")
+      .slice(0, 4)
+      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price) }));
+  }, [bizData]);
+
+  const events = useMemo(() => {
+    if (!bizData) return [];
+    return bizData
+      .filter((b: any) => b.category === "Event" || b.category === "Events")
+      .slice(0, 4)
+      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price) }));
+  }, [bizData]);
+
+  const marketplace = useMemo(() => {
+    if (!mktData) return [];
+    return mktData.slice(0, 4).map((m: any) => ({ id: m.id, title: fmt(m.title), description: fmt(m.description), image: m.image || "", category: fmt(m.category), rating: m.rating || 0, location: fmt(m.location), price: fmt(m.price) }));
+  }, [mktData]);
+
+  const properties = useMemo(() => {
+    if (!propData) return [];
+    return propData.slice(0, 4).map((p: any) => ({ id: p.id, title: fmt(p.title), description: fmt(p.description), image: p.image || "", category: fmt(p.category), rating: p.rating || 0, location: fmt(p.location), price: fmt(p.price) }));
+  }, [propData]);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
@@ -71,151 +67,74 @@ const CategoriesPage = () => {
   };
 
   const bizPathMap: Record<string, string> = {
-    Restaurant: "restaurants",
-    Hotel: "hotels",
-    Shopping: "shopping",
-    Attraction: "attractions",
-    "Fun Places": "fun-places",
-    Airbnb: "airbnb",
-    Lifestyle: "lifestyle",
-    Other: "others",
-    "Event Venue": "events",
-    Entertainment: "fun-places",
-    "Spa & Wellness": "lifestyle",
-    "Business Services": "others",
+    Restaurant: "restaurants", Hotel: "hotels", Shopping: "shopping", Attraction: "attractions",
+    "Fun Places": "fun-places", Airbnb: "airbnb", Lifestyle: "lifestyle", Other: "others",
+    "Event Venue": "events", Entertainment: "fun-places", "Spa & Wellness": "lifestyle", "Business Services": "others",
   };
 
-  const handleBizClick = (item: ListingItem) => {
-    const base = bizPathMap[item.category] || "others";
-    navigate(`/${base}/${item.id}`);
-  };
+  const handleBizClick = (item: ListingItem) => navigate(`/${bizPathMap[item.category] || "others"}/${item.id}`);
+  const handleEventClick = (item: ListingItem) => navigate(`/events/${item.id}`);
+  const handleMktClick = (item: ListingItem) => navigate(`/marketplace/${item.id}`);
+  const handlePropClick = (item: ListingItem) => navigate(`/airbnb/${item.id}`);
 
-  const handleEventClick = (item: ListingItem) => {
-    navigate(`/events/${item.id}`);
-  };
-
-  const handleMktClick = (item: ListingItem) => {
-    navigate(`/marketplace/${item.id}`);
-  };
-
-  const handlePropClick = (item: ListingItem) => {
-    navigate(`/airbnb/${item.id}`);
-  };
-
-  const r = (val: any): string => {
-    if (val === null || val === undefined) return "";
-    if (typeof val === "object") {
-      if (val._lat !== undefined && val._long !== undefined) return `${val._lat.toFixed(4)}, ${val._long.toFixed(4)}`;
-      return JSON.stringify(val);
-    }
-    return String(val);
-  };
+  const r = (val: any): string => fmt(val);
 
   const imgSrc = (item: ListingItem) => r(item.image) || getMockImage(item.category) || PLACEHOLDER_IMG;
 
   const renderRow = (
-    title: string,
-    items: ListingItem[],
-    onCardClick: (item: ListingItem) => void,
-    viewAllPath: string,
-    viewAllLabel: string,
-    emptyIcon: React.ReactNode,
-    cardSubtitle?: (item: ListingItem) => React.ReactNode
+    title: string, items: ListingItem[], onCardClick: (item: ListingItem) => void,
+    viewAllPath: string, viewAllLabel: string, emptyIcon: React.ReactNode, cardSubtitle?: (item: ListingItem) => React.ReactNode
   ) => (
     <section className="py-6">
       <div className="px-4 md:px-6 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">{title}</h2>
         {items.length > 0 && (
-          <button
-            onClick={() => navigate(viewAllPath)}
-            className="flex items-center gap-2 text-primary font-bold text-sm hover:underline transition-all group shrink-0"
-          >
-            {viewAllLabel}
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <button onClick={() => navigate(viewAllPath)} className="flex items-center gap-2 text-primary font-bold text-sm hover:underline transition-all group shrink-0">
+            {viewAllLabel}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         )}
       </div>
-
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-7 h-7 text-primary animate-spin" />
-        </div>
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-7 h-7 text-primary animate-spin" /></div>
       ) : items.length === 0 ? (
         <div className="px-4 md:px-6">
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
             <div className="flex-shrink-0 w-[280px] bg-muted/40 rounded-2xl border border-border/50 flex flex-col items-center justify-center py-12 px-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                {emptyIcon}
-              </div>
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">{emptyIcon}</div>
               <p className="text-sm font-semibold text-foreground mb-1">Nothing here yet</p>
-              <p className="text-xs text-muted-foreground">
-                Check back soon — new listings drop regularly.
-              </p>
+              <p className="text-xs text-muted-foreground">Check back soon — new listings drop regularly.</p>
             </div>
           </div>
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
           {items.map((item, index) => (
-            <div
-              key={item.id}
-              className="group flex-shrink-0 w-[280px] snap-start bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-card animate-fade-in"
-              style={{ animationDelay: `${index * 0.08}s` }}
-              onClick={() => onCardClick(item)}
-            >
+            <div key={item.id} className="group flex-shrink-0 w-[280px] snap-start bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-card animate-fade-in"
+              style={{ animationDelay: `${index * 0.08}s` }} onClick={() => onCardClick(item)}>
               <div className="relative aspect-[16/10] overflow-hidden">
-                <img
-                  src={imgSrc(item)}
-                  alt={r(item.title)}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLike(item.id);
-                  }}
+                <img src={imgSrc(item)} alt={r(item.title)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <button onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
                   className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-red-400 transition-colors"
-                  aria-label={likedIds.has(item.id) ? "Unlike" : "Like"}
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      likedIds.has(item.id) ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
+                  aria-label={likedIds.has(item.id) ? "Unlike" : "Like"}>
+                  <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-red-500 text-red-500" : ""}`} />
                 </button>
                 {item.rating != null && item.rating > 0 && (
                   <div className="absolute bottom-3 left-3 bg-background/80 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                    <span className="text-[11px] font-bold text-foreground">{r(item.rating)}</span>
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /><span className="text-[11px] font-bold text-foreground">{r(item.rating)}</span>
                   </div>
                 )}
               </div>
-
               <div className="p-3.5">
                 <h3 className="font-semibold text-sm text-foreground truncate">{r(item.title)}</h3>
-                {item.location && (
-                  <div className="flex items-center gap-1 text-muted-foreground text-xs mt-0.5 mb-1.5">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{r(item.location)}</span>
-                  </div>
-                )}
-                {cardSubtitle ? (
-                  cardSubtitle(item)
-                ) : (
-                  <span className="font-bold text-xs text-primary">{r(item.category)}</span>
-                )}
+                {item.location && (<div className="flex items-center gap-1 text-muted-foreground text-xs mt-0.5 mb-1.5"><MapPin className="w-3 h-3 shrink-0" /><span className="truncate">{r(item.location)}</span></div>)}
+                {cardSubtitle ? cardSubtitle(item) : <span className="font-bold text-xs text-primary">{r(item.category)}</span>}
               </div>
             </div>
           ))}
-
           {items.length >= 4 && (
-            <button
-              onClick={() => navigate(viewAllPath)}
-              className="flex-shrink-0 w-[280px] snap-start bg-muted/30 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer min-h-[240px]"
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <ChevronRight className="w-6 h-6 text-primary" />
-              </div>
+            <button onClick={() => navigate(viewAllPath)}
+              className="flex-shrink-0 w-[280px] snap-start bg-muted/30 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 cursor-pointer min-h-[240px]">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center"><ChevronRight className="w-6 h-6 text-primary" /></div>
               <span className="font-bold text-sm text-muted-foreground">{viewAllLabel}</span>
             </button>
           )}
@@ -226,77 +145,21 @@ const CategoriesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO
-        title={`Explore ${brandName} | CititourNG`}
-        description={`Discover businesses, events, marketplace, and properties across Nigeria.`}
-        keywords={["Nigeria", "restaurants", "hotels", "events", "marketplace", "properties"]}
-        canonicalUrl={`${window.location.origin}/explore`}
-        ogImage="/favicon.ico"
-      />
-
+      <SEO title={`Explore ${brandName} | CititourNG`} description="Discover businesses, events, marketplace, and properties across Nigeria."
+        keywords={["Nigeria", "restaurants", "hotels", "events", "marketplace", "properties"]} canonicalUrl={`${window.location.origin}/explore`} ogImage="/favicon.ico" />
       <main className="pb-12">
-        <HeroSlider />
-        <CategoryGrid />
-
+        <HeroSlider /><CategoryGrid />
         <div className="px-4 md:px-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Discovered in {brandName}
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base mb-6">
-            Top local businesses, events, and experiences near you
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Discovered in {brandName}</h1>
+          <p className="text-muted-foreground text-sm md:text-base mb-6">Top local businesses, events, and experiences near you</p>
         </div>
-
-        {renderRow(
-          "Local Businesses",
-          businesses,
-          handleBizClick,
-          "/businesses",
-          "View All Businesses",
-          <Store className="w-6 h-6 text-primary" />
-        )}
-
-        {renderRow(
-          "Upcoming Events",
-          events,
-          handleEventClick,
-          "/events",
-          "View All Events",
-          <Calendar className="w-6 h-6 text-primary" />,
-          (item) => (
-            <span className="font-bold text-xs text-primary">
-              {item.price ? `₦${item.price}` : "Free"}
-            </span>
-          )
-        )}
-
-        {renderRow(
-          "Marketplace",
-          marketplace,
-          handleMktClick,
-          "/marketplace",
-          "View All Products",
-          <ShoppingBag className="w-6 h-6 text-primary" />,
-          (item) => (
-            <span className="font-bold text-xs text-primary">
-              {item.price || "Price on request"}
-            </span>
-          )
-        )}
-
-        {renderRow(
-          "Properties & Stays",
-          properties,
-          handlePropClick,
-          "/airbnb",
-          "View All Properties",
-          <Home className="w-6 h-6 text-primary" />,
-          (item) => (
-            <span className="font-bold text-xs text-primary">
-              {item.price || "₦0/night"}
-            </span>
-          )
-        )}
+        {renderRow("Local Businesses", businesses, handleBizClick, "/businesses", "View All Businesses", <Store className="w-6 h-6 text-primary" />)}
+        {renderRow("Upcoming Events", events, handleEventClick, "/events", "View All Events", <Calendar className="w-6 h-6 text-primary" />,
+          (item) => <span className="font-bold text-xs text-primary">{item.price ? `₦${item.price}` : "Free"}</span>)}
+        {renderRow("Marketplace", marketplace, handleMktClick, "/marketplace", "View All Products", <ShoppingBag className="w-6 h-6 text-primary" />,
+          (item) => <span className="font-bold text-xs text-primary">{item.price || "Price on request"}</span>)}
+        {renderRow("Properties & Stays", properties, handlePropClick, "/airbnb", "View All Properties", <Home className="w-6 h-6 text-primary" />,
+          (item) => <span className="font-bold text-xs text-primary">{item.price || "₦0/night"}</span>)}
       </main>
     </div>
   );

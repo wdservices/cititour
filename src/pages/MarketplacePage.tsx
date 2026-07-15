@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search, Heart, MapPin, ShoppingBag, Car,
@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import SEO from "@/components/SEO";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useMarketplaceItems, fmt } from "@/lib/useFirestore";
 import { getMockImage } from "@/lib/mockImages";
+
+const PLACEHOLDER_IMG = "/placeholder.svg";
 
 const categories = [
   { id: "all", label: "All Products", icon: ShoppingBag },
@@ -20,30 +21,6 @@ const categories = [
   { id: "property", label: "Property", icon: Building2 },
 ];
 
-type MarketplaceItem = {
-  id: string;
-  title: string;
-  image: string;
-  location: string;
-  price: string;
-  promoPrice?: string;
-  badge?: string;
-  badgeColor?: string;
-  category: string;
-  rating?: number;
-};
-
-const PLACEHOLDER_IMG = "/placeholder.svg";
-
-const formatLocation = (loc: any): string => {
-  if (!loc) return "";
-  if (typeof loc === "string") return loc;
-  if (loc._lat !== undefined && loc._long !== undefined) {
-    return `${loc._lat.toFixed(4)}, ${loc._long.toFixed(4)}`;
-  }
-  return String(loc);
-};
-
 const MarketplacePage = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
@@ -53,37 +30,22 @@ const MarketplacePage = () => {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoadingData(true);
-      try {
-        const snap = await getDocs(collection(db, "marketplace"));
-        setMarketplaceItems(
-          snap.docs.map((d) => {
-            const raw = d.data() as any;
-            return {
-              id: d.id,
-              title: String(raw.title || "Untitled"),
-              image: raw.image || getMockImage(raw.category) || PLACEHOLDER_IMG,
-              location: formatLocation(raw.location),
-              price: formatLocation(raw.price) || "Price on request",
-              promoPrice: formatLocation(raw.promoPrice) || "",
-              category: String(raw.category || "Other"),
-              rating: raw.rating || 0,
-            };
-          })
-        );
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    fetchAll();
-  }, []);
+  const { data: rawItems, isLoading } = useMarketplaceItems();
+
+  const marketplaceItems = useMemo(() => {
+    if (!rawItems) return [];
+    return rawItems.map((raw: any) => ({
+      id: raw.id,
+      title: String(raw.title || "Untitled"),
+      image: raw.image || getMockImage(raw.category) || PLACEHOLDER_IMG,
+      location: fmt(raw.location),
+      price: fmt(raw.price) || "Price on request",
+      promoPrice: fmt(raw.promoPrice) || "",
+      category: String(raw.category || "Other"),
+      rating: raw.rating || 0,
+    }));
+  }, [rawItems]);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
@@ -93,19 +55,21 @@ const MarketplacePage = () => {
     });
   };
 
-  const filteredProducts = marketplaceItems.filter((l) => {
-    const q = search.trim().toLowerCase();
-    const matchSearch = !q || l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q);
-    const matchCat = activeCategory === "all" || l.category.toLowerCase() === activeCategory;
-    return matchSearch && matchCat;
-  });
+  const filteredProducts = useMemo(() => {
+    return marketplaceItems.filter((l) => {
+      const q = search.trim().toLowerCase();
+      const matchSearch = !q || l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q);
+      const matchCat = activeCategory === "all" || l.category.toLowerCase() === activeCategory;
+      return matchSearch && matchCat;
+    });
+  }, [marketplaceItems, search, activeCategory]);
 
   return (
     <div className="min-h-screen bg-background">
       <SEO
         title="Marketplace | CititourNG"
         description="Buy and sell electronics, fashion, vehicles, property and more on the CititourNG marketplace."
-        keywords={["marketplace", "buy", "sell", "Nigeria", "electronics", "fashion", "vehicles", "property", "businesses"]}
+        keywords={["marketplace", "buy", "sell", "Nigeria", "electronics", "fashion", "vehicles", "property"]}
         canonicalUrl={`${window.location.origin}/marketplace`}
       />
 
@@ -142,42 +106,42 @@ const MarketplacePage = () => {
             <div className="border-t border-border/50 pt-5">
               <h3 className="font-semibold text-foreground mb-4">Filters</h3>
               <div className="mb-5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Condition</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["all", "new", "used"].map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setCondition(c)}
-                        className={`px-3 py-1 text-[11px] font-bold rounded-full capitalize transition-colors ${
-                          condition === c
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-accent text-muted-foreground hover:bg-primary/20"
-                        }`}
-                      >
-                        {c === "all" ? "All" : c}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mb-6">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius (KM)</label>
-                  <div className="flex gap-1.5">
-                    {["5km", "15km", "30km"].map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setRadius(r)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                          radius === r
-                            ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border/50 bg-accent text-muted-foreground"
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Condition</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {["all", "new", "used"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCondition(c)}
+                      className={`px-3 py-1 text-[11px] font-bold rounded-full capitalize transition-colors ${
+                        condition === c
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-accent text-muted-foreground hover:bg-primary/20"
+                      }`}
+                    >
+                      {c === "all" ? "All" : c}
+                    </button>
+                  ))}
                 </div>
               </div>
+              <div className="mb-6">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius (KM)</label>
+                <div className="flex gap-1.5">
+                  {["5km", "15km", "30km"].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRadius(r)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                        radius === r
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-border/50 bg-accent text-muted-foreground"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <button
               onClick={() => navigate("/profile/dashboard?tab=listings&action=create")}
@@ -257,7 +221,7 @@ const MarketplacePage = () => {
             </div>
           )}
 
-          {loadingData ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
@@ -276,63 +240,60 @@ const MarketplacePage = () => {
               </button>
             </div>
           ) : (
-            /* ── Products View ── */
-            <>
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
-                    : "flex flex-col gap-4"
-                }
-              >
-                {filteredProducts.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer ${
-                      viewMode === "list" ? "flex" : ""
-                    }`}
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                    onClick={() => navigate(`/marketplace/${item.id}`)}
-                  >
-                    <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-square"}`}>
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
-                        className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
-                      >
-                        <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
-                      </button>
-                      {item.badge && (
-                        <div className="absolute bottom-3 left-3">
-                          <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>
-                            {item.badge}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className={`p-3.5 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
-                      <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{item.title}</h3>
-                      <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{item.location}</span>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+                  : "flex flex-col gap-4"
+              }
+            >
+              {filteredProducts.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer ${
+                    viewMode === "list" ? "flex" : ""
+                  }`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                  onClick={() => navigate(`/marketplace/${item.id}`)}
+                >
+                  <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-square"}`}>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
+                      className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
+                    >
+                      <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
+                    </button>
+                    {item.badge && (
+                      <div className="absolute bottom-3 left-3">
+                        <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>
+                          {item.badge}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm md:text-base text-accent">{item.price}</span>
-                          {item.promoPrice && (
-                            <span className="font-bold text-sm text-primary">{item.promoPrice}</span>
-                          )}
-                        </div>
+                    )}
+                  </div>
+                  <div className={`p-3.5 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
+                    <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{item.title}</h3>
+                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{item.location}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm md:text-base text-accent">{item.price}</span>
+                        {item.promoPrice && (
+                          <span className="font-bold text-sm text-primary">{item.promoPrice}</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
+                </div>
+              ))}
+            </div>
           )}
         </main>
       </div>

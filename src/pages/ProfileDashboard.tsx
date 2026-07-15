@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Building2, ShoppingBag, Home, Calendar, Megaphone,
   Plus, LayoutDashboard, MapPin, Trash2, Edit3, Ticket, Store,
-  ChevronRight, Loader2,
+  ChevronRight, Loader2, Download, FileText, BarChart2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, getDoc, query, where, addDoc, deleteDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { getDoc } from "firebase/firestore";
+import { useMyListings, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
 import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import { getMockImage } from "@/lib/mockImages";
@@ -111,41 +112,99 @@ const ProfileDashboard = () => {
   ]);
 
   // ── User's businesses (for product/property linking) ──
-  const [myBusinesses, setMyBusinesses] = useState<ListingItem[]>([]);
-  const [myProducts, setMyProducts] = useState<ListingItem[]>([]);
-  const [myProperties, setMyProperties] = useState<ListingItem[]>([]);
-  const [myEvents, setMyEvents] = useState<ListingItem[]>([]);
-  const [loadingListings, setLoadingListings] = useState(true);
+  const { data: listingsData, isLoading: loadingListings } = useMyListings(user?.id || null);
+  const myBusinesses = (listingsData?.businesses || []) as ListingItem[];
+  const myProducts = (listingsData?.products || []) as ListingItem[];
+  const myProperties = (listingsData?.properties || []) as ListingItem[];
+  const myEvents = (listingsData?.events || []) as ListingItem[];
+
+  // ── Event analytics (organized events) ──
+  const eventIds = myEvents.map((e) => e.id);
+  const { data: allOrders = [] } = useMyEventOrders(user?.id || null, eventIds);
+
+  console.log("[Dashboard] userId:", user?.id, "myEvents:", myEvents.length, "eventIds:", eventIds, "orders:", allOrders.length);
+
+  // ── Attended events (events user has tickets for) ──
+  const { data: myTicketOrders = [] } = useMyTicketOrders(user?.id || null);
+  const attendedEventIds = [...new Set(myTicketOrders.map((o: any) => o.eventId).filter(Boolean))];
+  const { data: attendedEvents = [] } = useMyAttendedEvents(user?.id || null, attendedEventIds);
+
+  const eventAnalytics = useMemo(() => {
+    let totalCapacity = 0;
+    let totalRevenue = 0;
+    const eventStats = myEvents.map((evt: any) => {
+      const tickets = evt.ticketTypes || [];
+      const capacity = tickets.reduce((s: number, t: any) => s + (Number(t.quantity) || 0), 0);
+      const potentialRev = tickets.reduce((s: number, t: any) => s + (Number(t.price) || 0) * (Number(t.quantity) || 0), 0);
+      const orders = allOrders.filter((o: any) => o.eventId === evt.id);
+      const attendees = orders.map((o: any) => ({
+        id: o.id || "",
+        name: o.buyerName || o.buyerEmail || "Anonymous",
+        email: o.buyerEmail || "",
+        amount: Number(o.totalAmount) || Number(o.amount) || 0,
+        tier: o.ticketTier || "General",
+        quantity: Number(o.quantity) || 1,
+        date: o.createdAt || "",
+      }));
+      const revenue = attendees.reduce((s: number, a: any) => s + a.amount, 0);
+      totalCapacity += capacity;
+      totalRevenue += revenue;
+      return { id: evt.id, title: evt.title || "Untitled", date: evt.startDate || "", location: evt.location || "", capacity, attendees, potentialRevenue: potentialRev, actualRevenue: revenue, ticketTiers: tickets };
+    });
+    return { totalEvents: myEvents.length, totalCapacity, totalRevenue, totalAttendees: allOrders.length, eventStats };
+  }, [myEvents, allOrders]);
+
+  // ── Generate Event Report (PDF/CSV) ──
+  const generateEventReport = () => {
+    const lines: string[] = [];
+    lines.push("CititourNG — Event Report");
+    lines.push(`Generated: ${new Date().toLocaleString()}`);
+    lines.push("");
+    lines.push(`Total Events: ${eventAnalytics.totalEvents}`);
+    lines.push(`Total Capacity: ${eventAnalytics.totalCapacity.toLocaleString()}`);
+    lines.push(`Total Attendees: ${eventAnalytics.totalAttendees}`);
+    lines.push(`Total Revenue: ₦${eventAnalytics.totalRevenue.toLocaleString()}`);
+    lines.push("");
+
+    eventAnalytics.eventStats.forEach((evt, i) => {
+      lines.push(`${i + 1}. ${evt.title}`);
+      lines.push(`   Date: ${evt.date || "TBA"} | Location: ${evt.location || "TBA"}`);
+      lines.push(`   Capacity: ${evt.capacity} | Attendees: ${evt.attendees.length} | Revenue: ₦${evt.actualRevenue.toLocaleString()}`);
+      if (evt.attendees.length > 0) {
+        lines.push("   Attendees:");
+        evt.attendees.forEach((a, j) => {
+          lines.push(`     ${j + 1}. ${a.name} (${a.email}) — ${a.tier} × ${a.quantity} — ₦${a.amount.toLocaleString()} — ${a.date ? new Date(a.date).toLocaleDateString() : "N/A"}`);
+        });
+      } else {
+        lines.push("   No attendees yet");
+      }
+      lines.push("");
+    });
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `event-report-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Report downloaded", description: "Event report saved as CSV." });
+  };
+
+  // ── Cached mutations (auto-invalidate queries on success) ──
+  const createBusiness = useCreateDoc("businesses");
+  const createProduct = useCreateDoc("marketplace");
+  const createProperty = useCreateDoc("house_listings");
+  const updateListing = useUpdateDoc("businesses");
+  const deleteListing = useDeleteDoc("businesses");
+  const deleteProduct = useDeleteDoc("marketplace");
+  const deleteProperty = useDeleteDoc("house_listings");
 
   // ── Inherited state from selected business ──
   const selectedBiz = myBusinesses.find((b) => b.id === listAsBizId);
   const selectedPropBiz = myBusinesses.find((b) => b.id === propListAsBizId);
   const inheritState = selectedBiz?.location?.split(", ").pop() || "";
   const inheritPropState = selectedPropBiz?.location?.split(", ").pop() || "";
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const loadListings = async () => {
-      setLoadingListings(true);
-      try {
-        const bizSnap = await getDocs(query(collection(db, "businesses"), where("ownerId", "==", user.id)));
-        const businesses = bizSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-        setMyBusinesses(businesses.filter((b: any) => b.category !== "Event" && b.category !== "Events"));
-        setMyEvents(businesses.filter((b: any) => b.category === "Event" || b.category === "Events"));
-
-        const prodSnap = await getDocs(query(collection(db, "marketplace"), where("ownerId", "==", user.id)));
-        setMyProducts(prodSnap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
-
-        const propSnap = await getDocs(query(collection(db, "house_listings"), where("ownerId", "==", user.id)));
-        setMyProperties(propSnap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
-      } catch (err) {
-        console.error("Error loading listings:", err);
-      } finally {
-        setLoadingListings(false);
-      }
-    };
-    loadListings();
-  }, [user?.id]);
 
   const resetWizard = () => {
     setCreateOpen(false);
@@ -193,7 +252,7 @@ const ProfileDashboard = () => {
     setIsSubmitting(true);
     try {
       const fullLocation = [selectedCity, selectedState].filter(Boolean).join(", ");
-      await addDoc(collection(db, "businesses"), {
+      await createBusiness.mutateAsync({
         title,
         description,
         category: bizCategory,
@@ -206,11 +265,9 @@ const ProfileDashboard = () => {
         ownerId: user.id,
         isOpen: true,
         rating: 0,
-        createdAt: serverTimestamp(),
       });
       toast({ title: "Business registered!" });
       resetWizard();
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to create business", variant: "destructive" });
@@ -233,7 +290,7 @@ const ProfileDashboard = () => {
       const city = isLinkedToBiz ? selectedBiz.location?.split(", ").shift() : selectedCity;
       const fullLocation = [city, state].filter(Boolean).join(", ");
 
-      await addDoc(collection(db, "marketplace"), {
+      await createProduct.mutateAsync({
         title,
         description,
         category: productCategory || "Other",
@@ -248,11 +305,9 @@ const ProfileDashboard = () => {
         image: uploadedImageUrl || getMockImage(productCategory),
         ownerId: user.id,
         condition: "new",
-        createdAt: serverTimestamp(),
       });
       toast({ title: "Product listed!" });
       resetWizard();
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to list product", variant: "destructive" });
@@ -275,7 +330,7 @@ const ProfileDashboard = () => {
       const city = isLinkedToBiz ? selectedPropBiz.location?.split(", ").shift() : selectedCity;
       const fullLocation = [city, state].filter(Boolean).join(", ");
 
-      await addDoc(collection(db, "house_listings"), {
+      await createProperty.mutateAsync({
         title,
         description,
         type: propertyType,
@@ -294,11 +349,9 @@ const ProfileDashboard = () => {
         status: "Pending",
         rating: 0,
         reviews: 0,
-        createdAt: serverTimestamp(),
       });
       toast({ title: "Property listed!" });
       resetWizard();
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to list property", variant: "destructive" });
@@ -317,7 +370,7 @@ const ProfileDashboard = () => {
     try {
       const fullLocation = [eventVenue, eventLocation, selectedCity, selectedState].filter(Boolean).join(", ");
       const validTickets = ticketTypes.filter((t) => t.name.trim());
-      await addDoc(collection(db, "businesses"), {
+      await createBusiness.mutateAsync({
         title,
         description,
         category: "Event",
@@ -336,11 +389,9 @@ const ProfileDashboard = () => {
         ownerId: user.id,
         isActive: true,
         rating: 0,
-        createdAt: serverTimestamp(),
       });
       toast({ title: "Event created!" });
       resetWizard();
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to create event", variant: "destructive" });
@@ -349,16 +400,8 @@ const ProfileDashboard = () => {
     }
   };
 
-  const reloadListings = async () => {
-    if (!user?.id) return;
-    const bizSnap = await getDocs(query(collection(db, "businesses"), where("ownerId", "==", user.id)));
-    const businesses = bizSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-    setMyBusinesses(businesses.filter((b: any) => b.category !== "Event" && b.category !== "Events"));
-    setMyEvents(businesses.filter((b: any) => b.category === "Event" || b.category === "Events"));
-    const prodSnap = await getDocs(query(collection(db, "marketplace"), where("ownerId", "==", user.id)));
-    setMyProducts(prodSnap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
-    const propSnap = await getDocs(query(collection(db, "house_listings"), where("ownerId", "==", user.id)));
-    setMyProperties(propSnap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
+  const reloadListings = () => {
+    // Mutations auto-invalidate queries, no manual reload needed
   };
 
   const getCollectionForType = (type: string) => {
@@ -384,12 +427,16 @@ const ProfileDashboard = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const collectionName = getCollectionForType(deleteTarget.type);
-      await deleteDoc(doc(db, collectionName, deleteTarget.id));
+      if (deleteTarget.type === "product") {
+        await deleteProduct.mutateAsync(deleteTarget.id);
+      } else if (deleteTarget.type === "property") {
+        await deleteProperty.mutateAsync(deleteTarget.id);
+      } else {
+        await deleteListing.mutateAsync(deleteTarget.id);
+      }
       toast({ title: `"${deleteTarget.title}" deleted.` });
       setDeleteTarget(null);
       setDeleteStep(0);
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to delete listing", variant: "destructive" });
@@ -449,11 +496,10 @@ const ProfileDashboard = () => {
         image: editImageUrl,
         location: fullLocation,
       };
-      await updateDoc(doc(db, collectionName, editTarget.id), updateData);
+      await updateListing.mutateAsync({ id: editTarget.id, data: updateData });
       toast({ title: "Listing updated!" });
       setEditOpen(false);
       setEditTarget(null);
-      reloadListings();
     } catch (err) {
       console.error(err);
       toast({ title: "Failed to update listing", variant: "destructive" });
@@ -1044,15 +1090,147 @@ const ProfileDashboard = () => {
           <TabsContent value="events" className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">My Events ({myEvents.length})</h3>
-              <Button size="sm" className="rounded-xl font-bold" onClick={() => { setListingType("event"); setWizardStep(2); setCreateOpen(true); }}>
-                <Plus className="w-4 h-4 mr-1" /> Create Event
-              </Button>
-            </div>
-            {myEvents.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {myEvents.map(item => <ListingCard key={item.id} item={item} type="event" />)}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl font-bold"
+                  onClick={generateEventReport}
+                  disabled={myEvents.length === 0}
+                >
+                  <FileText className="w-4 h-4 mr-1" /> Report
+                </Button>
+                <Button size="sm" className="rounded-xl font-bold" onClick={() => { setListingType("event"); setWizardStep(2); setCreateOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-1" /> Create Event
+                </Button>
               </div>
-            ) : (
+            </div>
+
+            {/* Analytics Cards */}
+            {myEvents.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-card border border-border/50 rounded-xl p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Events</p>
+                  <p className="text-2xl font-extrabold text-foreground">{eventAnalytics.totalEvents}</p>
+                </div>
+                <div className="bg-card border border-border/50 rounded-xl p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Capacity</p>
+                  <p className="text-2xl font-extrabold text-foreground">{eventAnalytics.totalCapacity.toLocaleString()}</p>
+                </div>
+                <div className="bg-card border border-border/50 rounded-xl p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Attendees</p>
+                  <p className="text-2xl font-extrabold text-primary">{eventAnalytics.totalAttendees}</p>
+                </div>
+                <div className="bg-card border border-border/50 rounded-xl p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Revenue</p>
+                  <p className="text-2xl font-extrabold text-green-600">₦{eventAnalytics.totalRevenue.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Per-Event Breakdown */}
+            {eventAnalytics.eventStats.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm text-foreground">Event Breakdown</h4>
+                {eventAnalytics.eventStats.map((evt) => (
+                  <div key={evt.id} className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-bold text-sm text-foreground truncate">{evt.title}</h5>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          {evt.date && <span>{new Date(evt.date).toLocaleDateString()}</span>}
+                          {evt.location && <span className="truncate">{evt.location}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 shrink-0">
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground">Capacity</p>
+                          <p className="font-bold text-sm">{evt.capacity}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground">Attendees</p>
+                          <p className="font-bold text-sm text-primary">{evt.attendees.length}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground">Revenue</p>
+                          <p className="font-bold text-sm text-green-600">₦{evt.actualRevenue.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                    {evt.ticketTiers.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2">Ticket Tiers</p>
+                        <div className="flex flex-wrap gap-2">
+                          {evt.ticketTiers.map((tier: any, i: number) => (
+                            <span key={i} className="px-2.5 py-1 bg-accent text-xs rounded-full font-medium">
+                              {tier.name || "Tier"} — ₦{Number(tier.price || 0).toLocaleString()} × {Number(tier.quantity || 0)} seats
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {evt.attendees.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2">Attendees ({evt.attendees.length})</p>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {evt.attendees.map((a: any, i: number) => (
+                            <div key={i} className="flex items-center justify-between gap-3 p-2 rounded-lg bg-accent/30 text-xs">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-foreground truncate">{a.name}</p>
+                                {a.email && <p className="text-muted-foreground truncate">{a.email}</p>}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="font-bold text-green-600">₦{a.amount.toLocaleString()}</p>
+                                <p className="text-muted-foreground">{a.tier} × {a.quantity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Attended Events */}
+            {attendedEvents.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-border/50">
+                <h4 className="font-bold text-sm text-foreground">My Tickets ({attendedEvents.length})</h4>
+                {attendedEvents.map((evt: any) => {
+                  const myOrder = myTicketOrders.find((o: any) => o.eventId === evt.id);
+                  return (
+                    <div key={evt.id} className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-all">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-bold text-sm text-foreground truncate">{evt.title || "Untitled Event"}</h5>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            {evt.startDate && <span>{new Date(evt.startDate).toLocaleDateString()}</span>}
+                            {evt.location && <span className="truncate">{evt.location}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold uppercase text-muted-foreground">My Ticket</p>
+                            <p className="font-bold text-sm text-primary">{myOrder?.ticketTier || "General"}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold uppercase text-muted-foreground">Paid</p>
+                            <p className="font-bold text-sm text-green-600">₦{Number(myOrder?.amount || 0).toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold uppercase text-muted-foreground">Qty</p>
+                            <p className="font-bold text-sm">{Number(myOrder?.quantity || 1)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {myEvents.length === 0 && attendedEvents.length === 0 && (
               <div className="text-center py-16 bg-card/30 rounded-2xl border border-dashed border-border">
                 <p className="text-muted-foreground mb-3">No events yet</p>
                 <Button size="sm" variant="outline" onClick={() => { setListingType("event"); setWizardStep(2); setCreateOpen(true); }}>

@@ -1,191 +1,179 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Users, 
-  Ticket, 
-  Heart, 
-  Share2, 
-  Star, 
-  ArrowLeft,
-  CreditCard,
-  Smartphone,
-  Wallet,
-  X
+import {
+  Calendar, MapPin, Clock, Users, Ticket, Heart, Share2, ArrowLeft,
+  CreditCard, Smartphone, Wallet, X, Loader2, CheckCircle2, User, Mail, Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { getMockImage } from "@/lib/mockImages";
+import { fmt } from "@/lib/useFirestore";
 
-interface Event {
+interface TicketTier {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface EventData {
   id: string;
   title: string;
   description: string;
-  category: string;
-  venue: string;
-  address: string;
   location: string;
-  startDate: any;
-  endDate: any;
+  image: string;
+  startDate: string;
   startTime: string;
-  endTime: string;
-  capacity: number | null;
-  ticketsAvailable: number;
-  ticketsSold: number;
-  status: string;
-  isActive: boolean;
-  organizerId: string;
-  website?: string;
-  phone?: string;
-  imageUrl?: string;
-  priceRange?: string;
+  ownerId: string;
+  ticketTypes: TicketTier[];
+  tags: string[];
+  category: string;
 }
 
-interface TicketType {
-  id: string;
-  ticketType: string;
-  price: number;
-  quantity: number;
-  sold: number;
-  available: number;
-  commission: number;
-  status: string;
-}
+type Step = 'details' | 'register' | 'payment' | 'success';
 
 const DynamicEventPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  const [event, setEvent] = useState<Event | null>(null);
-  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
+  const qc = useQueryClient();
+
+  const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  const [step, setStep] = useState<Step>('details');
+  const [selectedTier, setSelectedTier] = useState<TicketTier | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'wallet' | 'transfer'>('card');
-  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
-    if (!eventId) {
-      navigate('/');
-      return;
-    }
-
-    const loadEvent = async () => {
+    if (!eventId) { navigate('/'); return; }
+    const load = async () => {
       try {
         setLoading(true);
-        
-        // Load event details
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        if (!eventDoc.exists()) {
-          toast({
-            title: "Event Not Found",
-            description: "This event may have been removed or the link is invalid.",
-            variant: "destructive"
-          });
+        const snap = await getDoc(doc(db, 'businesses', eventId));
+        if (!snap.exists()) {
+          toast({ title: "Event Not Found", description: "This event may have been removed.", variant: "destructive" });
           navigate('/');
           return;
         }
-
-        const eventData = eventDoc.data() as Event;
+        const data = snap.data() as any;
+        if (data.category !== "Event" && data.category !== "Events") {
+          toast({ title: "Not an Event", variant: "destructive" });
+          navigate('/');
+          return;
+        }
         setEvent({
-          ...eventData,
-          id: eventDoc.id
+          id: snap.id,
+          title: fmt(data.title) || 'Untitled Event',
+          description: fmt(data.description) || '',
+          location: fmt(data.location) || 'Location TBA',
+          image: data.image || getMockImage('Event'),
+          startDate: data.startDate || '',
+          startTime: data.startTime || '',
+          ownerId: data.ownerId || '',
+          ticketTypes: (data.ticketTypes || []).map((t: any) => ({
+            name: t.name || 'General',
+            price: Number(t.price) || 0,
+            quantity: Number(t.quantity) || 0,
+          })),
+          tags: data.tags || [],
+          category: data.tags?.[0] || 'Event',
         });
-
-        // Load ticket types for this event
-        const ticketsSnapshot = await getDocs(collection(db, 'events', eventId, 'tickets'));
-        const tickets = ticketsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as TicketType));
-        setTicketTypes(tickets);
-
-      } catch (error) {
-        console.error('Error loading event:', error);
-        toast({
-          title: "Error Loading Event",
-          description: "Failed to load event details. Please try again.",
-          variant: "destructive"
-        });
+      } catch (err) {
+        console.error(err);
+        toast({ title: "Error", description: "Failed to load event.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     };
-
-    loadEvent();
+    load();
   }, [eventId, navigate, toast]);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    toast({
-      title: isLiked ? "Removed from Favorites" : "Added to Favorites",
-      description: isLiked ? "Event removed from your favorites." : "Event added to your favorites.",
-    });
+  const reset = () => { setStep('details'); setSelectedTier(null); setQuantity(1); setName(''); setEmail(''); setPhone(''); setSelectedPayment('card'); };
+
+  const tickets = event?.ticketTypes || [];
+  const isFree = tickets.length === 0 || tickets.every(t => t.price === 0);
+  const total = selectedTier ? selectedTier.price * quantity : 0;
+
+  const handleAttend = () => {
+    if (!user) { toast({ title: 'Sign in required', description: 'Please sign in to attend.', variant: 'destructive' }); return; }
+    setName(user.name || '');
+    setEmail(user.email || '');
+    setStep('register');
   };
 
-  const handleShare = () => {
-    const shareUrl = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: event?.title,
-        text: event?.description,
-        url: shareUrl,
-      });
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "Link Copied!",
-        description: "Event link has been copied to your clipboard.",
-      });
+  const handleRegisterSubmit = () => {
+    if (!name.trim() || !email.trim()) {
+      toast({ title: 'Missing info', description: 'Please fill in your name and email.', variant: 'destructive' }); return;
+    }
+    if (isFree) { submitOrder(); }
+    else {
+      if (!selectedTier) { toast({ title: 'Select a ticket', description: 'Please choose a ticket tier.', variant: 'destructive' }); return; }
+      setStep('payment');
     }
   };
 
-  const handleBookTicket = (ticket: TicketType) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-    setSelectedTicket(ticket);
-    setTicketQuantity(1);
-    setShowPayment(true);
-  };
-
-  const handlePayment = () => {
-    if (!selectedTicket || !event) return;
-    
-    // Simulate payment processing
-    toast({
-      title: "Payment Successful!",
-      description: `Your booking for ${ticketQuantity}x "${event.title}" - ${selectedTicket.ticketType} is confirmed.`,
-    });
-    setShowPayment(false);
-    setSelectedTicket(null);
+  const submitOrder = async () => {
+    if (!user || !event) return;
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'ticket_orders'), {
+        eventId: event.id,
+        eventTitle: event.title,
+        ownerId: event.ownerId || '',
+        buyerId: user.id,
+        buyerName: name.trim(),
+        buyerEmail: email.trim(),
+        buyerPhone: phone.trim() || '',
+        ticketTier: selectedTier?.name || 'Free',
+        quantity,
+        amount: total,
+        totalAmount: total,
+        paymentMethod: isFree ? 'free' : selectedPayment,
+        status: 'confirmed',
+        createdAt: serverTimestamp(),
+      });
+      setStep('success');
+      qc.invalidateQueries({ queryKey: ["myEventOrders"] });
+      qc.invalidateQueries({ queryKey: ["ticket_orders"] });
+      toast({ title: 'You are registered!', description: `Your spot for "${event.title}" is confirmed.` });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Error', description: 'Something went wrong.', variant: 'destructive' });
+    } finally { setSubmitting(false); }
   };
 
   const paymentMethods = [
-    { id: 'card', label: 'Credit/Debit Card', icon: CreditCard, description: 'Pay with Visa, Mastercard, or Verve' },
-    { id: 'wallet', label: 'Wallet', icon: Wallet, description: 'Pay with your in-app wallet' },
-    { id: 'transfer', label: 'Bank Transfer', icon: Smartphone, description: 'Pay with bank transfer or USSD' }
+    { id: 'card' as const, label: 'Credit/Debit Card', icon: CreditCard, desc: 'Visa, Mastercard, or Verve' },
+    { id: 'wallet' as const, label: 'Wallet', icon: Wallet, desc: 'Pay with your in-app wallet' },
+    { id: 'transfer' as const, label: 'Bank Transfer', icon: Smartphone, desc: 'Bank transfer or USSD' },
   ];
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) { navigator.share({ title: event?.title, text: event?.description, url }); }
+    else { navigator.clipboard.writeText(url); toast({ title: 'Link copied!' }); }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading event details...</p>
-        </div>
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -195,11 +183,7 @@ const DynamicEventPage = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
-          <p className="text-muted-foreground mb-6">This event may have been removed or the link is invalid.</p>
-          <Button onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
+          <Button onClick={() => navigate('/events')}><ArrowLeft className="h-4 w-4 mr-2" />Back to Events</Button>
         </div>
       </div>
     );
@@ -207,304 +191,158 @@ const DynamicEventPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-semibold">Event Details</h1>
-          </div>
+        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => step !== 'details' ? reset() : window.history.length > 2 ? navigate(-1) : navigate('/events')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold truncate">{step === 'details' ? event.title : step === 'register' ? 'Register' : step === 'payment' ? 'Payment' : 'Confirmed'}</h1>
         </div>
       </div>
 
-      {/* Event Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Event Header */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <Badge className="mb-2">{event.category}</Badge>
-                    <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
-                    <p className="text-muted-foreground">{event.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleLike}
-                      className={isLiked ? 'text-destructive border-destructive' : ''}
-                    >
-                      <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={handleShare}>
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {step === 'details' && (
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Main */}
+            <div className="md:col-span-2 space-y-5">
+              {event.image && (
+                <div className="relative h-64 rounded-2xl overflow-hidden bg-primary/10">
+                  <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
                 </div>
-
-                {/* Event Image */}
-                {event.imageUrl && (
-                  <div className="w-full h-64 bg-primary rounded-lg mb-6 flex items-center justify-center">
-                    <img 
-                      src={event.imageUrl} 
-                      alt={event.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-
-                {/* Event Details */}
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">Date</div>
-                      <div className="text-sm text-muted-foreground">
-                        {event.startDate?.toDate?.() ? 
-                          new Date(event.startDate.toDate()).toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          }) : 'TBD'
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">Time</div>
-                      <div className="text-sm text-muted-foreground">
-                        {event.startTime} - {event.endTime}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">Location</div>
-                      <div className="text-sm text-muted-foreground">
-                        {event.venue}, {event.location}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">Capacity</div>
-                      <div className="text-sm text-muted-foreground">
-                        {event.capacity ? `${event.ticketsSold}/${event.capacity}` : 'Unlimited'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Venue Information */}
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3">Venue Information</h3>
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <div className="font-medium mb-2">{event.venue}</div>
-                    <div className="text-sm text-muted-foreground mb-2">{event.address}</div>
-                    {event.phone && (
-                      <div className="text-sm text-muted-foreground mb-2">Phone: {event.phone}</div>
-                    )}
-                    {event.website && (
-                      <div className="text-sm">
-                        <a 
-                          href={event.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          Visit Website
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Ticket Types */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Tickets</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {ticketTypes.length === 0 ? (
-                  <p className="text-muted-foreground">No tickets available for this event.</p>
-                ) : (
-                  ticketTypes.map((ticket) => (
-                    <div key={ticket.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold">{ticket.ticketType}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {ticket.sold} sold out of {ticket.quantity}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-primary">
-                            ₦{ticket.price.toLocaleString()}
-                          </div>
-                          <div className="text-sm text-muted-foreground">per person</div>
-                        </div>
-                      </div>
-                      
-                      <div className="w-full bg-muted rounded-full h-2 mb-4">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(ticket.sold / ticket.quantity) * 100}%` }}
-                        />
-                      </div>
-
-                      <Button 
-                        className="w-full"
-                        onClick={() => handleBookTicket(ticket)}
-                        disabled={ticket.available <= 0}
-                      >
-                        {ticket.available <= 0 ? 'Sold Out' : 'Buy Now'}
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button onClick={handleShare} className="w-full" variant="outline">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share Event
-                </Button>
-                <Button onClick={handleLike} className="w-full" variant="outline">
-                  <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
-                  {isLiked ? 'Remove from Favorites' : 'Add to Favorites'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Event Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Status</span>
-                    <Badge className={event.isActive ? 'bg-success text-success-foreground' : 'bg-primary text-primary-foreground'}>
-                      {event.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Tickets Available</span>
-                    <span className="text-sm font-medium">
-                      {ticketTypes.reduce((sum, ticket) => sum + ticket.available, 0)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Modal */}
-      <Dialog open={showPayment} onOpenChange={setShowPayment}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Complete Your Booking</DialogTitle>
-          </DialogHeader>
-          
-          {selectedTicket && (
-            <div className="space-y-4">
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="font-medium mb-3">Booking Summary</h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-foreground">{event.title}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">{selectedTicket.ticketType}</span>
-                    <div className="flex items-center gap-3 bg-background border border-border/50 rounded-lg p-1 shadow-sm">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => setTicketQuantity(Math.max(1, ticketQuantity - 1))}>-</Button>
-                      <span className="font-bold w-4 text-center">{ticketQuantity}</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md" onClick={() => setTicketQuantity(Math.min(selectedTicket.available, ticketQuantity + 1))}>+</Button>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center text-muted-foreground">
-                    <span>Price per ticket</span>
-                    <span>₦{selectedTicket.price.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-muted-foreground">
-                    <span>Service fee</span>
-                    <span>₦500</span>
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total</span>
-                    <span className="text-primary">₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}</span>
-                  </div>
-                </div>
+              )}
+              <div>
+                <Badge className="mb-2">{event.category}</Badge>
+                <h1 className="text-3xl font-bold mb-3">{event.title}</h1>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{event.description || 'No description available.'}</p>
               </div>
-
-              {/* Payment Methods */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Select Payment Method</h4>
-                {paymentMethods.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <Button
-                      key={method.id}
-                      variant={selectedPayment === method.id ? "default" : "outline"}
-                      className="w-full justify-start h-auto p-4"
-                      onClick={() => setSelectedPayment(method.id as any)}
-                    >
-                      <div className="flex items-center gap-3 text-left">
-                        <Icon className="w-5 h-5" />
-                        <div>
-                          <div className="font-medium">{method.label}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {method.description}
-                          </div>
-                        </div>
-                      </div>
-                    </Button>
-                  );
-                })}
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="w-4 h-4" /><span>{event.startDate ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBA'}</span></div>
+                {event.startTime && <div className="flex items-center gap-2 text-muted-foreground"><Clock className="w-4 h-4" /><span>{event.startTime}</span></div>}
+                <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="w-4 h-4" /><span>{event.location}</span></div>
               </div>
-
-              <Button
-                onClick={handlePayment}
-                className="w-full h-12 bg-accent text-accent-foreground hover:bg-accent/90 font-bold text-base shadow-lg shadow-primary/20"
-              >
-                <CreditCard className="w-5 h-5 mr-2" />
-                Pay ₦{((selectedTicket.price * ticketQuantity) + 500).toLocaleString()}
-              </Button>
+              {event.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">{event.tags.map(t => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}</div>
+              )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            {/* Sidebar */}
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="font-semibold">{isFree ? 'Free Event' : 'Select Ticket'}</h4>
+                  {tickets.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">This is a free event.</p>
+                  ) : tickets.map((tier, i) => {
+                    const available = tier.quantity;
+                    const isSelected = selectedTier?.name === tier.name;
+                    return (
+                      <button key={i} disabled={available <= 0}
+                        onClick={() => { setSelectedTier(tier); setQuantity(1); }}
+                        className={`w-full text-left p-3 rounded-lg border transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'} ${available <= 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-sm">{tier.name || `Tier ${i + 1}`}</span>
+                          <span className="font-bold text-primary">{tier.price === 0 ? 'Free' : `₦${tier.price.toLocaleString()}`}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{available} spots</p>
+                      </button>
+                    );
+                  })}
+                  <Button onClick={handleAttend} className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
+                    <Ticket className="w-4 h-4 mr-2" />{isFree ? 'Reserve a Spot' : 'Attend'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsLiked(!isLiked)}>
+                  <Heart className={`w-4 h-4 mr-1 ${isLiked ? 'fill-destructive text-destructive' : ''}`} />{isLiked ? 'Saved' : 'Save'}
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={handleShare}>
+                  <Share2 className="w-4 h-4 mr-1" />Share
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'register' && (
+          <div className="max-w-md mx-auto">
+            <h3 className="text-xl font-bold mb-1">Register for {event.title}</h3>
+            <p className="text-sm text-muted-foreground mb-6">Fill in your details to reserve a spot</p>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-bold uppercase text-muted-foreground">Full Name *</Label>
+                <div className="relative mt-1.5"><User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} className="pl-10" /></div>
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase text-muted-foreground">Email *</Label>
+                <div className="relative mt-1.5"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" /></div>
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase text-muted-foreground">Phone (optional)</Label>
+                <div className="relative mt-1.5"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input type="tel" placeholder="0801 234 5678" value={phone} onChange={e => setPhone(e.target.value)} className="pl-10" /></div>
+              </div>
+              {!isFree && selectedTier && (
+                <div>
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">Tickets</Label>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</Button>
+                    <span className="font-bold text-lg w-8 text-center">{quantity}</span>
+                    <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setQuantity(quantity + 1)}>+</Button>
+                    <span className="text-sm text-muted-foreground ml-2">× ₦{selectedTier.price.toLocaleString()} = ₦{total.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Button onClick={handleRegisterSubmit} className="mt-6 w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
+              {isFree ? 'Confirm Reservation' : 'Continue to Payment'}<ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        )}
+
+        {step === 'payment' && (
+          <div className="max-w-md mx-auto">
+            <h3 className="text-xl font-bold mb-4">Complete Payment</h3>
+            <div className="bg-muted/30 rounded-xl p-4 mb-5">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Event</span><span className="font-medium">{event.title}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Ticket</span><span className="font-medium">{selectedTier?.name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Quantity</span><span className="font-medium">{quantity}</span></div>
+                <Separator className="my-2" />
+                <div className="flex justify-between font-bold text-base"><span>Total</span><span className="text-primary">₦{total.toLocaleString()}</span></div>
+              </div>
+            </div>
+            <div className="space-y-2 mb-5">
+              {paymentMethods.map(m => {
+                const Icon = m.icon;
+                return (
+                  <Button key={m.id} variant={selectedPayment === m.id ? 'default' : 'outline'} className="w-full justify-start h-auto p-3" onClick={() => setSelectedPayment(m.id)}>
+                    <div className="flex items-center gap-3 text-left"><Icon className="w-5 h-5" /><div><div className="font-medium">{m.label}</div><div className="text-xs text-muted-foreground">{m.desc}</div></div></div>
+                  </Button>
+                );
+              })}
+            </div>
+            <Button onClick={submitOrder} className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={submitting}>
+              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}Pay ₦{total.toLocaleString()}
+            </Button>
+          </div>
+        )}
+
+        {step === 'success' && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold mb-2">You're In!</h3>
+            <p className="text-muted-foreground mb-1">Your spot for <strong>{event.title}</strong> is confirmed.</p>
+            {selectedTier && <p className="text-sm text-muted-foreground mb-1">{selectedTier.name} × {quantity}</p>}
+            {total > 0 && <p className="text-sm font-semibold text-primary mb-4">₦{total.toLocaleString()} paid</p>}
+            <p className="text-xs text-muted-foreground mb-6">A confirmation has been sent to {email}</p>
+            <Button onClick={() => { reset(); navigate('/events'); }} className="bg-accent text-accent-foreground hover:bg-accent/90">Done</Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

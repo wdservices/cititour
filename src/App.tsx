@@ -50,7 +50,17 @@ import StatePage from "./pages/StatePage";
 import BlogIndexPage from "./pages/BlogIndexPage";
 import BlogPostPage from "./pages/BlogPostPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 3 * 60 * 1000,     // 3 minutes before data is considered stale
+      gcTime: 15 * 60 * 1000,       // 15 minutes before unused cache is garbage collected
+      refetchOnWindowFocus: false,   // Don't refetch on tab switch
+      refetchOnReconnect: false,     // Don't refetch on network reconnect
+      retry: 1,                      // Retry failed queries once
+    },
+  },
+});
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
