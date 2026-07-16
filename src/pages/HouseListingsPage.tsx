@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/ImageUpload";
+import { logActivity } from "@/lib/activityLog";
 
 interface HouseListing {
   id: string;
@@ -257,6 +258,9 @@ const HouseListingsPage = () => {
       const docRef = await addDoc(collection(db, "house_listings"), docData);
       setMyListings(prev => [{ id: docRef.id, ...docData } as HouseListing, ...prev]);
       toast({ title: "Listing submitted successfully!" });
+      if (user) {
+        logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "property", targetName: propertyTitle, details: "Created property: " + propertyTitle });
+      }
       setActiveTab("listings");
       setPropertyTitle("");
       setAddress("");

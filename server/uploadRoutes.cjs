@@ -59,4 +59,36 @@ router.post('/sign', (req, res) => {
   }
 });
 
+// Delete image(s) from Cloudinary
+router.delete('/destroy', async (req, res) => {
+  try {
+    if (!CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ status: false, message: 'Cloudinary not configured' });
+    }
+
+    const { public_id, public_ids } = req.body;
+    const ids = public_ids || (public_id ? [public_id] : []);
+
+    if (ids.length === 0) {
+      return res.status(400).json({ status: false, message: 'public_id or public_ids array is required' });
+    }
+
+    const results = [];
+    for (const id of ids) {
+      try {
+        const result = await cloudinary.uploader.destroy(id);
+        results.push({ public_id: id, result: result.result });
+      } catch (err) {
+        console.error(`Cloudinary destroy error for ${id}:`, err.message);
+        results.push({ public_id: id, result: 'error', error: err.message });
+      }
+    }
+
+    return res.json({ status: true, results });
+  } catch (error) {
+    console.error('Cloudinary bulk destroy error:', error);
+    return res.status(500).json({ status: false, message: 'Error deleting images' });
+  }
+});
+
 module.exports = router;

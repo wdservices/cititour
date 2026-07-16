@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { logActivity } from "@/lib/activityLog";
 
 interface TicketTier {
   name: string;
@@ -87,6 +88,10 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
       toast({ title: 'Sign in required', description: 'Please sign in to attend this event.', variant: 'destructive' });
       return;
     }
+    if (!isFree && tickets.length > 0 && !selectedTier) {
+      toast({ title: 'Select a ticket', description: 'Please choose a ticket tier before continuing.', variant: 'destructive' });
+      return;
+    }
     setName(user.name || '');
     setEmail(user.email || '');
     setStep('register');
@@ -146,6 +151,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
         status: 'confirmed',
         createdAt: serverTimestamp(),
       });
+      logActivity({ userId: user.id, userEmail: user.email || "", userName: user.name || "", action: "register_event", targetType: "event", targetId: event.id, targetName: event.title, details: "Registered for event: " + event.title });
       setStep('success');
       qc.invalidateQueries({ queryKey: ["myEventOrders"] });
       qc.invalidateQueries({ queryKey: ["ticket_orders"] });

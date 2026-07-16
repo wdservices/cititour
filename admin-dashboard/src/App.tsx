@@ -18,6 +18,7 @@ import AdminUsersPage from './pages/AdminUsersPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import BusinessListingPage from './pages/BusinessListingPage'
 import QRValidatePage from './pages/QRValidatePage'
+import ActivityLogsPage from './pages/ActivityLogsPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function AppRoutes() {
@@ -47,6 +48,7 @@ function AppRoutes() {
                 <Route path="/admin-users" element={<AdminUsersPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/qr-validate" element={<QRValidatePage />} />
+                <Route path="/activity-logs" element={<ActivityLogsPage />} />
                 <Route path="/login" element={<Navigate to="/dashboard" />} />
               </Routes>
             </Layout>

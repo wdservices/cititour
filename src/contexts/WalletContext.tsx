@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
+import { logActivity } from "@/lib/activityLog";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import {
@@ -151,6 +152,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const loadPaystackScript = (): Promise<void> => {
       return new Promise((resolve, reject) => {
         if ((window as any).PaystackPop) return resolve();
+        const existing = document.querySelector('script[src="https://js.paystack.co/v1/inline.js"]');
+        if (existing) return resolve();
         const script = document.createElement('script');
         script.src = 'https://js.paystack.co/v1/inline.js';
         script.async = true;
@@ -163,7 +166,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     try {
       let publicKey = (import.meta as any)?.env?.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
       if (!publicKey) {
-        // Fallback: fetch from backend config
         try {
           const resp = await fetch(`${serverBase}/api/wallet/config`);
           const cfg = await resp.json();
@@ -171,7 +173,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             publicKey = String(cfg.public_key || cfg.publicKey);
           }
         } catch (e) {
-          // ignore and show configuration error below
+          // ignore
         }
       }
       if (!publicKey) {
@@ -180,49 +182,60 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
 
       await loadPaystackScript();
+
+      if (!(window as any).PaystackPop) {
+        toast({ title: 'Payment Error', description: 'Could not load Paystack payment module. Check your internet connection.', variant: 'destructive' });
+        return false;
+      }
+
       setIsLoading(true);
 
+      const ref = `WALLET_${Date.now()}`;
       const handler = (window as any).PaystackPop.setup({
         key: publicKey,
         email: user.email,
         amount: Math.round(Number(amount) * 100),
         currency: 'NGN',
-        ref: `WALLET_${Date.now()}`,
-        callback: async (response: any) => {
-          try {
-            const resp = await fetch(`${serverBase}/api/wallet/verify/${response.reference}`);
-            const data = await resp.json();
-
-            if (data?.status) {
-              const credited = Number(data?.amount ?? amount);
-              const walletRef = doc(db, 'wallets', user.id);
-              await updateDoc(walletRef, { balance: increment(credited), updatedAt: serverTimestamp() });
-              await addDoc(collection(db, 'wallets', user.id, 'transactions'), {
-                userId: user.id,
-                type: 'credit',
-                amount: credited,
-                description: 'Wallet Top-up',
-                date: serverTimestamp(),
-                method: 'Paystack',
-                status: 'completed',
-                referenceNumber: response.reference,
-                createdAt: serverTimestamp(),
-              });
-
-              setBalance(prev => prev + credited);
-              toast({ title: 'Wallet Funded', description: `₦${credited.toFixed(2)} has been added to your wallet.` });
-            } else {
-              toast({ title: 'Payment Failed', description: data?.message || 'Payment was not successful.', variant: 'destructive' });
-            }
-          } catch (error) {
-            toast({ title: 'Verification Error', description: (error as any)?.message || 'Could not verify payment.', variant: 'destructive' });
-          } finally {
-            setIsLoading(false);
-          }
-        },
-        onClose: () => {
+        ref: ref,
+        onClose: function () {
           setIsLoading(false);
           toast({ title: 'Payment Cancelled', description: 'You closed the payment window.', variant: 'destructive' });
+        },
+        callback: function (response: any) {
+          fetch(`${serverBase}/api/wallet/verify/${response.reference}`)
+            .then(function (resp) { return resp.json(); })
+            .then(function (data) {
+              if (data?.status) {
+                var credited = Number(data?.amount ?? amount);
+                var walletRef = doc(db, 'wallets', user.id);
+                return Promise.all([
+                  updateDoc(walletRef, { balance: increment(credited), updatedAt: serverTimestamp() }),
+                  addDoc(collection(db, 'wallets', user.id, 'transactions'), {
+                    userId: user.id,
+                    type: 'credit',
+                    amount: credited,
+                    description: 'Wallet Top-up',
+                    date: serverTimestamp(),
+                    method: 'Paystack',
+                    status: 'completed',
+                    referenceNumber: response.reference,
+                    createdAt: serverTimestamp(),
+                  }),
+                ]).then(function () {
+                  setBalance(function (prev) { return prev + credited; });
+                  logActivity({ userId: user.id, userEmail: user.email || "", userName: user.name || "", action: "fund_wallet", targetType: "wallet", targetName: "Wallet", details: "Funded wallet: ₦" + credited.toFixed(2) });
+                  toast({ title: 'Wallet Funded', description: credited.toFixed(2) + ' NGN has been added to your wallet.' });
+                });
+              } else {
+                toast({ title: 'Payment Failed', description: data?.message || 'Payment was not successful.', variant: 'destructive' });
+              }
+            })
+            .catch(function (error) {
+              toast({ title: 'Verification Error', description: error?.message || 'Could not verify payment.', variant: 'destructive' });
+            })
+            .finally(function () {
+              setIsLoading(false);
+            });
         },
       });
 
@@ -290,6 +303,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
 
       setBalance(prev => prev - amount);
+
+      logActivity({ userId: user.id, userEmail: user.email || "", userName: user.name || "", action: "withdraw", targetType: "wallet", targetName: "Wallet", details: "Withdrew: ₦" + amount.toFixed(2) });
 
       toast({
         title: "Withdrawal Successful",

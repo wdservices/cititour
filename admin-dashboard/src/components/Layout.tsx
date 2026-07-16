@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Megaphone, FileText, MessageSquare, Wallet, Building,
-  Menu, X, LogOut, Calendar, Home, ClipboardList, Star, Settings, UserCog, BarChart2, QrCode
+  Menu, X, LogOut, Calendar, Home, ClipboardList, Star, Settings, UserCog, BarChart2, QrCode, History
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -25,6 +25,7 @@ const menuItems = [
   { icon: BarChart2, label: 'Analytics', path: '/analytics' },
   { icon: Wallet, label: 'Wallet & Revenue', path: '/wallet' },
   { icon: QrCode, label: 'QR Validate', path: '/qr-validate' },
+  { icon: History, label: 'Activity Logs', path: '/activity-logs' },
 ]
 
 export default function Layout({ children }: LayoutProps) {

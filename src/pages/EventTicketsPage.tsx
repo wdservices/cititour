@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { db } from "@/lib/firebase";
-import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
+import { uploadImageToCloudinary, CLOUDINARY_FOLDERS, collectPublicIdsForListing, deleteImagesFromCloudinary } from "@/lib/cloudinary";
+import { logActivity } from "@/lib/activityLog";
 import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where, deleteDoc } from "firebase/firestore";
 import QRCode from "react-qr-code";
 import ImageUpload from "@/components/ImageUpload";
@@ -229,7 +230,7 @@ const EventTicketsPage = () => {
     try {
       setIsUpdatingTicket(true);
       const commission = Number((priceNumber * COMMISSION_RATE).toFixed(2));
-      await updateDoc(doc(db, 'businesses', activeTicket.eventId, 'tickets', activeTicket.id), {
+      await updateDoc(doc(db, 'events', activeTicket.eventId, 'tickets', activeTicket.id), {
         ticketType: editTicketType,
         price: priceNumber,
         quantity: quantityNumber,
@@ -322,6 +323,9 @@ const EventTicketsPage = () => {
       setCreateOpen(false);
       
       toast({ title: "Success", description: "Event and ticket created successfully!" });
+      if (user) {
+        logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_event", targetType: "event", targetId: eventRef.id, targetName: title, details: `Created event: ${title}` });
+      }
     } catch (e) {
       console.error('Create failed', e);
       toast({ title: "Error", description: "Failed to create event.", variant: "destructive" });
@@ -333,8 +337,26 @@ const EventTicketsPage = () => {
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event? This will also remove it from the public listings.")) return;
     try {
-      await deleteDoc(doc(db, 'businesses', eventId));
+      // Best-effort: delete Cloudinary images
+      try {
+        const eventDoc = listings.find(t => t.eventId === eventId);
+        if (eventDoc) {
+          const snap = await import("firebase/firestore").then(m => m.getDoc(m.doc(db, 'events', eventId)));
+          if (snap.exists()) {
+            const data = snap.data() as any;
+            const publicIds = collectPublicIdsForListing(data);
+            if (publicIds.length > 0) await deleteImagesFromCloudinary(publicIds);
+          }
+        }
+      } catch (e) { console.error("Cloudinary delete error (non-blocking):", e); }
+
+      await deleteDoc(doc(db, 'events', eventId));
       setListings(prev => prev.filter(t => t.eventId !== eventId));
+
+      if (user) {
+        logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "delete_event", targetType: "event", targetId: eventId, details: "Deleted event" });
+      }
+
       toast({ title: "Deleted", description: "Event has been deleted successfully." });
     } catch (e) {
       console.error("Delete failed", e);

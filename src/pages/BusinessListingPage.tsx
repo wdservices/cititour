@@ -16,6 +16,7 @@ import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import ImageUpload from "@/components/ImageUpload";
 import { X } from "lucide-react";
 import StampIcon from "@/components/StampIcon";
+import { logActivity } from "@/lib/activityLog";
 
 const categories = [
   "Restaurant", "Hotel", "Event Venue", "Shopping", "Entertainment", 
@@ -102,6 +103,9 @@ const BusinessListingPage = () => {
 
       await addDoc(collection(db, "businesses"), docData);
       toast({ title: "Listing submitted", description: "Your business has been submitted for review." });
+      if (user) {
+        logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "business", targetName: businessName, details: "Created business: " + businessName });
+      }
       navigate("/explore");
     } catch (err: any) {
       console.error("Submit listing failed:", err);

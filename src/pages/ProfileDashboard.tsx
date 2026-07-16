@@ -20,7 +20,8 @@ import { db } from "@/lib/firebase";
 import { getDoc, doc } from "firebase/firestore";
 import { useMyListings, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
-import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
+import { CLOUDINARY_FOLDERS, deleteImagesFromCloudinary, collectPublicIdsForListing } from "@/lib/cloudinary";
+import { logActivity } from "@/lib/activityLog";
 import { getMockImage } from "@/lib/mockImages";
 import {
   NIGERIAN_STATES, STATE_CITIES, BUSINESS_CATEGORIES,
@@ -79,6 +80,16 @@ const ProfileDashboard = () => {
   const [editProductPrice, setEditProductPrice] = useState("");
   const [editPromoPrice, setEditPromoPrice] = useState("");
   const [editProductCategory, setEditProductCategory] = useState("");
+
+  // Event-specific edit fields
+  const [editEventCategory, setEditEventCategory] = useState("");
+  const [editEventStartDate, setEditEventStartDate] = useState("");
+  const [editEventEndDate, setEditEventEndDate] = useState("");
+  const [editEventStartTime, setEditEventStartTime] = useState("");
+  const [editEventEndTime, setEditEventEndTime] = useState("");
+  const [editEventVenue, setEditEventVenue] = useState("");
+  const [editEventLocation, setEditEventLocation] = useState("");
+  const [editTicketTypes, setEditTicketTypes] = useState<{ name: string; price: string; quantity: string }[]>([]);
 
   // ── Shared form fields ──
   const [title, setTitle] = useState("");
@@ -203,9 +214,11 @@ const ProfileDashboard = () => {
   const createProperty = useCreateDoc("house_listings");
   const updateListing = useUpdateDoc("businesses");
   const updateProduct = useUpdateDoc("marketplace");
+  const updateEvent = useUpdateDoc("events");
   const deleteListing = useDeleteDoc("businesses");
   const deleteProduct = useDeleteDoc("marketplace");
   const deleteProperty = useDeleteDoc("house_listings");
+  const deleteEvent = useDeleteDoc("events");
   const deleteTicketOrder = useDeleteDoc("ticket_orders");
 
   // ── Inherited state from selected business ──
@@ -274,6 +287,7 @@ const ProfileDashboard = () => {
         isOpen: true,
         rating: 0,
       });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "business", targetName: title, details: `Created business: ${title}` });
       toast({ title: "Business registered!" });
       resetWizard();
     } catch (err) {
@@ -314,6 +328,7 @@ const ProfileDashboard = () => {
         ownerId: user.id,
         condition: "new",
       });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "product", targetName: title, details: `Created product: ${title}` });
       toast({ title: "Product listed!" });
       resetWizard();
     } catch (err) {
@@ -358,6 +373,7 @@ const ProfileDashboard = () => {
         rating: 0,
         reviews: 0,
       });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "property", targetName: title, details: `Created property: ${title}` });
       toast({ title: "Property listed!" });
       resetWizard();
     } catch (err) {
@@ -397,6 +413,7 @@ const ProfileDashboard = () => {
         isActive: true,
         rating: 0,
       });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_event", targetType: "event", targetName: title, details: `Created event: ${title}` });
       toast({ title: "Event created!" });
       resetWizard();
     } catch (err) {
@@ -434,13 +451,46 @@ const ProfileDashboard = () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
+      // Best-effort: delete Cloudinary images
+      try {
+        const collectionName = getCollectionForType(deleteTarget.type);
+        const snap = await getDoc(doc(db, collectionName, deleteTarget.id));
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          const publicIds = collectPublicIdsForListing(data);
+          if (publicIds.length > 0) {
+            await deleteImagesFromCloudinary(publicIds);
+          }
+        }
+      } catch (e) {
+        console.error("Cloudinary delete error (non-blocking):", e);
+      }
+
+      // Delete Firestore document
       if (deleteTarget.type === "product") {
         await deleteProduct.mutateAsync(deleteTarget.id);
       } else if (deleteTarget.type === "property") {
         await deleteProperty.mutateAsync(deleteTarget.id);
+      } else if (deleteTarget.type === "event") {
+        await deleteEvent.mutateAsync(deleteTarget.id);
       } else {
         await deleteListing.mutateAsync(deleteTarget.id);
       }
+
+      // Log activity
+      if (user) {
+        logActivity({
+          userId: user.id,
+          userEmail: user.email,
+          userName: user.name,
+          action: deleteTarget.type === "event" ? "delete_event" : "delete_listing",
+          targetType: deleteTarget.type as any,
+          targetId: deleteTarget.id,
+          targetName: deleteTarget.title,
+          details: `Deleted ${deleteTarget.type}: ${deleteTarget.title}`,
+        });
+      }
+
       toast({ title: `"${deleteTarget.title}" deleted.` });
       setDeleteTarget(null);
       setDeleteStep(0);
@@ -482,6 +532,21 @@ const ProfileDashboard = () => {
         setEditPromoPrice(String(raw.promoPrice || ""));
         setEditProductCategory(raw.productCategory || raw.category || "");
       }
+      // Event-specific fields
+      if (type === "event") {
+        setEditEventCategory(raw.tags?.[0] || raw.category || "");
+        setEditEventStartDate(raw.startDate || "");
+        setEditEventEndDate(raw.endDate || "");
+        setEditEventStartTime(raw.startTime || "");
+        setEditEventEndTime(raw.endTime || "");
+        setEditEventVenue(raw.venue || "");
+        setEditEventLocation(raw.eventLocation || "");
+        setEditTicketTypes((raw.ticketTypes || []).map((t: any) => ({
+          name: t.name || "",
+          price: String(t.price || ""),
+          quantity: String(t.quantity || ""),
+        })));
+      }
       setEditOpen(true);
     } catch (err) {
       console.error(err);
@@ -513,10 +578,27 @@ const ProfileDashboard = () => {
         updateData.promoPrice = Number(editPromoPrice) || 0;
         updateData.productCategory = editProductCategory;
         await updateProduct.mutateAsync({ id: editTarget.id, data: updateData });
+      } else if (editTarget.type === "event") {
+        updateData.tags = [editEventCategory || "General"];
+        updateData.startDate = editEventStartDate;
+        updateData.endDate = editEventEndDate;
+        updateData.startTime = editEventStartTime;
+        updateData.endTime = editEventEndTime;
+        updateData.venue = editEventVenue;
+        updateData.eventLocation = editEventLocation;
+        updateData.ticketTypes = editTicketTypes.filter(t => t.name.trim()).map(t => ({
+          name: t.name,
+          price: Number(t.price) || 0,
+          quantity: Number(t.quantity) || 0,
+        }));
+        await updateEvent.mutateAsync({ id: editTarget.id, data: updateData });
       } else {
         await updateListing.mutateAsync({ id: editTarget.id, data: updateData });
       }
       toast({ title: "Listing updated!" });
+      if (user) {
+        logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: editTarget.type === "event" ? "edit_event" : "edit_listing", targetType: editTarget.type as any, targetId: editTarget.id, targetName: editTitle, details: `Updated ${editTarget.type}: ${editTitle}` });
+      }
       setEditOpen(false);
       setEditTarget(null);
     } catch (err) {
@@ -1174,6 +1256,20 @@ const ProfileDashboard = () => {
                           <p className="text-[10px] font-bold uppercase text-muted-foreground">Revenue</p>
                           <p className="font-bold text-sm text-green-600">₦{evt.actualRevenue.toLocaleString()}</p>
                         </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleEditClick({ id: evt.id, title: evt.title, image: "", category: "event" }, "event")}
+                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(evt.id, "event", evt.title)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                     {evt.ticketTiers.length > 0 && (
@@ -1425,6 +1521,59 @@ const ProfileDashboard = () => {
                     {PROPERTY_TYPES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* Event-specific fields */}
+            {editTarget?.type === "event" && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Category</Label>
+                  <Select value={editEventCategory} onValueChange={setEditEventCategory}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date</Label>
+                    <Input type="date" className="mt-1.5" value={editEventStartDate} onChange={(e) => setEditEventStartDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date</Label>
+                    <Input type="date" className="mt-1.5" value={editEventEndDate} onChange={(e) => setEditEventEndDate(e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
+                    <Input type="time" className="mt-1.5" value={editEventStartTime} onChange={(e) => setEditEventStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
+                    <Input type="time" className="mt-1.5" value={editEventEndTime} onChange={(e) => setEditEventEndTime(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue</Label>
+                  <Input className="mt-1.5" value={editEventVenue} onChange={(e) => setEditEventVenue(e.target.value)} placeholder="e.g. Eko Convention Center" />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ticket Types</Label>
+                  {editTicketTypes.map((tier, i) => (
+                    <div key={i} className="flex gap-2 mt-2">
+                      <Input placeholder="Name" value={tier.name} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], name: e.target.value }; setEditTicketTypes(copy); }} className="flex-1" />
+                      <Input type="number" placeholder="₦ Price" value={tier.price} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], price: e.target.value }; setEditTicketTypes(copy); }} className="w-24" />
+                      <Input type="number" placeholder="Qty" value={tier.quantity} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], quantity: e.target.value }; setEditTicketTypes(copy); }} className="w-20" />
+                      <button onClick={() => setEditTicketTypes(editTicketTypes.filter((_, j) => j !== i))} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditTicketTypes([...editTicketTypes, { name: "", price: "0", quantity: "100" }])}>
+                    <Plus className="w-3 h-3 mr-1" /> Add Tier
+                  </Button>
+                </div>
               </div>
             )}
 

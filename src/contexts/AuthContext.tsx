@@ -11,6 +11,8 @@ import {
   resetPassword as firebaseResetPassword
 } from '@/lib/firebase';
 
+import { logActivity } from "@/lib/activityLog";
+
 interface User {
   id: string;
   name: string;
@@ -79,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithEmail = async (email: string, password: string): Promise<void> => {
     try {
       await signInWithEmail(email, password);
+      logActivity({ userId: "", userEmail: email, userName: "", action: "sign_in", targetType: "auth", details: "Signed in with email: " + email });
     } catch (error: any) {
       console.error('Email login error:', error);
       // Re-throw the original Firebase error so callers can inspect error.code
@@ -89,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signUpWithEmailPassword = async (email: string, password: string): Promise<void> => {
     try {
       await signUpWithEmail(email, password);
+      logActivity({ userId: "", userEmail: email, userName: "", action: "sign_up", targetType: "auth", details: "Signed up with email: " + email });
     } catch (error: any) {
       console.error('Email signup error:', error);
       throw error;
@@ -125,6 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       await logOut();
+      logActivity({ userId: "", userEmail: user?.email || "", userName: user?.name || "", action: "sign_out", targetType: "auth", details: "Signed out" });
     } catch (error: any) {
       console.error('Logout error:', error);
       throw error;

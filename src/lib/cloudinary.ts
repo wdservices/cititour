@@ -258,38 +258,46 @@ export const getImagePreview = (file: File): Promise<string> => {
 };
 
 /**
- * Delete an image from Cloudinary
+ * Extract Cloudinary public_id from a full image URL.
+ * URL pattern: https://res.cloudinary.com/{cloud}/image/upload/{version?}/{public_id}.{ext}
+ */
+export const extractPublicIdFromUrl = (url: string): string | null => {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  try {
+    // Match pattern: /image/upload/ (optional v1234/) then public_id.ext
+    const match = url.match(/\/image\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
+    if (match && match[1]) {
+      // Remove any trailing query params
+      return match[1].split('?')[0];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Delete image(s) from Cloudinary via server endpoint.
+ * Best-effort: returns results even if some deletes fail.
  */
 export const deleteImageFromCloudinary = async (publicId: string): Promise<boolean> => {
-  try {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
-    const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY?.trim();
-    const apiSecret = import.meta.env.CLOUDINARY_API_SECRET?.trim();
-    
-    if (!cloudName || !apiKey || !apiSecret) {
-      console.error('Cloudinary configuration missing for delete operation');
-      return false;
-    }
+  return deleteImagesFromCloudinary([publicId]);
+};
 
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    const signature = generateDeleteSignature(publicId, timestamp, apiSecret);
-    
-    const formData = new FormData();
-    formData.append('public_id', publicId);
-    formData.append('signature', signature);
-    formData.append('timestamp', timestamp.toString());
-    formData.append('api_key', apiKey);
-    
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/image/destroy`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
-    
-    const data = await response.json();
-    return data.result === 'ok';
+/**
+ * Delete multiple images from Cloudinary via server endpoint.
+ */
+export const deleteImagesFromCloudinary = async (publicIds: string[]): Promise<boolean> => {
+  if (!publicIds.length) return true;
+  try {
+    const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+    const resp = await fetch(`${serverUrl}/api/uploads/destroy`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_ids: publicIds }),
+    });
+    const data = await resp.json();
+    return data?.status === true;
   } catch (error) {
     console.error('Cloudinary delete error:', error);
     return false;
@@ -297,13 +305,30 @@ export const deleteImageFromCloudinary = async (publicId: string): Promise<boole
 };
 
 /**
- * Generate signature for delete operations
+ * Collect all public_ids from a listing document for deletion.
+ * Checks imagePublicIds (array), imagePublicId (singular), and extracts from URL.
  */
-const generateDeleteSignature = (publicId: string, timestamp: number, apiSecret: string): string => {
-  // This is a simplified signature generation
-  // In production, use proper crypto library
-  const stringToSign = `public_id=${publicId}&timestamp=${timestamp}`;
-  return btoa(stringToSign); // This is a placeholder - use proper crypto in production
+export const collectPublicIdsForListing = (data: any): string[] => {
+  const ids: string[] = [];
+  if (data.imagePublicIds && Array.isArray(data.imagePublicIds)) {
+    ids.push(...data.imagePublicIds.filter(Boolean));
+  }
+  if (data.imagePublicId) {
+    ids.push(data.imagePublicId);
+  }
+  // Extract from image URL if no stored public_ids
+  if (ids.length === 0 && data.image) {
+    const extracted = extractPublicIdFromUrl(data.image);
+    if (extracted) ids.push(extracted);
+  }
+  // Also check images array
+  if (data.images && Array.isArray(data.images)) {
+    for (const url of data.images) {
+      const extracted = extractPublicIdFromUrl(url);
+      if (extracted && !ids.includes(extracted)) ids.push(extracted);
+    }
+  }
+  return ids;
 };
 
 /**
