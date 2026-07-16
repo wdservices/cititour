@@ -55,9 +55,17 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
+
+      // ── Wallet Transactions (subcollection) ──
+      match /transactions/{transactionId} {
+        allow read: if request.auth != null && request.auth.uid == walletId;
+        allow create: if request.auth != null && request.auth.uid == walletId;
+        allow update: if false;
+        allow delete: if false;
+      }
     }
 
-    // ── Transactions ──
+    // ── Transactions (legacy top-level) ──
     match /transactions/{transactionId} {
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;

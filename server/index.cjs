@@ -6,6 +6,10 @@ dotenv.config();
 const app = express();
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+
+// Raw body for Paystack webhook signature verification (must be BEFORE express.json)
+app.use('/api/wallet/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
 app.get('/', (req, res) => {

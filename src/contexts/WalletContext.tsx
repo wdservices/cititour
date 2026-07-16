@@ -9,6 +9,9 @@ import {
   updateDoc,
   collection,
   addDoc,
+  getDocs,
+  query,
+  orderBy,
   serverTimestamp,
   increment
 } from "firebase/firestore";
@@ -62,7 +65,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "http://localhost:4000";
 
-  // Load wallet data from Firestore when user changes
+  // Load wallet data and transactions from Firestore when user changes
   useEffect(() => {
     const loadWallet = async () => {
       if (!user) return;
@@ -83,7 +86,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }, { merge: true });
         setBalance(0);
       }
-      // Transactions list (optional display) can be fetched on demand; keep local-only sorted copy
+
+      // Fetch transactions from Firestore subcollection
+      try {
+        const txRef = collection(db, "wallets", user.id, "transactions");
+        const txQuery = query(txRef, orderBy("createdAt", "desc"));
+        const txSnap = await getDocs(txQuery);
+        const txList: Transaction[] = txSnap.docs.map((d) => {
+          const data: any = d.data();
+          const date = data.date || data.createdAt;
+          let dateStr = "";
+          if (date?.toDate) {
+            dateStr = date.toDate().toISOString();
+          } else if (date?.seconds) {
+            dateStr = new Date(date.seconds * 1000).toISOString();
+          } else if (typeof date === "string") {
+            dateStr = date;
+          } else {
+            dateStr = new Date().toISOString();
+          }
+          return {
+            id: d.id,
+            type: data.type || "debit",
+            amount: Number(data.amount || 0),
+            description: data.description || "",
+            date: dateStr,
+            method: data.method || "Wallet",
+            status: data.status || "completed",
+          };
+        });
+        setTransactions(txList);
+      } catch (e) {
+        console.error("Error loading transactions:", e);
+        // Transactions subcollection may not have security rules yet
+        setTransactions([]);
+      }
     };
     loadWallet().catch((e) => console.error("Load wallet error", e));
   }, [user]);
@@ -329,21 +366,46 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
-  const refreshBalance = () => {
-    // Fetch latest balance from Firestore
-    (async () => {
-      try {
-        if (!user) return;
-        const walletRef = doc(db, 'wallets', user.id);
-        const snap = await getDoc(walletRef);
-        if (snap.exists()) {
-          const data: any = snap.data();
-          setBalance(Number(data.balance || 0));
-        }
-      } catch (e) {
-        console.error('refreshBalance error', e);
+  const refreshBalance = async () => {
+    if (!user) return;
+    try {
+      const walletRef = doc(db, 'wallets', user.id);
+      const snap = await getDoc(walletRef);
+      if (snap.exists()) {
+        const data: any = snap.data();
+        setBalance(Number(data.balance || 0));
       }
-    })();
+      // Also refresh transactions
+      const txRef = collection(db, "wallets", user.id, "transactions");
+      const txQuery = query(txRef, orderBy("createdAt", "desc"));
+      const txSnap = await getDocs(txQuery);
+      const txList: Transaction[] = txSnap.docs.map((d) => {
+        const data: any = d.data();
+        const date = data.date || data.createdAt;
+        let dateStr = "";
+        if (date?.toDate) {
+          dateStr = date.toDate().toISOString();
+        } else if (date?.seconds) {
+          dateStr = new Date(date.seconds * 1000).toISOString();
+        } else if (typeof date === "string") {
+          dateStr = date;
+        } else {
+          dateStr = new Date().toISOString();
+        }
+        return {
+          id: d.id,
+          type: data.type || "debit",
+          amount: Number(data.amount || 0),
+          description: data.description || "",
+          date: dateStr,
+          method: data.method || "Wallet",
+          status: data.status || "completed",
+        };
+      });
+      setTransactions(txList);
+    } catch (e) {
+      console.error('refreshBalance error', e);
+    }
   };
 
   const value: WalletContextType = {

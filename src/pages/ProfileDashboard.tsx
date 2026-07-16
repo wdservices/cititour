@@ -931,12 +931,12 @@ const ProfileDashboard = () => {
   };
 
   const ListingCard = ({ item, type }: { item: ListingItem; type: string }) => (
-    <div className="bg-card border border-border/50 rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md group">
-      <div className="relative aspect-[4/3] overflow-hidden">
+    <div className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md group">
+      <div className="relative aspect-[3/2] overflow-hidden">
         <img
           src={item.image || getMockImage(item.category || item.type)}
           alt={item.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-100"
         />
         {item.status && (
           <Badge className={`absolute top-3 left-3 text-[9px] font-bold uppercase tracking-wider ${
@@ -946,7 +946,7 @@ const ProfileDashboard = () => {
           </Badge>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-3">
         <h3 className="font-bold text-sm text-foreground truncate mb-1">{item.title}</h3>
         {item.location && (
           <div className="flex items-center gap-1 text-muted-foreground text-xs mb-2">

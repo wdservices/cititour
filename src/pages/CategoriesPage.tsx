@@ -107,12 +107,12 @@ const CategoriesPage = () => {
           </div>
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
-          {items.map((item, index) => (
-            <div key={item.id} className="group flex-shrink-0 w-[280px] snap-start bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-card animate-fade-in"
-              style={{ animationDelay: `${index * 0.08}s` }} onClick={() => onCardClick(item)}>
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <img src={imgSrc(item)} alt={r(item.title)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+<div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+            {items.map((item, index) => (
+              <div key={item.id} className="group flex-shrink-0 w-[280px] snap-start bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 cursor-pointer hover:shadow-md animate-fade-in"
+                style={{ animationDelay: `${index * 0.08}s` }} onClick={() => onCardClick(item)}>
+                <div className="relative aspect-[3/2] overflow-hidden bg-muted">
+                  <img src={imgSrc(item)} alt={r(item.title)} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-100" />
                 <button onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
                   className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-red-400 transition-colors"
                   aria-label={likedIds.has(item.id) ? "Unlike" : "Like"}>

@@ -230,13 +230,13 @@ const MarketplaceDetailPage = () => {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Left: Gallery */}
           <div className="w-full lg:w-3/5 space-y-4">
-            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-card/60 border border-border/50 shadow-card group">
-              <img src={allImages[mainImageIdx]} alt={product.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
+            <div className="aspect-[3/2] rounded-2xl overflow-hidden bg-card/60 border border-border/50 shadow-card group">
+              <img src={allImages[mainImageIdx]} alt={product.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-100" />
             </div>
             {allImages.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
                 {allImages.slice(0, 4).map((img, idx) => (
-                  <div key={idx} onClick={() => setMainImageIdx(idx)} className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all ${mainImageIdx === idx ? "border-2 border-primary" : "border border-border/50 hover:border-primary/50"}`}>
+                  <div key={idx} onClick={() => setMainImageIdx(idx)} className={`aspect-[3/2] rounded-xl overflow-hidden cursor-pointer transition-all ${mainImageIdx === idx ? "border-2 border-primary" : "border border-border/50 hover:border-primary/50"}`}>
                     <img src={img} alt="" className="w-full h-full object-cover" />
                   </div>
                 ))}

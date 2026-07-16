@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { getMockImage } from "@/lib/mockImages";
@@ -46,6 +47,7 @@ const DynamicEventPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { balance, deductFunds } = useWallet();
   const qc = useQueryClient();
 
   const [event, setEvent] = useState<EventData | null>(null);
@@ -127,6 +129,24 @@ const DynamicEventPage = () => {
     if (!user || !event) return;
     setSubmitting(true);
     try {
+      // If paying with wallet, deduct funds first
+      if (!isFree && selectedPayment === 'wallet' && total > 0) {
+        if (balance < total) {
+          toast({
+            title: 'Insufficient Balance',
+            description: `You need ₦${total.toLocaleString()} but only have ₦${balance.toLocaleString()} in your wallet.`,
+            variant: 'destructive',
+          });
+          setSubmitting(false);
+          return;
+        }
+        const deducted = await deductFunds(total, `Event Ticket: ${event.title}`);
+        if (!deducted) {
+          setSubmitting(false);
+          return;
+        }
+      }
+
       await addDoc(collection(db, 'ticket_orders'), {
         eventId: event.id,
         eventTitle: event.title,

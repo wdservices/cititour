@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ArrowLeft, Plus, Minus, CreditCard, Smartphone, Building, History, TrendingUp, Megaphone, Ticket } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Plus, Minus, CreditCard, Smartphone, Building, History, TrendingUp, Megaphone, Ticket, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,23 +18,80 @@ const WalletPage = () => {
   const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "http://localhost:4000";
   const [fundAmount, setFundAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  // Removed payment method selection for funding; Paystack modal handles payment method.
   const [selectedWithdrawalMethod, setSelectedWithdrawalMethod] = useState("");
   const [showFundDialog, setShowFundDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [recipientCode, setRecipientCode] = useState("");
   const [showRecipientDialog, setShowRecipientDialog] = useState(false);
-  const [accountName, setAccountName] = useState("");
-  const [bankCode, setBankCode] = useState("");
+
+  // Bank resolution state
+  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [selectedBankCode, setSelectedBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [resolvedAccountName, setResolvedAccountName] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
   const [recipientLoading, setRecipientLoading] = useState(false);
 
-  const paymentMethods: (PaymentMethod & { icon: any })[] = [
-    { id: "gcash", name: "GCash", type: "gcash", icon: Smartphone, description: "Mobile wallet payment" },
-    { id: "paymaya", name: "PayMaya", type: "paymaya", icon: Smartphone, description: "Digital wallet" },
-    { id: "credit", name: "Credit Card", type: "credit", icon: CreditCard, description: "Visa, Mastercard" },
-    { id: "bank", name: "Bank Transfer", type: "bank", icon: Building, description: "Online banking" },
-  ];
+  // Withdrawal fee preview
+  const [feePreview, setFeePreview] = useState<{ fee: number; net_amount: number } | null>(null);
+
+  // Load bank list when withdraw dialog opens
+  useEffect(() => {
+    if (showRecipientDialog && banks.length === 0) {
+      fetch(`${serverBase}/api/wallet/banks`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.status && result.data) {
+            setBanks(result.data.map((b: any) => ({ name: b.name, code: b.code })));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [showRecipientDialog, banks.length, serverBase]);
+
+  // Auto-resolve account name when bank + account number are filled
+  useEffect(() => {
+    if (accountNumber.length === 10 && selectedBankCode) {
+      setResolving(true);
+      setResolvedAccountName(null);
+      fetch(`${serverBase}/api/wallet/resolve-account?account_number=${accountNumber}&bank_code=${selectedBankCode}`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.status && result.data?.account_name) {
+            setResolvedAccountName(result.data.account_name);
+          } else {
+            setResolvedAccountName(null);
+            toast({ title: 'Could not verify account', description: 'Check the number and bank.', variant: 'destructive' });
+          }
+        })
+        .catch(() => setResolvedAccountName(null))
+        .finally(() => setResolving(false));
+    } else {
+      setResolvedAccountName(null);
+    }
+  }, [accountNumber, selectedBankCode, serverBase]);
+
+  // Live fee preview as user types withdrawal amount
+  useEffect(() => {
+    const numericAmount = Number(withdrawAmount);
+    if (!numericAmount || numericAmount <= 0) {
+      setFeePreview(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${serverBase}/api/wallet/withdraw/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: numericAmount }),
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.status) setFeePreview({ fee: result.fee, net_amount: result.net_amount });
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [withdrawAmount, serverBase]);
 
   const stampActions = [
     { id: "add", title: "Add Money", icon: Plus, tone: "primary" as const, rotate: "-rotate-6" as const, onClick: () => setShowFundDialog(true) },
@@ -115,8 +172,8 @@ const WalletPage = () => {
       toast({ title: "Login required", description: "Please sign in to create a recipient.", variant: "destructive" });
       return;
     }
-    if (!accountName || !bankCode || !accountNumber) {
-      toast({ title: "Missing Details", description: "Provide account name, bank code and account number.", variant: "destructive" });
+    if (!resolvedAccountName || !selectedBankCode || !accountNumber) {
+      toast({ title: "Missing Details", description: "Provide bank, account number (auto-verified).", variant: "destructive" });
       return;
     }
     try {
@@ -125,9 +182,9 @@ const WalletPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: accountName,
+          name: resolvedAccountName,
           email: user.email,
-          bank_code: bankCode,
+          bank_code: selectedBankCode,
           account_number: accountNumber,
           currency: 'NGN',
           type: 'nuban',
@@ -141,12 +198,16 @@ const WalletPage = () => {
       if (code) {
         setRecipientCode(code);
         setShowRecipientDialog(false);
-        toast({ title: 'Recipient Created', description: 'Recipient code filled automatically.' });
+        // Reset form
+        setSelectedBankCode("");
+        setAccountNumber("");
+        setResolvedAccountName(null);
+        toast({ title: 'Bank Account Saved', description: 'You can now withdraw to this account.' });
       } else {
         throw new Error('No recipient_code returned');
       }
     } catch (error) {
-      toast({ title: 'Error', description: (error as any)?.message || 'Unable to create recipient.', variant: 'destructive' });
+      toast({ title: 'Error', description: (error as any)?.message || 'Unable to save bank account.', variant: 'destructive' });
     } finally {
       setRecipientLoading(false);
     }
@@ -314,7 +375,7 @@ const WalletPage = () => {
           <DialogHeader>
             <DialogTitle>Withdraw Funds</DialogTitle>
             <DialogDescription>
-              Choose your withdrawal method and amount to withdraw from your wallet.
+              Enter an amount to withdraw from your wallet to your bank account.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -331,48 +392,34 @@ const WalletPage = () => {
                 max={balance}
               />
             </div>
-            <div>
-              <Label>Withdrawal Method</Label>
-              <Select value={selectedWithdrawalMethod} onValueChange={setSelectedWithdrawalMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select withdrawal method" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((method) => {
-                    const Icon = method.icon;
-                    return (
-                      <SelectItem key={method.id} value={method.id}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          <div>
-                            <div className="font-medium">{method.name}</div>
-                            <div className="text-xs text-muted-foreground">{method.description}</div>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="recipientCode">Paystack Recipient Code</Label>
-              <Input
-                id="recipientCode"
-                type="text"
-                placeholder="e.g., RCP_xxxxxxxxx"
-                value={recipientCode}
-                onChange={(e) => setRecipientCode(e.target.value)}
-              />
-              <div className="flex items-center gap-2 mt-2">
-                <p className="text-xs text-muted-foreground">Don’t have a recipient code?</p>
-                <Button variant="outline" size="sm" onClick={() => setShowRecipientDialog(true)}>Create Recipient</Button>
+            {!recipientCode && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="text-muted-foreground">No bank account linked yet.</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => { setShowWithdrawDialog(false); setShowRecipientDialog(true); }}>
+                  Add Bank Account
+                </Button>
               </div>
-            </div>
-            <Button 
-              onClick={handleWithdrawFunds} 
-              className="w-full" 
-              disabled={isLoading}
+            )}
+            {feePreview && (
+              <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm space-y-1">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Withdrawal amount</span>
+                  <span>₦{Number(withdrawAmount).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Service fee (1.5%)</span>
+                  <span>-₦{feePreview.fee.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-foreground pt-1 border-t border-border">
+                  <span>You'll receive</span>
+                  <span>₦{feePreview.net_amount.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            <Button
+              onClick={handleWithdrawFunds}
+              className="w-full"
+              disabled={isLoading || !recipientCode || !withdrawAmount}
             >
               {isLoading ? "Processing..." : "Withdraw Funds"}
             </Button>
@@ -384,28 +431,57 @@ const WalletPage = () => {
       <Dialog open={showRecipientDialog} onOpenChange={setShowRecipientDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Paystack Transfer Recipient</DialogTitle>
+            <DialogTitle>Add Bank Account</DialogTitle>
             <DialogDescription>
-              Enter bank details to generate a recipient code for withdrawals.
+              Select your bank and enter account number. We'll verify the name automatically.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="accountName">Account Name</Label>
-              <Input id="accountName" type="text" placeholder="e.g., John Doe" value={accountName} onChange={(e) => setAccountName(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="bankCode">Bank Code</Label>
-              <Input id="bankCode" type="text" placeholder="e.g., 058 (GTBank), 044 (Access)" value={bankCode} onChange={(e) => setBankCode(e.target.value)} />
+              <Label>Bank</Label>
+              <Select value={selectedBankCode} onValueChange={setSelectedBankCode}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your bank" />
+                </SelectTrigger>
+                <SelectContent>
+                  {banks.map((bank) => (
+                    <SelectItem key={bank.code} value={bank.code}>
+                      {bank.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="accountNumber">Account Number</Label>
-              <Input id="accountNumber" type="text" placeholder="e.g., 0123456789" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+              <Input
+                id="accountNumber"
+                type="text"
+                maxLength={10}
+                placeholder="10-digit account number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+              />
             </div>
-            <Button onClick={handleCreateRecipient} className="w-full" disabled={recipientLoading}>
-              {recipientLoading ? 'Creating...' : 'Create Recipient'}
+            {resolving && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Verifying account...
+              </div>
+            )}
+            {resolvedAccountName && (
+              <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm">
+                <span className="text-muted-foreground">Account name: </span>
+                <span className="font-semibold text-foreground">{resolvedAccountName}</span>
+              </div>
+            )}
+            <Button
+              onClick={handleCreateRecipient}
+              className="w-full"
+              disabled={!resolvedAccountName || recipientLoading}
+            >
+              {recipientLoading ? 'Saving...' : 'Save Bank Account'}
             </Button>
-            <p className="text-xs text-muted-foreground">We’ll use your account email: {user?.email || '—'}</p>
           </div>
         </DialogContent>
       </Dialog>

@@ -238,14 +238,14 @@ const AllBusinessesPage = () => {
               <div
                 key={biz.id}
                 onClick={() => handleClick(biz.id, biz.category)}
-                className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+                className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[3/2] overflow-hidden bg-muted">
                   <img
                     src={renderValue(biz.image) || getMockImage(biz.category)}
                     alt={renderValue(biz.title)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-100"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                   {biz.rating != null && biz.rating > 0 && (
@@ -266,9 +266,9 @@ const AllBusinessesPage = () => {
                 </div>
 
                 {/* Content */}
-                <div className="p-5">
+                <div className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-lg font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                    <h3 className="text-base font-display font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {renderValue(biz.title)}
                     </h3>
                     {(biz as any).verified || (biz as any).featured ? (

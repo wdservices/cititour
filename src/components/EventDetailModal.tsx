@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -47,6 +48,7 @@ type Step = 'details' | 'register' | 'payment' | 'success';
 const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onClose }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { balance, deductFunds } = useWallet();
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>('details');
   const [selectedTier, setSelectedTier] = useState<TicketTier | null>(null);
@@ -110,6 +112,24 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
     if (!user || !event) return;
     setSubmitting(true);
     try {
+      // If paying with wallet, deduct funds first
+      if (!isFree && selectedPayment === 'wallet' && total > 0) {
+        if (balance < total) {
+          toast({
+            title: 'Insufficient Balance',
+            description: `You need ₦${total.toLocaleString()} but only have ₦${balance.toLocaleString()} in your wallet.`,
+            variant: 'destructive',
+          });
+          setSubmitting(false);
+          return;
+        }
+        const deducted = await deductFunds(total, `Event Ticket: ${event.title}`);
+        if (!deducted) {
+          setSubmitting(false);
+          return;
+        }
+      }
+
       await addDoc(collection(db, 'ticket_orders'), {
         eventId: event.id,
         eventTitle: event.title,

@@ -256,11 +256,11 @@ const MarketplacePage = () => {
                   style={{ animationDelay: `${index * 0.05}s` }}
                   onClick={() => navigate(`/marketplace/${item.id}`)}
                 >
-                  <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-square"}`}>
+                  <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-[3/2]"}`}>
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-100"
                     />
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
