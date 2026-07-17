@@ -862,132 +862,150 @@ const ProfileDashboard = () => {
 
   const renderEventForm = () => (
     <div className="py-2">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ── Left Column: Title, Ticket Tiers, Times ── */}
-        <div className="space-y-4">
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Title *</Label>
-            <Input className="mt-1.5" placeholder="e.g. Lagos Food & Wine Festival" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* ── Left Column (2/3): General Info, Schedule, Tickets ── */}
+        <div className="md:col-span-2 space-y-4">
+          {/* General Information */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+              <Info className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold uppercase tracking-wider">General Information</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Title *</Label>
+                <Input className="mt-1.5" placeholder="e.g. Lagos Food & Wine Festival" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Category</Label>
+                  <Select value={eventCategory} onValueChange={setEventCategory}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue Name</Label>
+                  <Input className="mt-1.5" placeholder="e.g. Eko Atlantic" value={eventVenue} onChange={(e) => setEventVenue(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
+                <Textarea className="mt-1.5" rows={3} placeholder="Describe your event..." value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+            </div>
           </div>
 
-          {/* Ticket Tiers */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ticket Tiers *</Label>
-              <button
-                onClick={() => setTicketTypes([...ticketTypes, { name: "", price: "0", quantity: "100" }])}
-                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-              >
-                <Plus className="w-3 h-3" /> Add Tier
-              </button>
+          {/* Schedule & Contact */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+              <CalendarClock className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold uppercase tracking-wider">Schedule & Contact</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date *</Label>
+                  <Input type="date" className="mt-1.5" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date *</Label>
+                  <Input type="date" className="mt-1.5" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
+                  <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+                    <SelectContent>
+                      {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
+                  <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder={selectedState ? "Select area" : "Select state first"} /></SelectTrigger>
+                    <SelectContent>
+                      {(STATE_CITIES[selectedState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
+                  <Input type="time" className="mt-1.5" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
+                  <Input type="time" className="mt-1.5" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket Settings */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+              <Ticket className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold uppercase tracking-wider">Ticket Settings</h3>
+            </div>
+            <div className="space-y-2">
+              {ticketTypes.length > 0 && (
+                <div className="grid grid-cols-12 gap-2 px-1">
+                  <span className="col-span-5 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tier Name</span>
+                  <span className="col-span-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦)</span>
+                  <span className="col-span-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Capacity</span>
+                  <span className="col-span-1" />
+                </div>
+              )}
               {ticketTypes.map((ticket, i) => (
-                <div key={i} className="bg-muted/30 rounded-xl p-3 border border-border/50 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tier {i + 1}</span>
+                <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                  <div className="col-span-5">
+                    <Input placeholder="e.g. Regular" value={ticket.name} onChange={(e) => { const copy = [...ticketTypes]; copy[i] = { ...copy[i], name: e.target.value }; setTicketTypes(copy); }} />
+                  </div>
+                  <div className="col-span-3">
+                    <Input type="number" placeholder="0" value={ticket.price} onChange={(e) => { const copy = [...ticketTypes]; copy[i] = { ...copy[i], price: e.target.value }; setTicketTypes(copy); }} />
+                  </div>
+                  <div className="col-span-3">
+                    <Input type="number" placeholder="100" value={ticket.quantity} onChange={(e) => { const copy = [...ticketTypes]; copy[i] = { ...copy[i], quantity: e.target.value }; setTicketTypes(copy); }} />
+                  </div>
+                  <div className="col-span-1 flex justify-center">
                     {ticketTypes.length > 1 && (
-                      <button
-                        onClick={() => setTicketTypes(ticketTypes.filter((_, j) => j !== i))}
-                        className="text-destructive hover:bg-destructive/10 p-1 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <button onClick={() => setTicketTypes(ticketTypes.filter((_, j) => j !== i))} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                     )}
-                  </div>
-                  <div>
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tier Name (e.g., VIP) *</Label>
-                    <Input
-                      className="mt-1"
-                      placeholder="Regular, VIP, etc."
-                      value={ticket.name}
-                      onChange={(e) => {
-                        const updated = [...ticketTypes];
-                        updated[i].name = e.target.value;
-                        setTicketTypes(updated);
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Price (₦) *</Label>
-                      <Input
-                        className="mt-1"
-                        placeholder="0"
-                        type="number"
-                        value={ticket.price}
-                        onChange={(e) => {
-                          const updated = [...ticketTypes];
-                          updated[i].price = e.target.value;
-                          setTicketTypes(updated);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quantity *</Label>
-                      <Input
-                        className="mt-1"
-                        placeholder="100"
-                        type="number"
-                        value={ticket.quantity}
-                        onChange={(e) => {
-                          const updated = [...ticketTypes];
-                          updated[i].quantity = e.target.value;
-                          setTicketTypes(updated);
-                        }}
-                      />
-                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Start & End Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
-              <Input className="mt-1.5" type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
-              <Input className="mt-1.5" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} />
+              <Button type="button" variant="outline" className="w-full mt-2 border-dashed" onClick={() => setTicketTypes([...ticketTypes, { name: "", price: "0", quantity: "100" }])}>
+                <Plus className="w-4 h-4 mr-1" /> Add Another Ticket Tier
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* ── Right Column: Dates, Category, Venue, Location, Image ── */}
+        {/* ── Right Column (1/3): Banner + Map ── */}
         <div className="space-y-4">
-          {/* Start & End Date */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date *</Label>
-              <Input className="mt-1.5" type="date" value={eventStartDate} onChange={(e) => setEventStartDate(e.target.value)} />
+          {/* Event Banner */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Banner</h3>
+              <span className="text-xs text-primary font-medium flex items-center gap-1"><ImageIcon className="w-3 h-3" /> Change</span>
             </div>
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date *</Label>
-              <Input className="mt-1.5" type="date" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} />
-            </div>
+            <ImageUpload
+              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+              folder={CLOUDINARY_FOLDERS.BUSINESSES}
+              currentImage={uploadedImageUrl}
+              buttonText="Upload Banner"
+            />
+            <p className="text-xs text-muted-foreground text-center mt-2">Recommended size: 1200 × 630 px</p>
           </div>
 
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
-            <Select value={eventCategory} onValueChange={setEventCategory}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
-              <SelectContent>
-                {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue Name</Label>
-            <Input className="mt-1.5" placeholder="e.g. Eko Atlantic" value={eventVenue} onChange={(e) => setEventVenue(e.target.value)} />
-          </div>
-
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Location</Label>
-            <p className="text-xs text-muted-foreground mt-1 mb-2">Type the address and confirm the pin location</p>
+          {/* Map Location */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Map Location</h3>
             <AddressPicker
               onLocationConfirmed={(data) => { setEventLocation(data.address); setStreetAddress(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
               initialAddress={eventLocation || streetAddress}
@@ -995,33 +1013,7 @@ const ProfileDashboard = () => {
               initialLon={mapLon}
             />
           </div>
-
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
-            <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
-              <SelectContent>
-                {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Banner</Label>
-            <ImageUpload
-              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-              folder={CLOUDINARY_FOLDERS.BUSINESSES}
-              currentImage={uploadedImageUrl}
-              buttonText="Upload Event Cover"
-            />
-          </div>
         </div>
-      </div>
-
-      {/* Description (full width below columns) */}
-      <div className="mt-4">
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
-        <Textarea className="mt-1.5" placeholder="Describe your event..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
     </div>
   );
@@ -1402,7 +1394,7 @@ const ProfileDashboard = () => {
 
       {/* ── Create Listing Wizard Dialog ── */}
       <Dialog open={createOpen} onOpenChange={(open) => { if (!open) resetWizard(); else setCreateOpen(true); }}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogContent className={`max-h-[90vh] overflow-y-auto rounded-2xl ${listingType === "event" ? "sm:max-w-6xl" : "sm:max-w-3xl"}`}>
           {wizardStep === 1 ? (
             <>
               <DialogHeader>

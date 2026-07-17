@@ -18,7 +18,6 @@ const WalletPage = () => {
   const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "http://localhost:4000";
   const [fundAmount, setFundAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [selectedWithdrawalMethod, setSelectedWithdrawalMethod] = useState("");
   const [showFundDialog, setShowFundDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [recipientCode, setRecipientCode] = useState("");
@@ -42,7 +41,13 @@ const WalletPage = () => {
         .then((res) => res.json())
         .then((result) => {
           if (result.status && result.data) {
-            setBanks(result.data.map((b: any) => ({ name: b.name, code: b.code })));
+            const seen = new Set<string>();
+            const unique = result.data.filter((b: any) => {
+              if (seen.has(b.code)) return false;
+              seen.add(b.code);
+              return true;
+            });
+            setBanks(unique.map((b: any) => ({ name: b.name, code: b.code })));
           }
         })
         .catch(() => {});
@@ -138,31 +143,12 @@ const WalletPage = () => {
       return;
     }
 
-    if (!selectedWithdrawalMethod) {
-      toast({
-        title: "Withdrawal Method Required",
-        description: "Please select a withdrawal method.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const selectedMethod = paymentMethods.find(method => method.id === selectedWithdrawalMethod);
-    if (!selectedMethod) {
-      toast({
-        title: "Invalid Withdrawal Method",
-        description: "Please select a valid withdrawal method.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const amount = parseFloat(withdrawAmount);
-    const success = await withdrawFunds(amount, selectedMethod, recipientCode);
+    const defaultMethod: PaymentMethod = { id: "bank", name: "Bank Transfer", type: "bank", description: "Withdraw to bank account" };
+    const success = await withdrawFunds(amount, defaultMethod, recipientCode);
     
     if (success) {
       setWithdrawAmount("");
-      setSelectedWithdrawalMethod("");
       setRecipientCode("");
     }
   };
