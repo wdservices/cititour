@@ -15,17 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const supportChannels = [
   {
-    name: "Live Chat",
-    description: "Get instant help from our support team",
-    availability: "24/7",
-    responseTime: "< 2 minutes",
-    icon: MessageCircle,
-    color: "bg-green-500",
-    available: true
-  },
-  {
     name: "Email Support",
-    description: "Send us a detailed message",
+    description: "Send us a detailed message at hello.bluewavestech@gmail.com",
     availability: "24/7",
     responseTime: "< 4 hours",
     icon: Mail,
@@ -33,9 +24,18 @@ const supportChannels = [
     available: true
   },
   {
+    name: "Live Chat",
+    description: "Get instant help from our support team",
+    availability: "Mon-Fri, 9AM-6PM WAT",
+    responseTime: "< 5 minutes",
+    icon: MessageCircle,
+    color: "bg-green-500",
+    available: false
+  },
+  {
     name: "Phone Support",
     description: "Speak directly with our team",
-    availability: "Mon-Fri, 9AM-6PM EST",
+    availability: "Mon-Fri, 9AM-5PM WAT",
     responseTime: "Immediate",
     icon: Phone,
     color: "bg-accent",
@@ -45,53 +45,153 @@ const supportChannels = [
 
 const faqData = [
   {
-    category: "Account & Profile",
+    category: "Account & Authentication",
     questions: [
       {
-        question: "How do I reset my password?",
-        answer: "Go to Settings > Account > Change Password, or use the 'Forgot Password' link on the login screen."
+        question: "How do I create an account?",
+        answer: "Visit CitiTour and click 'Get Started' or 'Sign In'. You can sign up with your email and password, or use Google for one-click registration."
       },
       {
-        question: "How can I update my profile information?",
-        answer: "Navigate to Profile in the side menu and click the Edit button to update your personal information."
+        question: "Why do I have to sign in again every time I reload the page?",
+        answer: "CitiTour uses session-based authentication for security. Your sign-in state is cleared when you close your browser tab or reload the page. This protects your account if you're using a shared or public device."
+      },
+      {
+        question: "How do I reset my password?",
+        answer: "On the login page, click 'Forgot Password' and enter your email. You'll receive a password reset link. Alternatively, contact support for assistance."
       },
       {
         question: "Can I delete my account?",
-        answer: "Yes, go to Settings > Data > Delete Account. Note that this action cannot be undone."
+        answer: "Yes. Go to Settings in the side menu and find the option to delete your account. Note that this action cannot be undone — all your data will be permanently removed."
       }
     ]
   },
   {
-    category: "Bookings & Reservations",
+    category: "Discovering Places & Events",
     questions: [
       {
-        question: "How do I cancel a booking?",
-        answer: "Go to your booking confirmation email and click 'Cancel Booking', or contact the business directly."
+        question: "How does CitiTour know my location?",
+        answer: "When you first visit, CitiTour asks for your location (with your permission) to show localised content. Your city determines your regional branding — e.g., TourLAG for Lagos, TourRIV for Rivers, TourABJ for Abuja. You can change this in Settings."
       },
       {
-        question: "What is your refund policy?",
-        answer: "Refund policies vary by business. Check the cancellation policy when booking or contact the business directly."
+        question: "What can I find on the Explore page?",
+        answer: "The Explore page shows businesses, events, marketplace products, and property listings. You can scroll through each category or click 'View More' to see the full list."
       },
       {
-        question: "I didn't receive my booking confirmation",
-        answer: "Check your spam folder. If still missing, contact us with your booking details and we'll resend it."
+        question: "How do I save a place or event?",
+        answer: "Tap the heart icon on any listing card to add it to your favourites. Access all your saved items from the side menu under 'Favourites'."
+      },
+      {
+        question: "How do I leave a review?",
+        answer: "Open any business or event detail page and scroll to the Reviews section. You must be signed in to submit a review with a rating and comment."
       }
     ]
   },
   {
-    category: "App Features",
+    category: "Marketplace",
     questions: [
       {
-        question: "How do I save places to my favorites?",
-        answer: "Tap the heart icon on any listing to save it to your favorites. Access them from the side menu."
+        question: "What is the Marketplace?",
+        answer: "The Marketplace is where local sellers list products and services — electronics, fashion, vehicles, property, and more. Browse by category, compare prices, and contact sellers directly."
       },
       {
-        question: "Can I use the app offline?",
-        answer: "Some features work offline, but you'll need internet connection for bookings and real-time information."
+        question: "How do discounts work?",
+        answer: "Sellers can set a regular price and a promo price. When the promo price is lower, CitiTour displays the original price with a strikethrough and highlights the discounted price."
       },
       {
-        question: "How do I share a place with friends?",
-        answer: "Tap the share button on any listing to send it via social media, email, or messaging apps."
+        question: "How do I list a product for sale?",
+        answer: "Go to your Dashboard (click the profile icon) and select 'Post a Product/Service'. Fill in the product name, price, promo price (optional), category, description, and upload an image. Your listing will appear on the Marketplace."
+      },
+      {
+        question: "How do I contact a seller?",
+        answer: "Open the product detail page and use the contact information provided by the seller (phone number, WhatsApp, etc.) to arrange purchase and delivery."
+      }
+    ]
+  },
+  {
+    category: "Events & Ticketing",
+    questions: [
+      {
+        question: "How do I buy an event ticket?",
+        answer: "Open any event, select a ticket tier and quantity, fill in your registration details, and pay via card, bank transfer, or your CitiTour wallet. You'll receive a confirmation after payment."
+      },
+      {
+        question: "Can I pay for event tickets with my wallet?",
+        answer: "Yes! If you have sufficient balance in your CitiTour wallet, you can select 'Wallet' as your payment method when purchasing event tickets."
+      },
+      {
+        question: "Where can I see my event tickets?",
+        answer: "Go to your Dashboard and click the 'My Events' tab. You'll see a 'My Tickets' section showing all events you've registered for, with options to view details or cancel."
+      },
+      {
+        question: "How do I create an event?",
+        answer: "Go to your Dashboard and select the 'Events' tab. Click 'Create Event' and fill in the event title, category, dates, times, venue, ticket tiers, description, and location on the map. Upload a banner image and click 'Create Listing'."
+      },
+      {
+        question: "Can I edit my event after creating it?",
+        answer: "Yes. In your Dashboard's 'My Events' tab, click the 'Edit' button on any event. You can update all details including title, dates, ticket tiers, venue, map location, and banner image."
+      },
+      {
+        question: "How do attendees get notified?",
+        answer: "When someone registers for your event, their details (name, email, phone) appear in your Dashboard under 'Attendees'. You can also download a CSV report with full event analytics."
+      }
+    ]
+  },
+  {
+    category: "Wallet & Payments",
+    questions: [
+      {
+        question: "How do I fund my wallet?",
+        answer: "Go to your Wallet page and click 'Add Money'. Enter an amount and complete the payment via Paystack — you can use debit card, bank transfer, or USSD."
+      },
+      {
+        question: "How do I withdraw from my wallet?",
+        answer: "Go to your Wallet page, click 'Withdraw', and enter the amount. You'll need to link a Nigerian bank account first (select your bank, enter account number — it's verified automatically). A 1.5% service fee applies."
+      },
+      {
+        question: "Is my money safe in the wallet?",
+        answer: "Your wallet balance is stored securely in Firebase. Payments are processed by Paystack, a PCI-compliant payment processor. We never see or store your card or bank details."
+      },
+      {
+        question: "What can I use my wallet balance for?",
+        answer: "You can use your wallet to purchase event tickets on CitiTour. Wallet funds cannot be transferred between users or withdrawn as cash outside the Platform."
+      },
+      {
+        question: "What are the withdrawal fees?",
+        answer: "A 1.5% service fee is deducted from your withdrawal amount. The fee breakdown is displayed before you confirm any withdrawal."
+      }
+    ]
+  },
+  {
+    category: "Listings & Dashboard",
+    questions: [
+      {
+        question: "How do I list my business on CitiTour?",
+        answer: "Click the profile icon to go to your Dashboard, then select 'Listings' tab. Click 'Create New' and choose 'Register Business'. Fill in your business name, category, state, city, address, phone, and upload a cover image."
+      },
+      {
+        question: "How do I list a property?",
+        answer: "In your Dashboard, click 'Create New' and select 'List a Property'. Enter the property name, type (shortlet, apartment, land, etc.), state, city, address, and upload photos."
+      },
+      {
+        question: "Can I edit or delete my listings?",
+        answer: "Yes. In your Dashboard, find the listing you want to change and click 'Edit' or 'Delete'. Deletion requires double confirmation for safety. When you delete a listing, associated images are also removed from Cloudinary."
+      },
+      {
+        question: "How do I run ads for my listing?",
+        answer: "Go to your Wallet and click 'Run Ads', or visit the Run Ads page directly. You'll need a minimum wallet balance to create an ad campaign."
+      }
+    ]
+  },
+  {
+    category: "Split It (Bill Splitting)",
+    questions: [
+      {
+        question: "What is Split It?",
+        answer: "Split It lets you split a bill or expense with friends. Enter the total amount, add the people splitting, and CitiTour calculates each person's share."
+      },
+      {
+        question: "Does Split It handle payments?",
+        answer: "Currently, Split It calculates and displays each person's share. Actual payment between friends is handled outside the app (bank transfer, cash, etc.)."
       }
     ]
   }
@@ -154,7 +254,7 @@ const ContactSupportPage = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Contact Support</h1>
-              <p className="text-white/90">We're here to help you 24/7</p>
+              <p className="text-white/90">We're here to help you</p>
             </div>
           </div>
         </div>
@@ -206,9 +306,14 @@ const ContactSupportPage = () => {
                       </div>
 
                       <Button 
-                    className={`w-full ${channel.available ? "bg-primary hover:opacity-90" : ""}`}
-                    disabled={!channel.available}
-                  >
+                        className={`w-full ${channel.available ? "bg-primary hover:opacity-90" : ""}`}
+                        disabled={!channel.available}
+                        onClick={() => {
+                          if (channel.name === "Email Support") {
+                            window.location.href = "mailto:hello.bluewavestech@gmail.com";
+                          }
+                        }}
+                      >
                         {channel.available ? `Start ${channel.name}` : "Currently Unavailable"}
                       </Button>
                     </CardContent>
@@ -223,41 +328,41 @@ const ContactSupportPage = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/docs')}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Check Order Status</h4>
-                      <p className="text-sm text-muted-foreground">Track your bookings and reservations</p>
+                      <h4 className="font-medium">Browse Help Center</h4>
+                      <p className="text-sm text-muted-foreground">Step-by-step guides for all CitiTour features</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/profile/dashboard')}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Report a Problem</h4>
-                      <p className="text-sm text-muted-foreground">Having issues with the app or a business?</p>
+                      <h4 className="font-medium">Manage Your Listings</h4>
+                      <p className="text-sm text-muted-foreground">Edit, update, or delete your listings from your dashboard</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/wallet')}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Business Partnership</h4>
-                      <p className="text-sm text-muted-foreground">Learn about listing your business</p>
+                      <h4 className="font-medium">Wallet & Payments</h4>
+                      <p className="text-sm text-muted-foreground">Fund wallet, withdraw, or view transaction history</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/feedback')}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Feature Request</h4>
-                      <p className="text-sm text-muted-foreground">Suggest new features for the app</p>
+                      <h4 className="font-medium">Send Feedback</h4>
+                      <p className="text-sm text-muted-foreground">Suggest new features or report issues</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
@@ -347,10 +452,11 @@ const ContactSupportPage = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="account">Account Issues</SelectItem>
-                          <SelectItem value="booking">Booking Problems</SelectItem>
-                          <SelectItem value="payment">Payment Issues</SelectItem>
+                          <SelectItem value="payment">Wallet & Payment Issues</SelectItem>
+                          <SelectItem value="event">Event Ticketing</SelectItem>
+                          <SelectItem value="marketplace">Marketplace</SelectItem>
+                          <SelectItem value="listing">Listing Problems</SelectItem>
                           <SelectItem value="technical">Technical Support</SelectItem>
-                          <SelectItem value="business">Business Inquiry</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
@@ -386,10 +492,10 @@ const ContactSupportPage = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low - General inquiry</SelectItem>
-                          <SelectItem value="normal">Normal - Standard issue</SelectItem>
-                          <SelectItem value="high">High - Urgent issue</SelectItem>
-                          <SelectItem value="critical">Critical - App not working</SelectItem>
+                          <SelectItem value="low">Low — General inquiry</SelectItem>
+                          <SelectItem value="normal">Normal — Standard issue</SelectItem>
+                          <SelectItem value="high">High — Urgent issue</SelectItem>
+                          <SelectItem value="critical">Critical — App not working</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -400,9 +506,9 @@ const ContactSupportPage = () => {
                         <div>
                           <h4 className="font-medium text-primary-dark">What happens next?</h4>
                           <ul className="text-sm text-primary mt-1 space-y-1">
-                            <li>• We'll send you a confirmation email with your ticket ID</li>
-                            <li>• Our team will review your request within 4 hours</li>
-                            <li>• You'll receive updates via email as we work on your case</li>
+                            <li>We'll send you a confirmation email with your ticket ID</li>
+                            <li>Our team will review your request within 4 hours</li>
+                            <li>You'll receive updates via email as we work on your case</li>
                           </ul>
                         </div>
                       </div>

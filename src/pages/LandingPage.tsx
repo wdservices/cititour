@@ -586,9 +586,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             <div className="col-span-2 md:col-span-2">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary-foreground" />
-                </div>
+                <img src="/cititour-logo.png" alt="CitiTour" className="w-9 h-9 rounded-xl object-contain" style={{ filter: 'brightness(0) invert(33%) sepia(98%) saturate(3463%) hue-rotate(195deg) brightness(97%) contrast(96%)' }} />
                 <span className="font-display text-2xl font-extrabold">CitiTour</span>
               </div>
               <p className="text-sm text-muted-foreground max-w-xs">Nigeria\u2019s urban concierge. Discover, book and split bills across Lagos, Abuja and Port Harcourt.</p>

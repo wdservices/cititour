@@ -13,6 +13,8 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  setPersistence,
+  inMemoryPersistence,
   User
 } from 'firebase/auth';
 
@@ -32,6 +34,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Use in-memory persistence — user must re-login on page reload
+setPersistence(auth, inMemoryPersistence);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

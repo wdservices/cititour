@@ -28,6 +28,8 @@ interface Event {
   tags: string[];
   ownerId: string;
   ticketTypes: { name: string; price: number; quantity: number }[];
+  lat?: number;
+  lon?: number;
 }
 
 const EventsSection = () => {
@@ -62,6 +64,8 @@ const EventsSection = () => {
         tags: raw.tags || [],
         ownerId: raw.ownerId || '',
         ticketTypes: tickets.map((t: any) => ({ name: t.name || 'General', price: Number(t.price) || 0, quantity: Number(t.quantity) || 0 })),
+        lat: raw.lat != null ? Number(raw.lat) : undefined,
+        lon: raw.lon != null ? Number(raw.lon) : undefined,
       };
     });
   }, [rawEvents]);

@@ -147,6 +147,7 @@ export default function DocsPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
+              <img src="/cititour-logo.png" alt="CitiTour" className="w-8 h-8 rounded-lg object-contain" style={{ filter: 'brightness(0) invert(33%) sepia(98%) saturate(3463%) hue-rotate(195deg) brightness(97%) contrast(96%)' }} />
               <span className="font-display text-2xl font-extrabold">CitiTour</span>
             </Link>
             <span className="text-muted-foreground text-sm hidden md:inline">/</span>
