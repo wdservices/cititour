@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Building2, ShoppingBag, Home, Calendar, Megaphone,
   Plus, LayoutDashboard, MapPin, Trash2, Edit3, Ticket, Store,
-  ChevronRight, Loader2, Download, FileText, BarChart2
+  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { db } from "@/lib/firebase";
 import { getDoc, doc } from "firebase/firestore";
 import { useMyListings, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
+import { AddressPicker } from "@/components/AddressPicker";
 import { CLOUDINARY_FOLDERS, deleteImagesFromCloudinary, collectPublicIdsForListing } from "@/lib/cloudinary";
 import { logActivity } from "@/lib/activityLog";
 import { getMockImage } from "@/lib/mockImages";
@@ -75,6 +76,8 @@ const ProfileDashboard = () => {
   const [editPhone, setEditPhone] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [editImagePublicId, setEditImagePublicId] = useState("");
+  const [editMapLat, setEditMapLat] = useState<number | undefined>();
+  const [editMapLon, setEditMapLon] = useState<number | undefined>();
 
   // Product-specific edit fields
   const [editProductPrice, setEditProductPrice] = useState("");
@@ -100,6 +103,8 @@ const ProfileDashboard = () => {
   const [phone, setPhone] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [uploadedImagePublicId, setUploadedImagePublicId] = useState("");
+  const [mapLat, setMapLat] = useState<number | undefined>();
+  const [mapLon, setMapLon] = useState<number | undefined>();
 
   // ── Business-specific ──
   const [bizCategory, setBizCategory] = useState("");
@@ -134,7 +139,7 @@ const ProfileDashboard = () => {
   const myProperties = (listingsData?.properties || []) as ListingItem[];
   const myEvents = (listingsData?.events || []) as ListingItem[];
 
-  console.log("[Dashboard] myBusinesses:", myBusinesses.length, myBusinesses.map(b => ({id: b.id, title: b.title, category: b.category})));
+
 
   // ── Event analytics (organized events) ──
   const eventIds = myEvents.map((e) => e.id);
@@ -286,6 +291,8 @@ const ProfileDashboard = () => {
         ownerId: user.id,
         isOpen: true,
         rating: 0,
+        lat: mapLat || null,
+        lon: mapLon || null,
       });
       logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "business", targetName: title, details: `Created business: ${title}` });
       toast({ title: "Business registered!" });
@@ -403,6 +410,8 @@ const ProfileDashboard = () => {
         city: selectedCity,
         venue: eventVenue,
         eventLocation,
+        lat: mapLat || null,
+        lon: mapLon || null,
         startDate: eventStartDate,
         endDate: eventEndDate || eventStartDate,
         startTime: eventStartTime,
@@ -526,6 +535,8 @@ const ProfileDashboard = () => {
       setEditPhone(raw.phone || "");
       setEditImageUrl(raw.image || "");
       setEditImagePublicId(raw.imagePublicId || "");
+      setEditMapLat(raw.lat || undefined);
+      setEditMapLon(raw.lon || undefined);
       // Product-specific fields
       if (type === "product") {
         setEditProductPrice(String(raw.price || ""));
@@ -572,6 +583,8 @@ const ProfileDashboard = () => {
         phone: editPhone.trim(),
         image: editImageUrl,
         location: fullLocation,
+        lat: editMapLat || null,
+        lon: editMapLon || null,
       };
       if (editTarget.type === "product") {
         updateData.price = Number(editProductPrice) || 0;
@@ -647,8 +660,14 @@ const ProfileDashboard = () => {
         </div>
       )}
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Street Address</Label>
-        <Input className="mt-1.5" placeholder="e.g. 15 Admiralty Way, Lekki Phase 1" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} />
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location on Map</Label>
+        <p className="text-xs text-muted-foreground mt-1 mb-2">Type your address and confirm the pin location</p>
+        <AddressPicker
+          onLocationConfirmed={(data) => { setStreetAddress(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
+          initialAddress={streetAddress}
+          initialLat={mapLat}
+          initialLon={mapLon}
+        />
       </div>
       <div>
         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number *</Label>
@@ -961,15 +980,20 @@ const ProfileDashboard = () => {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue</Label>
-              <Input className="mt-1.5" placeholder="e.g. Eko Atlantic" value={eventVenue} onChange={(e) => setEventVenue(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</Label>
-              <Input className="mt-1.5" placeholder="e.g. Victoria Island, Lagos" value={eventLocation} onChange={(e) => setEventLocation(e.target.value)} />
-            </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue Name</Label>
+            <Input className="mt-1.5" placeholder="e.g. Eko Atlantic" value={eventVenue} onChange={(e) => setEventVenue(e.target.value)} />
+          </div>
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Location</Label>
+            <p className="text-xs text-muted-foreground mt-1 mb-2">Type the address and confirm the pin location</p>
+            <AddressPicker
+              onLocationConfirmed={(data) => { setEventLocation(data.address); setStreetAddress(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
+              initialAddress={eventLocation || streetAddress}
+              initialLat={mapLat}
+              initialLon={mapLon}
+            />
           </div>
 
           <div>
@@ -1483,7 +1507,7 @@ const ProfileDashboard = () => {
 
       {/* ── Edit Dialog ── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {editTarget?.type === "business" && "Edit Business"}
@@ -1495,10 +1519,12 @@ const ProfileDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {editTarget?.type !== "event" && (
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title *</Label>
               <Input className="mt-1.5" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
             </div>
+            )}
 
             {editTarget?.type === "business" && (
               <div>
@@ -1526,53 +1552,159 @@ const ProfileDashboard = () => {
 
             {/* Event-specific fields */}
             {editTarget?.type === "event" && (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Category</Label>
-                  <Select value={editEventCategory} onValueChange={setEditEventCategory}>
-                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date</Label>
-                    <Input type="date" className="mt-1.5" value={editEventStartDate} onChange={(e) => setEditEventStartDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date</Label>
-                    <Input type="date" className="mt-1.5" value={editEventEndDate} onChange={(e) => setEditEventEndDate(e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
-                    <Input type="time" className="mt-1.5" value={editEventStartTime} onChange={(e) => setEditEventStartTime(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
-                    <Input type="time" className="mt-1.5" value={editEventEndTime} onChange={(e) => setEditEventEndTime(e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue</Label>
-                  <Input className="mt-1.5" value={editEventVenue} onChange={(e) => setEditEventVenue(e.target.value)} placeholder="e.g. Eko Convention Center" />
-                </div>
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ticket Types</Label>
-                  {editTicketTypes.map((tier, i) => (
-                    <div key={i} className="flex gap-2 mt-2">
-                      <Input placeholder="Name" value={tier.name} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], name: e.target.value }; setEditTicketTypes(copy); }} className="flex-1" />
-                      <Input type="number" placeholder="₦ Price" value={tier.price} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], price: e.target.value }; setEditTicketTypes(copy); }} className="w-24" />
-                      <Input type="number" placeholder="Qty" value={tier.quantity} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], quantity: e.target.value }; setEditTicketTypes(copy); }} className="w-20" />
-                      <button onClick={() => setEditTicketTypes(editTicketTypes.filter((_, j) => j !== i))} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* ── Left Column: Form Fields ── */}
+                <div className="md:col-span-2 space-y-4">
+                  {/* General Information */}
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+                      <Info className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-bold uppercase tracking-wider">General Information</h3>
                     </div>
-                  ))}
-                  <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setEditTicketTypes([...editTicketTypes, { name: "", price: "0", quantity: "100" }])}>
-                    <Plus className="w-3 h-3 mr-1" /> Add Tier
-                  </Button>
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Title *</Label>
+                        <Input className="mt-1.5" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="e.g. GDG Port Harcourt" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Category</Label>
+                          <Select value={editEventCategory} onValueChange={setEditEventCategory}>
+                            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+                            <SelectContent>
+                              {EVENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue Name</Label>
+                          <Input className="mt-1.5" value={editEventVenue} onChange={(e) => setEditEventVenue(e.target.value)} placeholder="e.g. Techcreek" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
+                        <Textarea className="mt-1.5" rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Describe your event..." />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Schedule & Contact */}
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+                      <CalendarClock className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-bold uppercase tracking-wider">Schedule & Contact</h3>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Date</Label>
+                          <Input type="date" className="mt-1.5" value={editEventStartDate} onChange={(e) => setEditEventStartDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Date</Label>
+                          <Input type="date" className="mt-1.5" value={editEventEndDate} onChange={(e) => setEditEventEndDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State</Label>
+                          <Select value={editState} onValueChange={(v) => { setEditState(v as NigerianState); setEditCity(""); }}>
+                            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+                            <SelectContent>
+                              {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
+                          <Select value={editCity} onValueChange={setEditCity} disabled={!editState}>
+                            <SelectTrigger className="mt-1.5"><SelectValue placeholder={editState ? "Select area" : "Select state first"} /></SelectTrigger>
+                            <SelectContent>
+                              {(STATE_CITIES[editState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Start Time</Label>
+                          <Input type="time" className="mt-1.5" value={editEventStartTime} onChange={(e) => setEditEventStartTime(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">End Time</Label>
+                          <Input type="time" className="mt-1.5" value={editEventEndTime} onChange={(e) => setEditEventEndTime(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Contact Phone</Label>
+                          <Input className="mt-1.5" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Enter phone number" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ticket Settings */}
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+                      <Ticket className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-bold uppercase tracking-wider">Ticket Settings</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {editTicketTypes.length > 0 && (
+                        <div className="grid grid-cols-12 gap-2 px-1">
+                          <span className="col-span-5 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tier Name</span>
+                          <span className="col-span-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦)</span>
+                          <span className="col-span-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Capacity</span>
+                          <span className="col-span-1" />
+                        </div>
+                      )}
+                      {editTicketTypes.map((tier, i) => (
+                        <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-5">
+                            <Input placeholder="e.g. Regular" value={tier.name} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], name: e.target.value }; setEditTicketTypes(copy); }} />
+                          </div>
+                          <div className="col-span-3">
+                            <Input type="number" placeholder="0" value={tier.price} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], price: e.target.value }; setEditTicketTypes(copy); }} />
+                          </div>
+                          <div className="col-span-3">
+                            <Input type="number" placeholder="100" value={tier.quantity} onChange={(e) => { const copy = [...editTicketTypes]; copy[i] = { ...copy[i], quantity: e.target.value }; setEditTicketTypes(copy); }} />
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            <button onClick={() => setEditTicketTypes(editTicketTypes.filter((_, j) => j !== i))} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button type="button" variant="outline" className="w-full mt-2 border-dashed" onClick={() => setEditTicketTypes([...editTicketTypes, { name: "", price: "0", quantity: "100" }])}>
+                        <Plus className="w-4 h-4 mr-1" /> Add Another Ticket Tier
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Right Column: Banner + Map ── */}
+                <div className="space-y-4">
+                  {/* Event Banner */}
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Banner</h3>
+                      <span className="text-xs text-primary font-medium flex items-center gap-1"><ImageIcon className="w-3 h-3" /> Change</span>
+                    </div>
+                    <ImageUpload
+                      onUploadSuccess={(r) => { setEditImageUrl(r.secureUrl); setEditImagePublicId(r.publicId); }}
+                      folder={CLOUDINARY_FOLDERS.BUSINESSES}
+                      currentImage={editImageUrl}
+                      buttonText="Upload Banner"
+                    />
+                    <p className="text-xs text-muted-foreground text-center mt-2">Recommended size: 1200 × 630 px</p>
+                  </div>
+
+                  {/* Map Location */}
+                  <div className="rounded-xl border border-border bg-card p-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Map Location</h3>
+                    <AddressPicker
+                      onLocationConfirmed={(data) => { setEditEventLocation(data.address); setEditMapLat(data.lat); setEditMapLon(data.lon); }}
+                      initialAddress={editEventLocation || editStreetAddress}
+                      initialLat={editMapLat}
+                      initialLon={editMapLon}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1600,8 +1732,8 @@ const ProfileDashboard = () => {
               </div>
             )}
 
-            {/* Location fields for business, property, event */}
-            {(editTarget?.type === "business" || editTarget?.type === "property" || editTarget?.type === "event") && (
+            {/* Location fields for business, property only (events have these in their own section) */}
+            {(editTarget?.type === "business" || editTarget?.type === "property") && (
               <>
                 <div>
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State</Label>
@@ -1626,8 +1758,14 @@ const ProfileDashboard = () => {
                 )}
 
                 <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Street Address</Label>
-                  <Input className="mt-1.5" value={editStreetAddress} onChange={(e) => setEditStreetAddress(e.target.value)} />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location on Map</Label>
+                  <p className="text-xs text-muted-foreground mt-1 mb-2">Update address and pin location</p>
+                  <AddressPicker
+                    onLocationConfirmed={(data) => { setEditStreetAddress(data.address); setEditMapLat(data.lat); setEditMapLon(data.lon); }}
+                    initialAddress={editStreetAddress}
+                    initialLat={editMapLat}
+                    initialLon={editMapLon}
+                  />
                 </div>
 
                 <div>
@@ -1637,11 +1775,14 @@ const ProfileDashboard = () => {
               </>
             )}
 
+            {editTarget?.type !== "event" && (
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
               <Textarea className="mt-1.5" rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
             </div>
+            )}
 
+            {editTarget?.type !== "event" && (
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
               <ImageUpload
@@ -1651,15 +1792,16 @@ const ProfileDashboard = () => {
                 buttonText="Change Cover"
               />
             </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-border">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setEditOpen(false)}>Cancel Changes</Button>
             <Button className="flex-1 rounded-xl font-bold" onClick={handleUpdateListing} disabled={editSaving}>
               {editSaving ? (
                 <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving...</span>
               ) : (
-                "Save Changes"
+                editTarget?.type === "event" ? "Update Event Details" : "Save Changes"
               )}
             </Button>
           </div>

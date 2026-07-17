@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Sparkles, MapPin, Calendar, Hotel, ShoppingBag, Utensils, ArrowRight, Star, Users, Shield, Heart, MessageCircle, Share2, ThumbsUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,22 @@ import heroCity from '@/assets/hero-cityscape.jpg';
 import heroNightlife from '@/assets/hero-nightlife.jpg';
 import heroRestaurant from '@/assets/hero-restaurant.jpg';
 import heroHotel from '@/assets/hero-hotel.jpg';
+
+const IMAGE_POOL = [
+  '/image/img1.jpg', '/image/img2.jpg', '/image/img3.jpg', '/image/img4.jpg',
+  '/image/img5.jpg', '/image/img6.jpg', '/image/img7.jpg', '/image/img8.jpg',
+  '/image/img9.jpg', '/image/img10.jpg', '/image/img11.jpg', '/image/img12.jpg',
+  '/image/img13.jpg', '/image/img14.jpg',
+];
+
+const MOSAIC_SLOTS = [
+  { initial: heroCity, alt: 'Cityscape', className: 'h-36 sm:h-44 md:h-56 w-full' },
+  { initial: heroRestaurant, alt: 'Restaurant', className: 'h-44 sm:h-56 md:h-72 w-full' },
+  { initial: heroNightlife, alt: 'Nightlife', className: 'h-44 sm:h-56 md:h-72 w-full' },
+  { initial: heroHotel, alt: 'Hotel', className: 'h-36 sm:h-44 md:h-56 w-full' },
+];
+
+const MOSAIC_INTERVALS = [10000, 11200, 10600, 11800];
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -55,6 +71,51 @@ const LandingPage = () => {
     }, 2800);
     return () => clearInterval(feedTimer);
   }, []);
+
+  // Mosaic image rotation — 4 unique images, one slot changes at a time
+  const shuffledStart = useCallback(() => {
+    const indices = [...Array(IMAGE_POOL.length).keys()];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices.slice(0, 4);
+  }, []);
+
+  const [mosaicSlots, setMosaicSlots] = useState<number[]>(() => shuffledStart());
+  const [mosaicFading, setMosaicFading] = useState([false, false, false, false]);
+
+  const changeMosaicSlot = useCallback((slot: number) => {
+    setMosaicFading((prev) => {
+      const next = [...prev];
+      next[slot] = true;
+      return next;
+    });
+    setTimeout(() => {
+      setMosaicSlots((prev) => {
+        const used = new Set(prev);
+        const available: number[] = [];
+        for (let i = 0; i < IMAGE_POOL.length; i++) {
+          if (!used.has(i)) available.push(i);
+        }
+        const next = [...prev];
+        next[slot] = available[Math.floor(Math.random() * available.length)];
+        return next;
+      });
+      setMosaicFading((prev) => {
+        const next = [...prev];
+        next[slot] = false;
+        return next;
+      });
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    const timers = MOSAIC_INTERVALS.map((interval, i) =>
+      setInterval(() => changeMosaicSlot(i), interval)
+    );
+    return () => timers.forEach(clearInterval);
+  }, [changeMosaicSlot]);
 
   const features = [
     {
@@ -343,28 +404,25 @@ const LandingPage = () => {
               {/* Right: Mosaic gallery */}
               <div className="relative">
                 <div className="grid grid-cols-2 grid-rows-2 gap-3">
-                  <motion.img src={heroCity} alt="Cityscape" className="rounded-2xl object-cover h-36 sm:h-44 md:h-56 w-full shadow-soft"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15 }}
-                  />
-                  <motion.img src={heroRestaurant} alt="Restaurant" className="rounded-2xl object-cover h-44 sm:h-56 md:h-72 w-full shadow-soft"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.25 }}
-                  />
-                  <motion.img src={heroNightlife} alt="Nightlife" className="rounded-2xl object-cover h-44 sm:h-56 md:h-72 w-full shadow-soft"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.35 }}
-                  />
-                  <motion.img src={heroHotel} alt="Hotel" className="rounded-2xl object-cover h-36 sm:h-44 md:h-56 w-full shadow-soft"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.45 }}
-                  />
+                  {MOSAIC_SLOTS.map((slot, i) => {
+                    const src = IMAGE_POOL[mosaicSlots[i]];
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.15 + i * 0.1 }}
+                        className="relative overflow-hidden rounded-2xl shadow-soft"
+                      >
+                        <img
+                          src={src}
+                          alt={slot.alt}
+                          className={`rounded-2xl object-cover ${slot.className} w-full transition-all duration-1000 ease-in-out ${mosaicFading[i] ? 'opacity-0 scale-[1.02]' : 'opacity-100 scale-100'}`}
+                        />
+                      </motion.div>
+                    );
+                  })}
                 </div>
-                {/* Reactions overlay removed to avoid overlapping images */}
               </div>
             </div>
           </div>
@@ -558,6 +616,7 @@ const LandingPage = () => {
               <ul className="space-y-2 text-sm">
                 <li><Link to="/privacy" className="hover:text-primary">Privacy</Link></li>
                 <li><Link to="/terms" className="hover:text-primary">Terms</Link></li>
+                <li><Link to="/docs" className="hover:text-primary">Help Center</Link></li>
                 <li><Link to="/contact-support" className="hover:text-primary">Support</Link></li>
               </ul>
             </div>

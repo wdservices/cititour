@@ -16,6 +16,7 @@ import {
   serverTimestamp, orderBy,
 } from "firebase/firestore";
 import SEO from "@/components/SEO";
+import { AddressPicker } from "@/components/AddressPicker";
 import { getMockImage } from "@/lib/mockImages";
 
 type ProductData = {
@@ -32,6 +33,8 @@ type ProductData = {
   ownerId: string;
   state?: string;
   city?: string;
+  lat?: number;
+  lon?: number;
 };
 
 type ReviewData = {
@@ -94,6 +97,8 @@ const MarketplaceDetailPage = () => {
             ownerId: raw.ownerId || "",
             state: raw.state || "",
             city: raw.city || "",
+            lat: raw.lat,
+            lon: raw.lon,
           });
         }
 
@@ -258,6 +263,11 @@ const MarketplaceDetailPage = () => {
                 <MapPin className="w-4 h-4 text-primary" />
                 <span>{product.location}</span>
               </div>
+              {product.lat && product.lon && (
+                <div className="mt-4">
+                  <AddressPicker readOnly initialLat={product.lat} initialLon={product.lon} initialAddress={product.location} />
+                </div>
+              )}
               {avgRating && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">

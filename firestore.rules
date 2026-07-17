@@ -51,9 +51,9 @@ service cloud.firestore {
 
     // ── Wallets ──
     match /wallets/{walletId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && request.auth.uid == walletId;
+      allow create: if request.auth != null && request.auth.uid == walletId;
+      allow update: if request.auth != null && request.auth.uid == walletId;
       allow delete: if false;
 
       // ── Wallet Transactions (subcollection) ──

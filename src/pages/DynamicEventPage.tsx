@@ -18,6 +18,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { logActivity } from "@/lib/activityLog";
+import { AddressPicker } from "@/components/AddressPicker";
 import { getMockImage } from "@/lib/mockImages";
 import { fmt } from "@/lib/useFirestore";
 
@@ -39,6 +40,8 @@ interface EventData {
   ticketTypes: TicketTier[];
   tags: string[];
   category: string;
+  lat?: number;
+  lon?: number;
 }
 
 type Step = 'details' | 'register' | 'payment' | 'success';
@@ -91,6 +94,8 @@ const DynamicEventPage = () => {
           })),
           tags: data.tags || [],
           category: data.tags?.[0] || 'Event',
+          lat: data.lat,
+          lon: data.lon,
         });
       } catch (err) {
         console.error(err);
@@ -241,6 +246,11 @@ const DynamicEventPage = () => {
                 <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="w-4 h-4" /><span>{event.startDate ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBA'}</span></div>
                 {event.startTime && <div className="flex items-center gap-2 text-muted-foreground"><Clock className="w-4 h-4" /><span>{event.startTime}</span></div>}
                 <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="w-4 h-4" /><span>{event.location}</span></div>
+                {event.lat && event.lon && (
+                  <div className="mt-3">
+                    <AddressPicker readOnly initialLat={event.lat} initialLon={event.lon} initialAddress={event.location} />
+                  </div>
+                )}
               </div>
               {event.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">{event.tags.map(t => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}</div>

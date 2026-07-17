@@ -49,6 +49,7 @@ import HostAnEventPage from "./pages/HostAnEventPage";
 import StatePage from "./pages/StatePage";
 import BlogIndexPage from "./pages/BlogIndexPage";
 import BlogPostPage from "./pages/BlogPostPage";
+import DocsPage from "./pages/DocsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,6 +152,7 @@ const App = () => (
                   <Route path="/auth" element={<AuthPage onAuthenticated={() => {}} />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfUsePage />} />
+                  <Route path="/docs" element={<DocsPage />} />
                   <Route path="/*" element={<ProtectedRoutes />} />
                 </Routes>
               </BrowserRouter>

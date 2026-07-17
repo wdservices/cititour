@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import SEO from "@/components/SEO";
+import { AddressPicker } from "@/components/AddressPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,6 +29,8 @@ type DetailData = {
   phone?: string;
   email?: string;
   website?: string;
+  lat?: number;
+  lon?: number;
   whatsapp?: string;
   latitude?: number;
   longitude?: number;
@@ -90,6 +93,8 @@ const DetailPage = () => {
             phone: raw.phone,
             email: raw.email,
             website: raw.website,
+            lat: raw.lat,
+            lon: raw.lon,
             whatsapp: raw.whatsapp || raw.phone,
             latitude: raw.latitude,
             longitude: raw.longitude,
@@ -310,6 +315,20 @@ const DetailPage = () => {
                 {renderValue(data.description)}
               </p>
             </div>
+
+            {/* Location Map */}
+            {data.lat && data.lon && (
+              <div className="bg-card/40 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm backdrop-blur-sm">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Location
+                </h2>
+                <AddressPicker readOnly initialLat={data.lat} initialLon={data.lon} initialAddress={data.address} />
+                {data.address && (
+                  <p className="text-sm text-muted-foreground mt-3">{data.address}</p>
+                )}
+              </div>
+            )}
 
             {/* Features Section */}
             <div className="bg-card/40 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm backdrop-blur-sm">

@@ -22,6 +22,7 @@ import { logActivity } from "@/lib/activityLog";
 import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where, deleteDoc } from "firebase/firestore";
 import QRCode from "react-qr-code";
 import ImageUpload from "@/components/ImageUpload";
+import { AddressPicker } from "@/components/AddressPicker";
 import SEO from "@/components/SEO";
 
 const COMMISSION_RATE = 0.07;
@@ -62,6 +63,8 @@ const EventTicketsPage = () => {
   const [venue, setVenue] = useState("");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
+  const [mapLat, setMapLat] = useState<number | undefined>();
+  const [mapLon, setMapLon] = useState<number | undefined>();
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   
@@ -292,6 +295,8 @@ const EventTicketsPage = () => {
         venue,
         address,
         location,
+        lat: mapLat || null,
+        lon: mapLon || null,
         startDate: new Date(date).toISOString(),
         endDate: endDate ? new Date(endDate).toISOString() : new Date(date).toISOString(),
         imageUrl: uploadedImageUrl,
@@ -910,15 +915,19 @@ const EventTicketsPage = () => {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue</Label>
-                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={venue} onChange={(e) => setVenue(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</Label>
-                  <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={location} onChange={(e) => setLocation(e.target.value)} />
-                </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Venue Name</Label>
+                <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" placeholder="e.g. Eko Hotel Convention Centre" value={venue} onChange={(e) => setVenue(e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Location</Label>
+                <AddressPicker
+                  onLocationConfirmed={(data) => { setAddress(data.address); setLocation(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
+                  initialAddress={address}
+                  initialLat={mapLat}
+                  initialLon={mapLon}
+                />
               </div>
 
               <div className="pt-2">

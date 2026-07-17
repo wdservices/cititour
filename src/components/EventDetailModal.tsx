@@ -17,6 +17,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { logActivity } from "@/lib/activityLog";
+import { AddressPicker } from "@/components/AddressPicker";
 
 interface TicketTier {
   name: string;
@@ -36,6 +37,8 @@ interface EventData {
   ownerId: string;
   ticketTypes: TicketTier[];
   tags: string[];
+  lat?: number;
+  lon?: number;
 }
 
 interface EventDetailModalProps {
@@ -216,6 +219,9 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, isOpen, onCl
                     <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <span className="text-muted-foreground">{event.location || 'Location TBA'}</span>
                   </div>
+                  {event.lat && event.lon && (
+                    <AddressPicker readOnly initialLat={event.lat} initialLon={event.lon} initialAddress={event.location} />
+                  )}
                   {event.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {event.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}

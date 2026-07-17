@@ -32,6 +32,8 @@ interface Event {
   tags: string[];
   ownerId: string;
   ticketTypes: { name: string; price: number; quantity: number }[];
+  lat?: number;
+  lon?: number;
 }
 
 const EventsPage = () => {
@@ -68,6 +70,8 @@ const EventsPage = () => {
         tags: raw.tags || [],
         ownerId: raw.ownerId || '',
         ticketTypes: tickets.map((t: any) => ({ name: t.name || 'General', price: Number(t.price) || 0, quantity: Number(t.quantity) || 0 })),
+        lat: raw.lat,
+        lon: raw.lon,
       };
     });
   }, [rawEvents]);
