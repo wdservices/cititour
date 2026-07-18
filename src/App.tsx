@@ -85,6 +85,7 @@ const ProtectedRoutes = () => {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/:id" element={<MarketplaceDetailPage />} />
         <Route path="/businesses" element={<AllBusinessesPage />} />
+        <Route path="/business/:id" element={<DetailPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/hotels" element={<HotelsPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />

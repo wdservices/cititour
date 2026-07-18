@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, Share2, MapPin, ShoppingCart,
   MessageCircle, Star, ShieldCheck, Truck, RefreshCcw,
-  CheckCircle2, Loader2, Send,
+  CheckCircle2, Loader2, Send, Store, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ type ProductData = {
   condition?: string;
   description: string;
   ownerId: string;
+  businessId?: string;
   state?: string;
   city?: string;
   lat?: number;
@@ -68,6 +69,7 @@ const MarketplaceDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [mainImageIdx, setMainImageIdx] = useState(0);
+  const [parentBusiness, setParentBusiness] = useState<{ id: string; title: string; image: string; category: string; location: string } | null>(null);
 
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
@@ -95,11 +97,31 @@ const MarketplaceDetailPage = () => {
             condition: raw.condition ? formatField(raw.condition) : undefined,
             description: formatField(raw.description) || "",
             ownerId: raw.ownerId || "",
+            businessId: raw.businessId || "",
             state: raw.state || "",
             city: raw.city || "",
             lat: raw.lat,
             lon: raw.lon,
           });
+
+          // Fetch parent business if businessId exists
+          if (raw.businessId) {
+            try {
+              const bizSnap = await getDoc(doc(db, "businesses", raw.businessId));
+              if (bizSnap.exists()) {
+                const biz = bizSnap.data() as any;
+                setParentBusiness({
+                  id: bizSnap.id,
+                  title: biz.title || "Untitled Business",
+                  image: biz.image || "",
+                  category: biz.category || "",
+                  location: biz.location || "",
+                });
+              }
+            } catch (e) {
+              // Parent business not found — non-blocking
+            }
+          }
         }
 
         // Fetch reviews
@@ -299,6 +321,36 @@ const MarketplaceDetailPage = () => {
                 Secure payment through CitiTour
               </div>
             </div>
+
+            {/* View Storefront Card */}
+            {parentBusiness && (
+              <button
+                onClick={() => navigate(`/business/${parentBusiness.id}`)}
+                className="w-full p-4 rounded-2xl bg-card/60 border border-border/50 shadow-sm hover:border-primary/30 hover:bg-card/80 transition-all text-left group flex items-center gap-4"
+              >
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
+                  {parentBusiness.image ? (
+                    <img src={parentBusiness.image} alt={parentBusiness.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Store className="w-6 h-6 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Sold by</p>
+                  <p className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">{parentBusiness.title}</p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{parentBusiness.location}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-semibold text-primary shrink-0">
+                  <span>View Store</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </button>
+            )}
 
             {/* Description */}
             <div className="space-y-3">

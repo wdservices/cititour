@@ -92,6 +92,58 @@ export function useHouseListings() {
   return useCollection("house_listings");
 }
 
+/** Fetch products and properties belonging to a specific business */
+export function useBusinessChildren(businessId: string | null) {
+  return useQuery({
+    queryKey: ["businessChildren", businessId],
+    queryFn: async () => {
+      if (!businessId) return { products: [], properties: [] };
+      try {
+        const [prodSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "marketplace"), where("businessId", "==", businessId))),
+          getDocs(query(collection(db, "house_listings"), where("businessId", "==", businessId))),
+        ]);
+        return {
+          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+        };
+      } catch (error) {
+        console.error("[useBusinessChildren] Error:", error);
+        return { products: [], properties: [] };
+      }
+    },
+    enabled: !!businessId,
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
+  });
+}
+
+/** Fetch all products and properties for multiple businesses (for DetailPage) */
+export function useBusinessesProducts(businessIds: string[]) {
+  return useQuery({
+    queryKey: ["businessesProducts", businessIds.sort().join(",")],
+    queryFn: async () => {
+      if (businessIds.length === 0) return { products: [], properties: [] };
+      try {
+        const [prodSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "marketplace"), where("businessId", "in", businessIds))),
+          getDocs(query(collection(db, "house_listings"), where("businessId", "in", businessIds))),
+        ]);
+        return {
+          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+        };
+      } catch (error) {
+        console.error("[useBusinessesProducts] Error:", error);
+        return { products: [], properties: [] };
+      }
+    },
+    enabled: businessIds.length > 0,
+    staleTime: 3 * 60_000,
+    gcTime: 15 * 60_000,
+  });
+}
+
 export function useMyListings(userId: string | null) {
   return useQuery({
     queryKey: ["myListings", userId],

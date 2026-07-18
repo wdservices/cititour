@@ -5,10 +5,11 @@ import { db } from "@/lib/firebase";
 import {
   ArrowLeft, Star, MapPin, Phone, Globe, MessageCircle,
   Heart, Share2, Ticket, Loader2, Info, Layers, Clock, PhoneCall,
-  MessageSquare, FileText, Send,
+  MessageSquare, FileText, Send, ShoppingBag, Home, ChevronRight, Mail, Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import SEO from "@/components/SEO";
 import { AddressPicker } from "@/components/AddressPicker";
@@ -67,6 +68,8 @@ const DetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [childProducts, setChildProducts] = useState<any[]>([]);
+  const [childProperties, setChildProperties] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -117,6 +120,24 @@ const DetailPage = () => {
 
     fetchDetail();
   }, [id, categorySlug]);
+
+  // Fetch child products & properties for this business
+  useEffect(() => {
+    if (!id) return;
+    const fetchChildren = async () => {
+      try {
+        const [prodSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "marketplace"), where("businessId", "==", id))),
+          getDocs(query(collection(db, "house_listings"), where("businessId", "==", id))),
+        ]);
+        setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Error fetching business children:", err);
+      }
+    };
+    fetchChildren();
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -212,9 +233,9 @@ const DetailPage = () => {
   const mainImage = data.images && data.images.length > 0 ? data.images[0] : data.image;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-12">
-      <SEO 
-        title={`${renderValue(data.title)} | TourPH`}
+    <div className="min-h-screen bg-[#F5F5F0] text-foreground pb-0">
+      <SEO
+        title={`${renderValue(data.title)} | CititourNG`}
         description={renderValue(data.description)}
       />
 
@@ -225,275 +246,364 @@ const DetailPage = () => {
         </Button>
       </div>
 
-      <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8">
-        
-        {/* Desktop Back Button */}
-        <div className="hidden lg:block mb-6">
-          <Button variant="ghost" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/explore')} className="gap-2 pl-0 hover:bg-transparent hover:text-primary text-muted-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to listings
-          </Button>
-        </div>
+      {/* ── Hero Section (Full-Width Dark) ── */}
+      <section className="relative h-[50vh] sm:h-[55vh] md:h-[60vh] w-full bg-black">
+        {mainImage ? (
+          <img
+            src={renderValue(mainImage)}
+            alt={renderValue(data.title)}
+            className="w-full h-full object-cover opacity-60"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/40">No image available</div>
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-        {/* Hero Section */}
-        <section className="relative sm:rounded-2xl overflow-hidden mb-8 lg:mb-12 shadow-2xl bg-card border border-border/50 sm:border-border">
-          {/* Image Container */}
-          <div className="relative h-[60vh] sm:h-96 md:h-[450px] w-full bg-muted">
-            {mainImage ? (
-              <img
-                src={renderValue(mainImage)}
-                alt={renderValue(data.title)}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image available</div>
-            )}
-            {/* Flat overlay bar for title readability */}
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-foreground/80"></div>
-          </div>
-
-          {/* Business Info Over Hero */}
-          <div className="absolute bottom-0 left-0 w-full p-5 sm:p-8 md:p-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3 md:space-y-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                {data.isOpen !== undefined && (
-                  <span className={`px-3 sm:px-4 py-1 sm:py-1.5 ${data.isOpen ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'} text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider shadow-sm`}>
-                    {data.isOpen ? "Open Now" : "Closed"}
+        {/* Content over hero */}
+        <div className="absolute bottom-0 left-0 w-full p-6 sm:p-10 md:p-14">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {data.isOpen !== undefined && (
+                    <span className={`px-3 py-1.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${data.isOpen ? 'bg-white text-black' : 'bg-white/20 text-white'}`}>
+                      {data.isOpen ? "Open Now" : "Closed"}
+                    </span>
+                  )}
+                  <span className="px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white text-[10px] font-bold rounded-full border border-white/20 uppercase tracking-wider">
+                    {renderValue(data.category)}
                   </span>
-                )}
-                <span className="px-3 sm:px-4 py-1 sm:py-1.5 bg-card text-foreground text-[10px] sm:text-xs font-bold rounded-full border border-border uppercase tracking-wider">
-                  {renderValue(data.category)}
-                </span>
-              </div>
-              
-              <div>
-                <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-background tracking-tight leading-tight mb-2">
-                  {renderValue(data.title)}
-                </h1>
-                <div className="flex items-center text-background/80 mt-1 sm:mt-2">
-                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary shrink-0" />
-                  <span className="text-sm sm:text-base lg:text-lg line-clamp-1">{renderValue(data.address)}</span>
+                </div>
+                <div>
+                  <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
+                    {renderValue(data.title)}
+                  </h1>
+                  <p className="text-white/70 text-base sm:text-lg mt-3 max-w-2xl leading-relaxed">
+                    {renderValue(data.description).slice(0, 200)}{renderValue(data.description).length > 200 ? '...' : ''}
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex flex-wrap md:flex-nowrap gap-3 w-full md:w-auto mt-4 md:mt-0">
-              <Button 
-                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
-                onClick={() => {
-                  if(data.whatsapp) window.open(`https://wa.me/${renderValue(data.whatsapp).replace(/\D/g, "")}`, '_blank');
-                  else if(data.phone) window.open(`tel:${renderValue(data.phone)}`, '_self');
-                }}
-              >
-                <MessageSquare className="w-5 h-5" />
-                Message Business
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 md:flex-none h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-full gap-2 bg-card border-border text-foreground hover:bg-muted"
-              >
-                <FileText className="w-5 h-5" />
-                Request Quote
-              </Button>
+              <div className="flex flex-wrap gap-3 shrink-0">
+                <Button
+                  variant="outline"
+                  className="h-12 px-6 sm:px-8 text-sm font-bold rounded-full gap-2 bg-transparent border-white/30 text-white hover:bg-white/10"
+                >
+                  <FileText className="w-4 h-4" />
+                  Request Quote
+                </Button>
+                <Button
+                  className="h-12 px-6 sm:px-8 text-sm font-bold rounded-full gap-2 bg-white text-black hover:bg-white/90"
+                  onClick={() => {
+                    if (data.whatsapp) window.open(`https://wa.me/${renderValue(data.whatsapp).replace(/\D/g, "")}`, '_blank');
+                    else if (data.phone) window.open(`tel:${renderValue(data.phone)}`, '_self');
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Message Business
+                </Button>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Profile Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 px-4 sm:px-0">
-          
-          {/* Left Column: Details */}
-          <div className="lg:col-span-2 space-y-6">
-            
+      {/* ── Main Content ── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+
+          {/* ── Left Column (2/3) ── */}
+          <div className="lg:col-span-2 space-y-8">
+
             {/* About Section */}
-            <div className="bg-card/40 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
-                <Info className="h-5 w-5 text-primary" />
-                About
-              </h2>
-              <p className="text-muted-foreground leading-relaxed text-base sm:text-lg whitespace-pre-wrap">
-                {renderValue(data.description)}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-black/5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">
+                About {renderValue(data.title)}
               </p>
+              <div className="text-muted-foreground leading-relaxed text-sm sm:text-base whitespace-pre-wrap">
+                {renderValue(data.description).split('\n').map((paragraph, i) => (
+                  <p key={i} className={i > 0 ? 'mt-4' : ''}>{paragraph}</p>
+                ))}
+              </div>
             </div>
 
-            {/* Location Map */}
-            {data.lat && data.lon && (
-              <div className="bg-card/40 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm backdrop-blur-sm">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Location
-                </h2>
-                <AddressPicker readOnly initialLat={data.lat} initialLon={data.lon} initialAddress={data.address} />
-                {data.address && (
-                  <p className="text-sm text-muted-foreground mt-3">{data.address}</p>
-                )}
+            {/* Our Products */}
+            {childProducts.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Our Products</p>
+                  <button className="text-xs font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    View All <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {childProducts.map((product: any) => (
+                    <button
+                      key={product.id}
+                      onClick={() => navigate(`/marketplace/${product.id}`)}
+                      className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
+                    >
+                      <div className="aspect-[4/3] overflow-hidden bg-muted">
+                        {product.image ? (
+                          <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-10 h-10 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{product.category || 'Product'}</p>
+                        <p className="font-bold text-sm text-foreground truncate">{product.title}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Features Section */}
-            <div className="bg-card/40 border border-border/50 rounded-2xl p-6 sm:p-8 shadow-sm backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-foreground">
-                <Layers className="h-5 w-5 text-primary" />
-                Features & Tags
-              </h2>
-              <div className="flex flex-wrap gap-2.5 sm:gap-3">
-                {data.features && data.features.length > 0 ? (
-                  data.features.map((feature, index) => (
-                    <span 
-                      key={index} 
-                      className={`px-4 py-2 rounded-xl font-medium text-xs sm:text-sm transition-colors cursor-default ${
-                        index === 0 
-                          ? 'bg-primary/10 text-primary border border-primary/20' 
-                          : 'bg-card/80 text-muted-foreground border border-border/50 hover:border-border'
-                      }`}
+            {/* Available Rooms */}
+            {childProperties.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Available Rooms</p>
+                  <button className="text-xs font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    View All <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {childProperties.map((prop: any) => (
+                    <button
+                      key={prop.id}
+                      onClick={() => navigate(`/property/${prop.id}`)}
+                      className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
                     >
+                      <div className="aspect-[4/3] overflow-hidden bg-muted">
+                        {prop.image ? (
+                          <img src={prop.image} alt={prop.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Home className="w-10 h-10 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{prop.type || prop.propertyType || 'Room'}</p>
+                        <p className="font-bold text-sm text-foreground truncate">{prop.title}</p>
+                        {prop.price != null && (
+                          <p className="text-xs font-bold text-primary mt-1">₦{Number(prop.price || 0).toLocaleString()}/night</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features & Tags */}
+            {data.features && data.features.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-black/5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">Features & Tags</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.features.map((feature, index) => (
+                    <span key={index} className="px-3 py-1.5 rounded-full font-medium text-xs bg-black/5 text-foreground">
                       {renderValue(feature)}
                     </span>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground italic">No features listed.</span>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Column: Sidebar */}
-          <div className="space-y-6">
-            
-            {/* Operating Hours */}
-            <div className="bg-card/40 border border-border/50 rounded-2xl p-6 shadow-sm backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-5 flex items-center gap-2 text-foreground">
-                <Clock className="h-5 w-5 text-primary" />
-                Hours
-              </h2>
-              
-              <div className="space-y-0 text-sm sm:text-base">
-                <div className="flex justify-between items-center py-3 border-b border-border/50">
-                  <span className="text-muted-foreground">Mon - Fri</span>
-                  <span className="text-foreground font-medium">{renderValue(data.hours)}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-border/50">
-                  <span className="text-muted-foreground">Saturday</span>
-                  <span className="text-muted-foreground italic">Closed</span>
-                </div>
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-muted-foreground">Sunday</span>
-                  <span className="text-muted-foreground italic">Closed</span>
+                  ))}
                 </div>
               </div>
-            </div>
-
-            {/* Contact Information */}
-            <div className="bg-card/40 border border-border/50 rounded-2xl p-6 shadow-sm backdrop-blur-sm">
-              <h2 className="text-xl font-bold mb-5 flex items-center gap-2 text-foreground">
-                <PhoneCall className="h-5 w-5 text-primary" />
-                Contact Information
-              </h2>
-              
-              {data.phone ? (
-                <a 
-                  href={`tel:${renderValue(data.phone)}`} 
-                  className="flex items-center p-4 bg-card/80 rounded-xl border border-border/50 hover:bg-card hover:border-primary/30 transition-all group shadow-sm"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:bg-primary/20 transition-colors shrink-0">
-                    <Phone className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Phone</p>
-                    <p className="text-foreground font-bold text-lg">{renderValue(data.phone)}</p>
-                  </div>
-                </a>
-              ) : (
-                 <p className="text-muted-foreground italic">Phone number not available.</p>
-              )}
-
-              {/* Added Website if available to match the aesthetic pattern */}
-              {data.website && (
-                 <a 
-                  href={renderValue(data.website)} 
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center p-4 bg-card/80 rounded-xl border border-border/50 hover:bg-card hover:border-primary/30 transition-all group shadow-sm mt-3"
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 group-hover:bg-primary/20 transition-colors shrink-0">
-                    <Globe className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Website</p>
-                    <p className="text-foreground font-bold text-base truncate">{renderValue(data.website)}</p>
-                  </div>
-                </a>
-              )}
-            </div>
-
-          </div>
-        </div>
-
-        {/* ── Reviews Section ── */}
-        <section className="mt-12 pt-10 border-t border-border px-4 sm:px-0">
-          <h2 className="font-display text-2xl font-extrabold mb-6">
-            Reviews ({reviews.length})
-            {avgRating && (
-              <span className="ml-3 text-lg text-muted-foreground font-normal">
-                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400 inline -mt-0.5 mr-1" />
-                {avgRating}
-              </span>
             )}
-          </h2>
 
-          {user && (
-            <div className="bg-card/60 border border-border/50 rounded-2xl p-5 mb-8">
-              <h3 className="font-bold text-sm mb-3">Write a Review</h3>
-              <div className="flex items-center gap-1 mb-3">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button key={s} onClick={() => setReviewRating(s)}>
-                    <Star className={`w-6 h-6 transition-colors ${s <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"}`} />
-                  </button>
-                ))}
-                <span className="ml-2 text-sm font-bold text-muted-foreground">{reviewRating}/5</span>
-              </div>
-              <Textarea
-                placeholder="Share your experience with this business..."
-                rows={3}
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-                className="mb-3"
-              />
-              <Button onClick={handleSubmitReview} disabled={submittingReview} className="rounded-xl font-bold">
-                {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                Submit Review
-              </Button>
-            </div>
-          )}
-
-          {reviews.length === 0 ? (
-            <div className="text-center py-12 bg-card/30 rounded-2xl border border-dashed border-border">
-              <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((rev) => (
-                <div key={rev.id} className="bg-card/60 border border-border/50 rounded-xl p-5">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                      {(rev.userName || "A").charAt(0).toUpperCase()}
+            {/* ── Reviews Section ── */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-black/5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left: Rating Summary */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">Reviews</p>
+                  {avgRating ? (
+                    <div className="mb-4">
+                      <div className="flex items-baseline gap-3 mb-1">
+                        <span className="text-5xl font-extrabold text-foreground">{avgRating}</span>
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={`w-4 h-4 ${s <= Math.round(Number(avgRating)) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Based on {reviews.length} verified review{reviews.length !== 1 ? 's' : ''}</p>
                     </div>
-                    <div>
-                      <p className="font-bold text-sm text-foreground">{rev.userName}</p>
-                      <div className="flex items-center gap-1">
+                  ) : (
+                    <div className="mb-4">
+                      <span className="text-5xl font-extrabold text-muted-foreground/30">—</span>
+                      <p className="text-sm text-muted-foreground mt-2">No reviews yet</p>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {renderValue(data.title)} consistently delivers top-tier service to the community.
+                  </p>
+                </div>
+
+                {/* Right: Write a Review */}
+                <div>
+                  <p className="font-bold text-base mb-4">Write a Review</p>
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Your Name"
+                      value={user?.name || user?.email || ""}
+                      readOnly
+                      className="bg-muted/50"
+                    />
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">Rating:</span>
+                      <div className="flex items-center gap-0.5">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className={`w-3 h-3 ${s <= (rev.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`} />
+                          <button key={s} onClick={() => setReviewRating(s)}>
+                            <Star className={`w-5 h-5 transition-colors ${s <= reviewRating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground hover:text-yellow-300"}`} />
+                          </button>
                         ))}
                       </div>
                     </div>
+                    <Textarea
+                      placeholder="Share your experience with our services..."
+                      rows={4}
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSubmitReview}
+                        disabled={submittingReview || !reviewComment.trim()}
+                        className="px-8 font-bold rounded-full bg-foreground text-background hover:bg-foreground/90"
+                      >
+                        {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Post Review
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{rev.comment}</p>
                 </div>
-              ))}
+              </div>
+
+              {/* Existing Reviews */}
+              {reviews.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-border/50 space-y-4">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="flex gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                        {(rev.userName || "A").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-sm text-foreground">{rev.userName}</p>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star key={s} className={`w-3 h-3 ${s <= (rev.rating || 0) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{rev.comment}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </section>
+          </div>
+
+          {/* ── Right Column: Sidebar (1/3) ── */}
+          <div className="space-y-6">
+
+            {/* Contact Information (Dark Card) */}
+            <div className="bg-[#1A1A1A] text-white rounded-2xl p-6 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 mb-5">Contact Information</p>
+
+              {/* Location */}
+              <div className="mb-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <MapPin className="w-4 h-4 text-white/60 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-0.5">Location</p>
+                    <p className="text-sm font-semibold">{renderValue(data.address || data.location)}</p>
+                  </div>
+                </div>
+                {data.lat && data.lon && (
+                  <div className="rounded-xl overflow-hidden h-36 bg-white/10">
+                    <AddressPicker readOnly initialLat={data.lat} initialLon={data.lon} initialAddress={data.address} />
+                  </div>
+                )}
+              </div>
+
+              {/* Phone */}
+              {data.phone && (
+                <a href={`tel:${renderValue(data.phone)}`} className="flex items-start gap-3 mb-4 group">
+                  <Phone className="w-4 h-4 text-white/60 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-0.5">Phone Number</p>
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">{renderValue(data.phone)}</p>
+                  </div>
+                </a>
+              )}
+
+              {/* Email */}
+              {data.email && (
+                <a href={`mailto:${renderValue(data.email)}`} className="flex items-start gap-3 mb-5 group">
+                  <Mail className="w-4 h-4 text-white/60 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-0.5">Business Email</p>
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">{renderValue(data.email)}</p>
+                  </div>
+                </a>
+              )}
+
+              {/* Get Directions */}
+              {data.lat && data.lon && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center py-3 rounded-full border border-white/20 text-sm font-bold hover:bg-white/10 transition-colors"
+                >
+                  Get Directions
+                </a>
+              )}
+            </div>
+
+            {/* Business Hours */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-black/5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-5">Business Hours</p>
+              <div className="space-y-0 text-sm">
+                <div className="flex justify-between items-center py-3 border-b border-border/50">
+                  <span className="text-foreground">Monday - Friday</span>
+                  <span className="font-medium text-foreground">{renderValue(data.hours) || '09:00 - 18:00'}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-border/50">
+                  <span className="text-foreground">Saturday</span>
+                  <span className="font-medium text-foreground">10:00 - 16:00</span>
+                </div>
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-foreground">Sunday</span>
+                  <span className="font-medium text-muted-foreground">Closed</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </main>
+
+      {/* ── Footer ── */}
+      <footer className="bg-[#1A1A1A] text-white/50 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-white/80">{renderValue(data.title)}</p>
+            <div className="flex items-center gap-6 text-[11px]">
+              <a href="/privacy" className="hover:text-white transition-colors uppercase tracking-wider font-medium">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white transition-colors uppercase tracking-wider font-medium">Terms of Service</a>
+              <span className="text-white/30">© {new Date().getFullYear()} CititourNG</span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

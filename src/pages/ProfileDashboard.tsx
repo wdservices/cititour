@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { getDoc, doc } from "firebase/firestore";
-import { useMyListings, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
+import { useMyListings, useBusinessChildren, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
 import { AddressPicker } from "@/components/AddressPicker";
 import { CLOUDINARY_FOLDERS, deleteImagesFromCloudinary, collectPublicIdsForListing } from "@/lib/cloudinary";
@@ -48,7 +48,8 @@ const ProfileDashboard = () => {
 
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [listingsTab, setListingsTab] = useState<"businesses" | "products" | "properties">("businesses");
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+  const [selectedBusinessTitle, setSelectedBusinessTitle] = useState<string | null>(null);
 
   // Wizard state
   const [createOpen, setCreateOpen] = useState(searchParams.get("action") === "create");
@@ -139,6 +140,11 @@ const ProfileDashboard = () => {
   const myProperties = (listingsData?.properties || []) as ListingItem[];
   const myEvents = (listingsData?.events || []) as ListingItem[];
 
+  // ── Children of selected business ──
+  const { data: bizChildren, isLoading: loadingBizChildren } = useBusinessChildren(selectedBusinessId);
+  const bizProducts = (bizChildren?.products || []) as ListingItem[];
+  const bizProperties = (bizChildren?.properties || []) as ListingItem[];
+
 
 
   // ── Event analytics (organized events) ──
@@ -219,6 +225,7 @@ const ProfileDashboard = () => {
   const createProperty = useCreateDoc("house_listings");
   const updateListing = useUpdateDoc("businesses");
   const updateProduct = useUpdateDoc("marketplace");
+  const updateProperty = useUpdateDoc("house_listings");
   const updateEvent = useUpdateDoc("events");
   const deleteListing = useDeleteDoc("businesses");
   const deleteProduct = useDeleteDoc("marketplace");
@@ -260,6 +267,8 @@ const ProfileDashboard = () => {
     setEventLocation("");
     setEventCategory("");
     setTicketTypes([{ name: "Regular", price: "0", quantity: "100" }]);
+    setMapLat(undefined);
+    setMapLon(undefined);
   };
 
   const resolveState = (override?: string): string => {
@@ -307,16 +316,19 @@ const ProfileDashboard = () => {
 
   const handleCreateProduct = async () => {
     if (!user?.id) { navigate("/auth"); return; }
-    if (!title) {
-      toast({ title: "Please fill all required fields", variant: "destructive" });
+    if (!title || !listAsBizId || listAsBizId === "individual") {
+      toast({ title: "Please select a parent business", variant: "destructive" });
+      return;
+    }
+    if (!selectedBiz) {
+      toast({ title: "Selected business not found", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const isLinkedToBiz = listAsBizId !== "individual" && selectedBiz;
-      const bizState = isLinkedToBiz ? selectedBiz.location?.split(", ").pop() : "";
-      const state = isLinkedToBiz ? bizState : selectedState;
-      const city = isLinkedToBiz ? selectedBiz.location?.split(", ").shift() : selectedCity;
+      const bizState = selectedBiz.location?.split(", ").pop() || "";
+      const state = bizState;
+      const city = selectedBiz.location?.split(", ").shift() || "";
       const fullLocation = [city, state].filter(Boolean).join(", ");
 
       await createProduct.mutateAsync({
@@ -329,8 +341,8 @@ const ProfileDashboard = () => {
         location: fullLocation,
         state,
         city,
-        businessId: listAsBizId === "individual" ? null : listAsBizId,
-        sellerType: listAsBizId === "individual" ? "individual" : "business",
+        businessId: listAsBizId,
+        sellerType: "business",
         image: uploadedImageUrl || getMockImage(productCategory),
         ownerId: user.id,
         condition: "new",
@@ -348,16 +360,19 @@ const ProfileDashboard = () => {
 
   const handleCreateProperty = async () => {
     if (!user?.id) { navigate("/auth"); return; }
-    if (!title || !propertyType) {
-      toast({ title: "Please fill all required fields", variant: "destructive" });
+    if (!title || !propertyType || !propListAsBizId || propListAsBizId === "individual") {
+      toast({ title: "Please select a parent business", variant: "destructive" });
+      return;
+    }
+    if (!selectedPropBiz) {
+      toast({ title: "Selected business not found", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const isLinkedToBiz = propListAsBizId !== "individual" && selectedPropBiz;
-      const bizState = isLinkedToBiz ? selectedPropBiz.location?.split(", ").pop() : "";
-      const state = isLinkedToBiz ? bizState : selectedState;
-      const city = isLinkedToBiz ? selectedPropBiz.location?.split(", ").shift() : selectedCity;
+      const bizState = selectedPropBiz.location?.split(", ").pop() || "";
+      const state = bizState;
+      const city = selectedPropBiz.location?.split(", ").shift() || "";
       const fullLocation = [city, state].filter(Boolean).join(", ");
 
       await createProperty.mutateAsync({
@@ -369,8 +384,8 @@ const ProfileDashboard = () => {
         location: fullLocation,
         state,
         city,
-        businessId: propListAsBizId === "individual" ? null : propListAsBizId,
-        sellerType: propListAsBizId === "individual" ? "individual" : "business",
+        businessId: propListAsBizId,
+        sellerType: "business",
         image: uploadedImageUrl || getMockImage("Airbnb"),
         ownerId: user.id,
         guests: 1,
@@ -605,6 +620,8 @@ const ProfileDashboard = () => {
           quantity: Number(t.quantity) || 0,
         }));
         await updateEvent.mutateAsync({ id: editTarget.id, data: updateData });
+      } else if (editTarget.type === "property") {
+        await updateProperty.mutateAsync({ id: editTarget.id, data: updateData });
       } else {
         await updateListing.mutateAsync({ id: editTarget.id, data: updateData });
       }
@@ -691,172 +708,146 @@ const ProfileDashboard = () => {
 
   const renderProductForm = () => (
     <div className="space-y-4 py-2">
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">List as *</Label>
-        <Select value={listAsBizId} onValueChange={setListAsBizId}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business or list individually" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="individual">Individual Seller</SelectItem>
-            {myBusinesses.map((b) => (
-              <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {listAsBizId !== "individual" && inheritState && (
-        <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
-          Location inherited from {selectedBiz?.title}: {selectedBiz?.location}
+      {myBusinesses.length === 0 ? (
+        <div className="text-center py-10 bg-muted/30 rounded-xl border border-dashed border-border">
+          <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+          <p className="text-sm font-semibold text-foreground mb-1">No business registered</p>
+          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before posting products.</p>
+          <Button size="sm" variant="outline" onClick={() => { setWizardStep(1); setListingType("business"); }}>
+            <Plus className="w-4 h-4 mr-1" /> Register Business First
+          </Button>
         </div>
-      )}
-
-      {listAsBizId === "individual" && (
+      ) : (
         <>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
-            <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
+            <Select value={listAsBizId} onValueChange={setListAsBizId}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business" /></SelectTrigger>
               <SelectContent>
-                {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {myBusinesses.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {selectedState && (
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select area" /></SelectTrigger>
-                <SelectContent>
-                  {(STATE_CITIES[selectedState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+          {listAsBizId && inheritState && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
+              Location inherited from {selectedBiz?.title}: {selectedBiz?.location}
             </div>
           )}
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product / Service Title *</Label>
+            <Input className="mt-1.5" placeholder="e.g. Brand New iPhone 15 Pro" value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
+            <Select value={productCategory} onValueChange={setProductCategory}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+              <SelectContent>
+                {["Electronics", "Fashion", "Home", "Vehicles", "Property", "Beauty", "Sports", "Other"].map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Regular Price (₦) *</Label>
+              <Input className="mt-1.5" placeholder="e.g. 150000" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo Price (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
+              <Input className="mt-1.5" placeholder="e.g. 120000" value={promoPrice} onChange={(e) => setPromoPrice(e.target.value)} />
+            </div>
+          </div>
+          {promoPrice && productPrice && (
+            <p className="text-xs text-muted-foreground">
+              UI will show: <span className="line-through text-destructive">₦{productPrice}</span> <span className="font-bold text-primary">₦{promoPrice}</span>
+            </p>
+          )}
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
+            <Textarea className="mt-1.5" placeholder="Describe your product..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
+            <ImageUpload
+              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+              folder={CLOUDINARY_FOLDERS.MARKETPLACE}
+              currentImage={uploadedImageUrl}
+              buttonText="Upload Image"
+            />
+          </div>
         </>
       )}
-
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product / Service Title *</Label>
-        <Input className="mt-1.5" placeholder="e.g. Brand New iPhone 15 Pro" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
-        <Select value={productCategory} onValueChange={setProductCategory}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
-          <SelectContent>
-            {["Electronics", "Fashion", "Home", "Vehicles", "Property", "Beauty", "Sports", "Other"].map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Regular Price (₦) *</Label>
-          <Input className="mt-1.5" placeholder="e.g. 150000" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo Price (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
-          <Input className="mt-1.5" placeholder="e.g. 120000" value={promoPrice} onChange={(e) => setPromoPrice(e.target.value)} />
-        </div>
-      </div>
-      {promoPrice && productPrice && (
-        <p className="text-xs text-muted-foreground">
-          UI will show: <span className="line-through text-destructive">₦{productPrice}</span> <span className="font-bold text-primary">₦{promoPrice}</span>
-        </p>
-      )}
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
-        <Textarea className="mt-1.5" placeholder="Describe your product..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-        <ImageUpload
-          onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-          folder={CLOUDINARY_FOLDERS.MARKETPLACE}
-          currentImage={uploadedImageUrl}
-          buttonText="Upload Image"
-        />
-      </div>
     </div>
   );
 
   const renderPropertyForm = () => (
     <div className="space-y-4 py-2">
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">List as *</Label>
-        <Select value={propListAsBizId} onValueChange={setPropListAsBizId}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business or list individually" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="individual">Individual Seller</SelectItem>
-            {myBusinesses.map((b) => (
-              <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {propListAsBizId !== "individual" && inheritPropState && (
-        <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
-          Location inherited from {selectedPropBiz?.title}: {selectedPropBiz?.location}
+      {myBusinesses.length === 0 ? (
+        <div className="text-center py-10 bg-muted/30 rounded-xl border border-dashed border-border">
+          <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
+          <p className="text-sm font-semibold text-foreground mb-1">No business registered</p>
+          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before adding rooms or properties.</p>
+          <Button size="sm" variant="outline" onClick={() => { setWizardStep(1); setListingType("business"); }}>
+            <Plus className="w-4 h-4 mr-1" /> Register Business First
+          </Button>
         </div>
-      )}
-
-      {propListAsBizId === "individual" && (
+      ) : (
         <>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
-            <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
+            <Select value={propListAsBizId} onValueChange={setPropListAsBizId}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business" /></SelectTrigger>
               <SelectContent>
-                {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {myBusinesses.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {selectedState && (
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select area" /></SelectTrigger>
-                <SelectContent>
-                  {(STATE_CITIES[selectedState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+
+          {propListAsBizId && inheritPropState && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
+              Location inherited from {selectedPropBiz?.title}: {selectedPropBiz?.location}
             </div>
           )}
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Title *</Label>
+            <Input className="mt-1.5" placeholder="e.g. Modern 2-Bedroom in GRA" value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Type *</Label>
+            <Select value={propertyType} onValueChange={setPropertyType}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                {PROPERTY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦) *</Label>
+            <Input className="mt-1.5" placeholder="e.g. 50000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
+            <Textarea className="mt-1.5" placeholder="Describe your property..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
+            <ImageUpload
+              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+              folder={CLOUDINARY_FOLDERS.BUSINESSES}
+              currentImage={uploadedImageUrl}
+              buttonText="Upload Image"
+            />
+          </div>
         </>
       )}
-
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Title *</Label>
-        <Input className="mt-1.5" placeholder="e.g. Modern 2-Bedroom in GRA" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Type *</Label>
-        <Select value={propertyType} onValueChange={setPropertyType}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select type" /></SelectTrigger>
-          <SelectContent>
-            {PROPERTY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦) *</Label>
-        <Input className="mt-1.5" placeholder="e.g. 50000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
-        <Textarea className="mt-1.5" placeholder="Describe your property..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-        <ImageUpload
-          onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-          folder={CLOUDINARY_FOLDERS.BUSINESSES}
-          currentImage={uploadedImageUrl}
-          buttonText="Upload Image"
-        />
-      </div>
     </div>
   );
 
@@ -1138,12 +1129,7 @@ const ProfileDashboard = () => {
               <CardContent className="p-5">
                 <h3 className="font-bold mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { icon: Building2, label: "Register Business", type: "business" },
-                    { icon: ShoppingBag, label: "Post Product", type: "product" },
-                    { icon: Home, label: "List Property", type: "property" },
-                    { icon: Calendar, label: "Create Event", type: "event" },
-                  ].map((action) => (
+                  {[{ icon: Building2, label: "Register Business", type: "business" }, { icon: ShoppingBag, label: "Post Product", type: "product" }, { icon: Home, label: "List Property", type: "property" }, { icon: Calendar, label: "Create Event", type: "event" }].map((action) => (
                     <button
                       key={action.type}
                       onClick={() => { setListingType(action.type as any); setWizardStep(2); setCreateOpen(true); }}
@@ -1160,46 +1146,197 @@ const ProfileDashboard = () => {
 
           {/* My Listings */}
           <TabsContent value="listings" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Tabs value={listingsTab} onValueChange={(v) => setListingsTab(v as any)} className="w-fit">
-                <TabsList className="bg-muted/50 p-1 rounded-lg">
-                  <TabsTrigger value="businesses" className="rounded-md text-xs font-semibold px-3">Businesses ({myBusinesses.length})</TabsTrigger>
-                  <TabsTrigger value="products" className="rounded-md text-xs font-semibold px-3">Products ({myProducts.length})</TabsTrigger>
-                  <TabsTrigger value="properties" className="rounded-md text-xs font-semibold px-3">Properties ({myProperties.length})</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button size="sm" className="rounded-xl font-bold" onClick={() => setCreateOpen(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Create New
-              </Button>
-            </div>
-            {loadingListings ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-card rounded-2xl border border-border/50 overflow-hidden animate-pulse">
-                    <div className="aspect-[4/3] bg-muted/60" />
-                    <div className="p-4 space-y-2">
-                      <div className="h-4 bg-muted/60 rounded w-3/4" />
-                      <div className="h-3 bg-muted/40 rounded w-1/2" />
-                    </div>
+            {!selectedBusinessId ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold">My Businesses ({myBusinesses.length})</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">Click a business to manage its products & rooms</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {listingsTab === "businesses" && myBusinesses.map(item => <ListingCard key={item.id} item={item} type="business" />)}
-                {listingsTab === "products" && myProducts.map(item => <ListingCard key={item.id} item={item} type="product" />)}
-                {listingsTab === "properties" && myProperties.map(item => <ListingCard key={item.id} item={item} type="property" />)}
-                {((listingsTab === "businesses" && myBusinesses.length === 0) ||
-                  (listingsTab === "products" && myProducts.length === 0) ||
-                  (listingsTab === "properties" && myProperties.length === 0)) && (
-                  <div className="col-span-full text-center py-16 bg-card/30 rounded-2xl border border-dashed border-border">
-                    <p className="text-muted-foreground mb-3">No {listingsTab} yet</p>
+                  <Button size="sm" className="rounded-xl font-bold" onClick={() => setCreateOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> Register Business
+                  </Button>
+                </div>
+                {loadingListings ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="bg-card rounded-2xl border border-border/50 overflow-hidden animate-pulse">
+                        <div className="aspect-[4/3] bg-muted/60" />
+                        <div className="p-4 space-y-2">
+                          <div className="h-4 bg-muted/60 rounded w-3/4" />
+                          <div className="h-3 bg-muted/40 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : myBusinesses.length === 0 ? (
+                  <div className="text-center py-16 bg-card/30 rounded-2xl border border-dashed border-border">
+                    <Building2 className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+                    <p className="text-muted-foreground mb-3">No businesses yet</p>
                     <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
-                      <Plus className="w-4 h-4 mr-1" /> Create Your First
+                      <Plus className="w-4 h-4 mr-1" /> Register Your First Business
                     </Button>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {myBusinesses.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => { setSelectedBusinessId(item.id); setSelectedBusinessTitle(item.title); }}
+                        className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md group text-left"
+                      >
+                        <div className="relative aspect-[3/2] overflow-hidden">
+                          <img
+                            src={item.image || getMockImage(item.category)}
+                            alt={item.title}
+                            className="w-full h-full object-contain bg-muted transition-transform duration-500 group-hover:scale-100"
+                          />
+                          {item.category && (
+                            <Badge className="absolute top-3 left-3 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">
+                              {item.category}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-bold text-sm text-foreground truncate mb-1">{item.title}</h3>
+                          {item.location && (
+                            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-2">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{item.location}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-xs text-primary font-semibold">
+                            <span>Manage workspace</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </div>
+              </>
+            ) : (
+              <>
+                {/* Business Workspace */}
+                <div className="flex items-center gap-3 mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() => { setSelectedBusinessId(null); setSelectedBusinessTitle(null); }}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-1" /> Back to Businesses
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold">{selectedBusinessTitle}</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">Products & rooms in this business</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl font-bold"
+                      onClick={() => {
+                        setListingType("product");
+                        setListAsBizId(selectedBusinessId!);
+                        setWizardStep(2);
+                        setCreateOpen(true);
+                      }}
+                    >
+                      <ShoppingBag className="w-4 h-4 mr-1" /> Add Product
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl font-bold"
+                      onClick={() => {
+                        setListingType("property");
+                        setPropListAsBizId(selectedBusinessId!);
+                        setWizardStep(2);
+                        setCreateOpen(true);
+                      }}
+                    >
+                      <Home className="w-4 h-4 mr-1" /> Add Room
+                    </Button>
+                  </div>
+                </div>
+
+                {loadingBizChildren ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="bg-card rounded-2xl border border-border/50 overflow-hidden animate-pulse">
+                        <div className="aspect-[4/3] bg-muted/60" />
+                        <div className="p-4 space-y-2">
+                          <div className="h-4 bg-muted/60 rounded w-3/4" />
+                          <div className="h-3 bg-muted/40 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {/* Products Section */}
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground mb-3">Products ({bizProducts.length})</h4>
+                      {bizProducts.length === 0 ? (
+                        <div className="text-center py-10 bg-card/30 rounded-2xl border border-dashed border-border">
+                          <ShoppingBag className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                          <p className="text-sm text-muted-foreground mb-2">No products yet</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setListingType("product");
+                              setListAsBizId(selectedBusinessId!);
+                              setWizardStep(2);
+                              setCreateOpen(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-1" /> Add First Product
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {bizProducts.map((item) => (
+                            <ListingCard key={item.id} item={item} type="product" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Properties/Rooms Section */}
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground mb-3">Rooms / Properties ({bizProperties.length})</h4>
+                      {bizProperties.length === 0 ? (
+                        <div className="text-center py-10 bg-card/30 rounded-2xl border border-dashed border-border">
+                          <Home className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                          <p className="text-sm text-muted-foreground mb-2">No rooms listed yet</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setListingType("property");
+                              setPropListAsBizId(selectedBusinessId!);
+                              setWizardStep(2);
+                              setCreateOpen(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-1" /> Add First Room
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {bizProperties.map((item) => (
+                            <ListingCard key={item.id} item={item} type="property" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </TabsContent>
 
