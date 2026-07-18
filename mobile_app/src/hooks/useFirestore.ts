@@ -8,6 +8,7 @@ import {
   fetchMyEventOrders,
   fetchMyTicketOrders,
   fetchAttendedEvents,
+  fetchReviews,
   createDoc,
   updateDocById,
   deleteDocById,

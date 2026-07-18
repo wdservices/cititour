@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RegionCode = 'LAG' | 'RIV' | 'ABJ' | 'KAN' | 'OWR' | 'KAD';
 
@@ -84,20 +85,27 @@ export function RegionProvider({ children }: RegionProviderProps) {
 
   const setRegion = (code: RegionCode) => {
     setRegionState(code);
-    localStorage.setItem('app_region', code);
+    AsyncStorage.setItem('app_region', code);
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem('app_region') as RegionCode | null;
-    if (stored) {
-      setRegionState(stored);
-    } else {
-      detectRegion();
-    }
+    const loadRegion = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('app_region') as RegionCode | null;
+        if (stored) {
+          setRegionState(stored);
+        } else {
+          detectRegion();
+        }
+      } catch {
+        detectRegion();
+      }
+    };
+    loadRegion();
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('app_region', region);
+    AsyncStorage.setItem('app_region', region);
   }, [region]);
 
   return (

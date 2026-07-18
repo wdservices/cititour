@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import SEO from "@/components/SEO";
-import { postBySlug } from "@/content/blog";
+import { getPostBySlug, getRelatedPosts, getRecentPosts } from "@/content/blogPosts";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
-// Ultra-light markdown renderer: supports ## headings, - lists, [text](url) links, **bold**, paragraphs.
 function renderMarkdown(md: string) {
   const blocks = md.trim().split(/\n\n+/);
   return blocks.map((block, i) => {
@@ -25,7 +24,6 @@ function renderMarkdown(md: string) {
 }
 
 function inline(text: string): ReactNode {
-  // links
   const parts: ReactNode[] = [];
   const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
   let last = 0;
@@ -49,27 +47,44 @@ function inline(text: string): ReactNode {
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
-  const post = slug ? postBySlug(slug) : null;
+  const post = slug ? getPostBySlug(slug) : undefined;
+
   if (!post) return <Navigate to="/blog" replace />;
 
-  const jsonLd = {
+  const related = getRelatedPosts(post);
+  const recent = getRecentPosts(post.slug);
+
+  const faqSchema = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    "@type": "FAQPage",
+    mainEntity: post.faq.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
     headline: post.title,
-    datePublished: post.date,
-    author: { "@type": "Organization", name: post.author },
-    keywords: post.tags.join(", "),
+    datePublished: post.publishedDate,
+    dateModified: post.updatedDate || post.publishedDate,
+    image: post.coverImage,
+    description: post.metaDescription,
+    author: { "@type": "Organization", name: "CitiTour" },
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title={`${post.title} — CitiTour`}
-        description={post.excerpt}
+        title={`${post.title} | CitiTour`}
+        description={post.metaDescription}
         canonicalUrl={`/blog/${post.slug}`}
         ogType="article"
-        keywords={post.tags}
-        structuredData={jsonLd}
+        ogImage={post.coverImage}
+        keywords={[post.category, post.city].filter(Boolean) as string[]}
+        structuredData={[faqSchema, articleSchema]}
       />
 
       <header className="border-b border-border">
@@ -79,21 +94,107 @@ export default function BlogPostPage() {
         </div>
       </header>
 
-      <article className="container mx-auto px-4 max-w-2xl py-16 md:py-24">
-        <div className="text-xs font-bold uppercase tracking-widest text-primary mb-3">{post.tags[0]}</div>
-        <h1 className="font-display text-4xl md:text-5xl font-extrabold leading-tight mb-4">{post.title}</h1>
-        <p className="text-muted-foreground text-lg mb-6">{post.excerpt}</p>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-10 pb-8 border-b border-border">
-          <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {new Date(post.date).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}</span>
-          <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {post.readMinutes} min read</span>
-          <span>• {post.author}</span>
-        </div>
-        <div className="prose prose-lg">{renderMarkdown(post.body)}</div>
-      </article>
+      <div className="container mx-auto px-4 py-12 grid lg:grid-cols-[1fr_320px] gap-12 max-w-7xl">
+        {/* Main content */}
+        <article>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-8">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {new Date(post.publishedDate).toLocaleDateString("en-NG", { year: "numeric", month: "long", day: "numeric" })}
+            </span>
+            <span>·</span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {post.readingMinutes} min read
+            </span>
+            {post.updatedDate && (
+              <>
+                <span>·</span>
+                <span>Updated {new Date(post.updatedDate).toLocaleDateString("en-NG", { year: "numeric", month: "long", day: "numeric" })}</span>
+              </>
+            )}
+          </div>
+
+          {post.coverImage && (
+            <div className="relative w-full rounded-2xl mb-8 overflow-hidden max-h-[500px]">
+              <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <span className="text-xs font-bold uppercase tracking-wide text-white/80">{post.category}</span>
+                <h1 className="font-display text-2xl md:text-4xl font-extrabold mt-1 text-white leading-tight">
+                  {post.title}
+                </h1>
+              </div>
+            </div>
+          )}
+
+          <div className="prose prose-lg max-w-none text-foreground">
+            {renderMarkdown(post.body)}
+          </div>
+
+          {/* FAQ section */}
+          {post.faq.length > 0 && (
+            <section className="mt-16 border-t border-border pt-10">
+              <h2 className="font-display text-2xl font-bold mb-6 text-foreground">Frequently Asked Questions</h2>
+              <div className="space-y-4">
+                {post.faq.map((item, i) => (
+                  <details key={i} className="group rounded-xl border border-border bg-card p-4">
+                    <summary className="cursor-pointer font-semibold text-foreground list-none flex justify-between items-center">
+                      {item.q}
+                      <span className="text-primary group-open:rotate-45 transition-transform text-xl">+</span>
+                    </summary>
+                    <p className="mt-3 text-muted-foreground leading-relaxed">{item.a}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
+        </article>
+
+        {/* Sidebar */}
+        <aside className="space-y-8">
+          {related.length > 0 && (
+            <div>
+              <h3 className="font-display text-lg font-bold mb-4 text-foreground">Related Reads</h3>
+              <div className="space-y-4">
+                {related.map((p) => (
+                  <Link key={p.slug} to={`/blog/${p.slug}`} className="flex gap-3 group">
+                    {p.coverImage && (
+                      <img src={p.coverImage} alt={p.title} className="w-20 h-20 object-cover rounded-lg shrink-0" />
+                    )}
+                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {p.title}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <h3 className="font-display text-lg font-bold mb-4 text-foreground">Recent Posts</h3>
+            <div className="space-y-3">
+              {recent.map((p) => (
+                <Link key={p.slug} to={`/blog/${p.slug}`} className="block text-sm text-muted-foreground hover:text-primary transition-colors">
+                  {p.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
+            <p className="font-display font-bold text-foreground mb-2">Ready to book?</p>
+            <p className="text-sm text-muted-foreground mb-4">Find and book verified venues, hotels and restaurants on CitiTour.</p>
+            <Link to="/explore" className="inline-block rounded-full bg-primary text-primary-foreground px-5 py-2 text-sm font-semibold hover:opacity-90">
+              Explore CitiTour
+            </Link>
+          </div>
+        </aside>
+      </div>
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} CitiTour</p>
+          <p>&copy; {new Date().getFullYear()} CitiTour</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

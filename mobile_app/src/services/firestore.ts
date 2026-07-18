@@ -13,6 +13,7 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  documentId,
 } from 'firebase/firestore';
 
 // Types
@@ -160,7 +161,7 @@ export async function fetchBusinesses(state?: string) {
 }
 
 export async function fetchEvents() {
-  return fetchCollection('events', [{ field: 'category', operator: '==', value: 'Event' }]);
+  return fetchCollection('events');
 }
 
 export async function fetchMarketplaceItems() {
@@ -205,7 +206,7 @@ export async function fetchMyTicketOrders(userId: string) {
 
 export async function fetchAttendedEvents(userId: string, eventIds: string[]) {
   if (!userId || eventIds.length === 0) return [];
-  const snap = await getDocs(query(collection(db, 'events'), where('id', 'in', eventIds)));
+  const snap = await getDocs(query(collection(db, 'events'), where(documentId(), 'in', eventIds)));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 

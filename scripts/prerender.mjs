@@ -43,7 +43,25 @@ const STATIC_ROUTES = [
   '/privacy',
   '/terms',
   '/auth',
+  '/blog',
 ];
+
+// Dynamically extract blog post slugs from blogPosts.ts
+function getBlogRoutes() {
+  const blogPostsPath = path.join(__dirname, '..', 'src', 'content', 'blogPosts.ts');
+  if (!fs.existsSync(blogPostsPath)) {
+    console.warn('blogPosts.ts not found — skipping blog routes');
+    return [];
+  }
+  const content = fs.readFileSync(blogPostsPath, 'utf-8');
+  const slugRegex = /slug:\s*['"]([^'"]+)['"]/g;
+  const slugs = [];
+  let match;
+  while ((match = slugRegex.exec(content)) !== null) {
+    slugs.push(match[1]);
+  }
+  return slugs.map((slug) => `/blog/${slug}`);
+}
 
 // Optional — pull dynamic routes from Firestore at build time.
 // Requires firebase-admin and a FIREBASE_SERVICE_ACCOUNT env var.
@@ -82,8 +100,8 @@ async function main() {
   await new Promise((resolve) => server.listen(PORT, resolve));
   console.log(`Local server running at http://localhost:${PORT}`);
 
-  // 2. Combine static + (optional) dynamic routes.
-  let routes = [...STATIC_ROUTES];
+  // 2. Combine static + blog + (optional) dynamic routes.
+  let routes = [...STATIC_ROUTES, ...getBlogRoutes()];
   // const dynamicRoutes = await getDynamicRoutes();
   // routes = [...routes, ...dynamicRoutes];
 

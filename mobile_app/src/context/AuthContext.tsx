@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import {
@@ -7,6 +7,7 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  updateProfile,
   User,
 } from 'firebase/auth';
 
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerWithEmail = async (email: string, password: string, displayName: string) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    await result.user.updateProfile({ displayName });
+    await updateProfile(result.user, { displayName });
     setUser({
       uid: result.user.uid,
       email: result.user.email || '',

@@ -159,12 +159,12 @@ export interface UserProfile {
   createdAt?: any;
 }
 
-export interface NigerianState {
+export interface NigerianStateItem {
   name: string;
   cities: string[];
 }
 
-export const NIGERIAN_STATES: NigerianState[] = [
+export const NIGERIAN_STATES: NigerianStateItem[] = [
   { name: 'Abia', cities: ['Aba', 'Umuahia', 'Ohafia', 'Arochukwu'] },
   { name: 'Adamawa', cities: ['Yola', 'Mubi', 'Jimeta', 'Numan'] },
   { name: 'Akwa Ibom', cities: ['Uyo', 'Eket', 'Ikot Ekpene', 'Abak'] },
