@@ -15,6 +15,7 @@ import SEO from "@/components/SEO";
 import { AddressPicker } from "@/components/AddressPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { ChatWidget } from "@/components/ChatWidget";
 
 type DetailData = {
   title: string;
@@ -70,6 +71,7 @@ const DetailPage = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [childProducts, setChildProducts] = useState<any[]>([]);
   const [childProperties, setChildProperties] = useState<any[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -294,10 +296,7 @@ const DetailPage = () => {
                 </Button>
                 <Button
                   className="h-12 px-6 sm:px-8 text-sm font-bold rounded-full gap-2 bg-white text-black hover:bg-white/90"
-                  onClick={() => {
-                    if (data.whatsapp) window.open(`https://wa.me/${renderValue(data.whatsapp).replace(/\D/g, "")}`, '_blank');
-                    else if (data.phone) window.open(`tel:${renderValue(data.phone)}`, '_self');
-                  }}
+                  onClick={() => setChatOpen(true)}
                 >
                   <MessageSquare className="w-4 h-4" />
                   Message Business
@@ -604,6 +603,15 @@ const DetailPage = () => {
           </div>
         </div>
       </footer>
+
+      {/* ── Chat Widget ── */}
+      <ChatWidget
+        businessId={id || ''}
+        businessName={data.title}
+        businessAvatar={data.image}
+        isOpen={chatOpen}
+        onOpenChange={setChatOpen}
+      />
     </div>
   );
 };
