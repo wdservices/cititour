@@ -16,6 +16,41 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+
+      // ── Business activity log (chat notifications, etc.) ──
+      // Only the business owner can read their own activity feed. Writes
+      // happen via sendMessage() in the app using the owner's/customer's
+      // own auth context, not directly by an arbitrary third party.
+      match /activityLog/{entryId} {
+        allow read: if request.auth != null && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+        allow create: if request.auth != null;
+        allow update, delete: if false;
+      }
+    }
+
+    // ── Chats (business <-> customer messaging) ──
+    // Only the two participants on a thread (business owner via ownerId,
+    // or the customer themself) can read or write to it.
+    match /chats/{chatId} {
+      allow read: if request.auth != null && (
+        resource.data.customerId == request.auth.uid ||
+        get(/databases/$(database)/documents/businesses/$(resource.data.businessId)).data.ownerId == request.auth.uid
+      );
+      allow create: if request.auth != null && request.resource.data.customerId == request.auth.uid;
+      allow update: if request.auth != null && (
+        resource.data.customerId == request.auth.uid ||
+        get(/databases/$(database)/documents/businesses/$(resource.data.businessId)).data.ownerId == request.auth.uid
+      );
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if request.auth != null && (
+          get(/databases/$(database)/documents/chats/$(chatId)).data.customerId == request.auth.uid ||
+          get(/databases/$(database)/documents/businesses/$(get(/databases/$(database)/documents/chats/$(chatId)).data.businessId)).data.ownerId == request.auth.uid
+        );
+        allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     // ── Marketplace Products ──
