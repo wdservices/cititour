@@ -26,6 +26,27 @@ service cloud.firestore {
         allow create: if request.auth != null;
         allow update, delete: if false;
       }
+
+      // ── Event ticket tiers ──
+      // Read must be public (pricing needs to be visible pre-purchase, same
+      // as the parent business doc). Create/update is restricted to the
+      // event's own organizer OR a signed-in user completing a purchase —
+      // this is intentionally broad on update (any authenticated user can
+      // increment `sold`) because the client currently updates `sold` from
+      // the buyer's own session, not a privileged backend. Tighten this to
+      // a Cloud Function-only write once ticket purchases move server-side.
+      match /tickets/{ticketId} {
+        allow read: if true;
+        allow create: if request.auth != null && (
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.organizerId == request.auth.uid ||
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
+        );
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null && (
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.organizerId == request.auth.uid ||
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
+        );
+      }
     }
 
     // ── Chats (business <-> customer messaging) ──
@@ -51,6 +72,22 @@ service cloud.firestore {
         allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid;
         allow update, delete: if false;
       }
+    }
+
+    // ── Purchased ticket records (top-level, separate from the tier
+    // inventory subcollection above) ──
+    // NOTE: no write path to this collection exists anywhere in the client
+    // codebase as of this writing — EventTicketsPage.tsx only ever READS
+    // from it (querying sales counts). This means either ticket purchases
+    // aren't actually being recorded here yet (a real gap to close before
+    // "tickets sold" figures can be trusted), or they're written through a
+    // mechanism not yet found in this codebase. Read is allowed broadly for
+    // now so the existing sales-count queries don't break; revisit the
+    // write rule once the actual purchase-recording flow is confirmed.
+    match /tickets/{ticketRecordId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
     }
 
     // ── Marketplace Products ──

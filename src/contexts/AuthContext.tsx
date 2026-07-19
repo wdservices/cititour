@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { 
   onAuthStateChange, 
   signInWithGoogle, 
@@ -40,6 +42,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mirrors a Firebase Auth session into a `users/{uid}` Firestore document.
+  // Firebase Auth itself cannot be listed/counted by a client-side SDK — the
+  // admin dashboard needs a real Firestore collection to read "Total Users"
+  // and a user list from. This upserts on every sign-in, so it also keeps
+  // `lastSeenAt` fresh without needing a separate heartbeat mechanism.
+  const mirrorUserToFirestore = async (firebaseUser: FirebaseUser) => {
+    try {
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      const existing = await getDoc(userRef);
+
+      await setDoc(
+        userRef,
+        {
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          email: firebaseUser.email || '',
+          photoURL: firebaseUser.photoURL || null,
+          lastSeenAt: serverTimestamp(),
+          ...(!existing.exists() && { createdAt: serverTimestamp() }),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      // Don't block sign-in if this mirror write fails (e.g. transient
+      // network issue) — the user should still get into the app.
+      console.error('Failed to mirror user to Firestore:', error);
+    }
+  };
+
   // Convert Firebase user to our User interface
   const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
     return {
@@ -57,6 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (result) {
         // User signed in via redirect
         setUser(convertFirebaseUser(result.user));
+        mirrorUserToFirestore(result.user);
         setIsLoading(false);
       }
     }).catch((error) => {
@@ -67,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChange((firebaseUser) => {
       if (firebaseUser) {
         setUser(convertFirebaseUser(firebaseUser));
+        mirrorUserToFirestore(firebaseUser);
       } else {
         setUser(null);
       }
