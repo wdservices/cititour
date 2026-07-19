@@ -7,32 +7,35 @@ around the website. It shares the same Firebase project as the website
 (same Firestore data — businesses, events, chats), but is a completely
 separate, native-rendered codebase living in `mobile-app/`.
 
-## ⚠️ Critical gap: no login/auth screen (per instruction)
+## Auth — now fully wired
 
-This was built with the login/auth screen deliberately excluded. That
-means **several screens will not actually function** until a real
-authentication entry point exists, because they depend on a genuine
-Firebase `user.id`:
+A real login/sign-up screen (`src/screens/LoginScreen.tsx`) and
+`src/contexts/AuthContext.tsx` are in place, using Firebase Auth
+(email/password, with password reset). `RootNavigator` watches
+`isAuthenticated` and automatically renders `LoginScreen` until a real
+session exists, then switches to the main tab navigator — no manual
+"navigate after login" call needed anywhere.
 
-- `WalletScreen` — needs a real user to read/write wallet balance
-- `BusinessDetailScreen`'s chat feature — `ensureChatExists` requires a
-  real `currentUser.id`
-- Any future Profile/Bookings screen
+`BusinessDetailScreen` (chat) and `SettingsScreen` (sign out) now consume
+the real `user` object from `useAuth()` directly, rather than a placeholder
+passed through navigation params. `WalletScreen` still needs its balance
+wired to a live Firestore read (see the `TODO` in that file) — the auth
+session itself is available there via `useAuth()`, just not yet consumed
+for a real balance query.
 
-Right now these screens use a placeholder `currentUser` shape passed via
-navigation params — they are NOT wired to a real signed-in session. Before
-this app is usable end-to-end, you'll need one of:
-1. Add a login screen back in (simplest — mirrors the website's AuthPage)
-2. A silent/anonymous Firebase Auth session (works for browsing, not for
-   wallet/chat since those need a persistent identity across app opens)
-3. A deep-link/token handoff from an existing web session
-
-This isn't a design choice I made lightly — it's a direct consequence of
-your instruction, flagged clearly so it doesn't get discovered later as a
-surprise "why doesn't the wallet work" bug.
+One thing to decide: this uses Firebase's standard email/password auth,
+separate from any session on the website. If you want a user who's signed
+in on web to also be signed in on mobile without re-entering credentials,
+that needs a cross-platform session/token handoff — not implemented here,
+and only worth building once you have a concrete reason users need that
+continuity (many apps don't bother, and just have users sign in separately
+on each platform).
 
 ## Fully built and working
 
+- **Authentication** (`src/screens/LoginScreen.tsx`, `src/contexts/AuthContext.tsx`)
+  — email/password sign in, sign up, forgot password, all wired through
+  Firebase Auth; `RootNavigator` branches automatically on session state
 - Project scaffold: package.json, app.json, navigation, theme
 - **Theme** (src/theme/theme.ts) — colors ported exactly from the live
   website's src/index.css tokens (blue primary, marigold accent, palm

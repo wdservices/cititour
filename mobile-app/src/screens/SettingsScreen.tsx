@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Sun, Moon, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react-native';
+import { Sun, Moon, ChevronRight, Bell, Shield, HelpCircle, LogOut } from 'lucide-react-native';
 import { colors, spacing, radius, typography } from '../theme/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SettingsScreen() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { user, logout } = useAuth();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -49,6 +51,11 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        <TouchableOpacity style={styles.signOutButton} onPress={logout}>
+          <LogOut size={18} color={colors.destructive} />
+          <Text style={styles.signOutText}>Sign Out{user?.email ? ` (${user.email})` : ''}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -71,4 +78,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
   rowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
   rowLabel: { flex: 1, fontSize: typography.sizes.sm, color: colors.foreground },
+  signOutButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.destructive + '40',
+    borderRadius: radius.md, paddingVertical: spacing.md,
+  },
+  signOutText: { color: colors.destructive, fontWeight: '700', fontSize: typography.sizes.sm },
 });

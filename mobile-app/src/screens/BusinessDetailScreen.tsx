@@ -7,17 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, Star, Phone, MessageCircle, Send, ArrowLeft } from 'lucide-react-native';
 import { colors, spacing, radius, typography } from '../theme/theme';
 import { ensureChatExists, sendMessage, listenToMessages, markThreadRead, ChatMessage } from '../lib/chat';
-
-// NOTE: this assumes a real authenticated user (uid/name) is available —
-// wire this to whatever auth context/hook the app ends up using once the
-// sign-in flow is added. Placeholder shape shown here for now.
-interface CurrentUser {
-  id: string;
-  name: string;
-}
+import { useAuth } from '../contexts/AuthContext';
 
 export default function BusinessDetailScreen({ route }: any) {
-  const { businessId, businessName, currentUser }: { businessId: string; businessName: string; currentUser: CurrentUser } = route.params;
+  const { businessId, businessName } = route.params;
+  const { user } = useAuth(); // real, authenticated user — RootNavigator guarantees this screen only renders when signed in
 
   const [showChat, setShowChat] = useState(false);
   const [chatId, setChatId] = useState<string | null>(null);
@@ -26,12 +20,12 @@ export default function BusinessDetailScreen({ route }: any) {
   const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    if (!showChat || chatId || !currentUser) return;
-    ensureChatExists(businessId, currentUser.id, businessName, currentUser.name).then((id) => {
+    if (!showChat || chatId || !user) return;
+    ensureChatExists(businessId, user!.id, businessName, user!.name).then((id) => {
       setChatId(id);
       markThreadRead(id, 'customer');
     });
-  }, [showChat, businessId, businessName, currentUser, chatId]);
+  }, [showChat, businessId, businessName, user, chatId]);
 
   useEffect(() => {
     if (!chatId) return;
@@ -39,10 +33,10 @@ export default function BusinessDetailScreen({ route }: any) {
   }, [chatId]);
 
   const handleSend = async () => {
-    if (!draft.trim() || !chatId || !currentUser) return;
+    if (!draft.trim() || !chatId || !user) return;
     const text = draft.trim();
     setDraft('');
-    await sendMessage(chatId, currentUser.id, 'customer', text);
+    await sendMessage(chatId, user!.id, 'customer', text);
   };
 
   if (showChat) {

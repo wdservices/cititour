@@ -3,11 +3,12 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowDownToLine, ArrowUpFromLine, Plus } from 'lucide-react-native';
 import { colors, spacing, radius, typography } from '../theme/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function WalletScreen() {
-  // NOTE: assumes a real authenticated user + a live wallet balance read
-  // from Firestore (wallets/{userId}) once auth is wired up — placeholder
-  // value shown here for layout purposes only.
+  const { user } = useAuth(); // real, authenticated user — RootNavigator guarantees this screen only renders when signed in
+  // TODO: replace with a live Firestore read, e.g. wallets/{user.id}.balance,
+  // via an onSnapshot listener the same way chat messages are streamed.
   const balance = 45000;
 
   return (
