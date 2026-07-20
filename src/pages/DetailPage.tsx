@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   ArrowLeft, Star, MapPin, Phone, Globe, MessageCircle,
@@ -16,6 +16,7 @@ import { AddressPicker } from "@/components/AddressPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ChatWidget } from "@/components/ChatWidget";
+import { BusinessChatInbox } from "@/components/BusinessChatInbox";
 
 type DetailData = {
   title: string;
@@ -41,6 +42,7 @@ type DetailData = {
   hasTickets?: boolean;
   tags?: string[];
   isOpen?: boolean;
+  ownerId?: string;
 };
 
 type ReviewData = {
@@ -72,6 +74,9 @@ const DetailPage = () => {
   const [childProducts, setChildProducts] = useState<any[]>([]);
   const [childProperties, setChildProperties] = useState<any[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [ownerUid, setOwnerUid] = useState<string | null>(null);
+
+  const isOwner = user && ownerUid === user.id;
 
   useEffect(() => {
     if (!id) return;
@@ -84,6 +89,8 @@ const DetailPage = () => {
 
         if (snap.exists()) {
           const raw = snap.data() as any;
+          const resolvedOwnerId = raw.ownerId || raw.userId || raw.uid || '';
+          setOwnerUid(resolvedOwnerId || null);
           setData({
             title: raw.title || "Untitled",
             description: raw.description || "No description provided.",
@@ -107,7 +114,8 @@ const DetailPage = () => {
             hours: raw.hours || "9:00 AM - 5:00 PM (Mon-Fri)", // default mock hours if none
             hasTickets: raw.hasTickets || false,
             tags: raw.tags,
-            isOpen: raw.isOpen !== undefined ? raw.isOpen : true, // default to open for UI demo
+            isOpen: raw.isOpen !== undefined ? raw.isOpen : true,
+            ownerId: raw.ownerId || raw.userId || raw.uid,
           });
         } else {
           setData(null);
@@ -122,6 +130,29 @@ const DetailPage = () => {
 
     fetchDetail();
   }, [id, categorySlug]);
+
+  // Backfill ownerId if missing (old listings created before chat feature)
+  useEffect(() => {
+    if (!id || !user || ownerUid === user.id) return;
+    const backfill = async () => {
+      try {
+        // Set ownerId on the business doc
+        await updateDoc(doc(db, "businesses", id), { ownerId: user.id });
+        setOwnerUid(user.id);
+        // Backfill participants on existing chats for this business
+        const chatsSnap = await getDocs(
+          query(collection(db, "chats"), where("businessId", "==", id))
+        );
+        for (const chatDoc of chatsSnap.docs) {
+          const chatData = chatDoc.data();
+          if (!chatData.participants?.includes(user.id)) {
+            await updateDoc(chatDoc.ref, { participants: arrayUnion(user.id) });
+          }
+        }
+      } catch { /* ignore */ }
+    };
+    if (!ownerUid) backfill();
+  }, [id, user, ownerUid]);
 
   // Fetch child products & properties for this business
   useEffect(() => {
@@ -604,14 +635,21 @@ const DetailPage = () => {
         </div>
       </footer>
 
-      {/* ── Chat Widget ── */}
-      <ChatWidget
-        businessId={id || ''}
-        businessName={data.title}
-        businessAvatar={data.image}
-        isOpen={chatOpen}
-        onOpenChange={setChatOpen}
-      />
+      {/* ── Chat Widget (customer side) ── */}
+      {user && !isOwner && (
+        <ChatWidget
+          businessId={id || ''}
+          businessName={data.title}
+          businessAvatar={data.image}
+          isOpen={chatOpen}
+          onOpenChange={setChatOpen}
+        />
+      )}
+
+      {/* ── Business Chat Inbox (owner side) ── */}
+      {isOwner && (
+        <BusinessChatInbox businessId={id || ''} />
+      )}
     </div>
   );
 };

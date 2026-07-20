@@ -1,6 +1,6 @@
 import {
   collection, doc, getDocs, addDoc, updateDoc, query, where,
-  onSnapshot, serverTimestamp, increment,
+  onSnapshot, serverTimestamp, increment, getDoc, arrayUnion,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -18,8 +18,10 @@ export interface ChatThread {
   id: string;
   businessId: string;
   customerId: string;
+  businessOwnerId: string;
   businessName: string;
   customerName: string;
+  participants: string[];
   lastMessage: string;
   lastMessageAt: any;
   unreadCustomer: number;
@@ -28,7 +30,8 @@ export interface ChatThread {
 }
 
 /**
- * Finds or creates a chat thread between a customer and a business.
+ * Finds or creates a chat thread between a customer and a business owner.
+ * Uses a `participants` array [customerId, businessOwnerId] for security rules.
  * Returns the chat document ID.
  */
 export async function ensureChatExists(
@@ -42,24 +45,45 @@ export async function ensureChatExists(
   const safeBusinessName = businessName || 'Business';
   const safeCustomerName = customerName || 'Customer';
 
+  // Fetch the business owner's UID from the business document
+  let businessOwnerId = '';
+  try {
+    const bizDoc = await getDoc(doc(db, 'businesses', safeBusinessId));
+    if (bizDoc.exists()) {
+      const bizData = bizDoc.data();
+      businessOwnerId = bizData.ownerId || bizData.userId || bizData.uid || '';
+    }
+  } catch (err) {
+    console.error('Failed to fetch business owner:', err);
+  }
+
+  // Build the participants array — both UIDs for security rule access
+  const participants = [safeCustomerId, businessOwnerId].filter(Boolean);
+
+  // Check if a chat already exists between this customer and this business
   const q = query(
     collection(db, 'chats'),
-    where('businessId', '==', safeBusinessId),
-    where('customerId', '==', safeCustomerId),
+    where('participants', 'array-contains', safeCustomerId),
   );
   const snap = await getDocs(q);
 
-  if (!snap.empty) {
-    return snap.docs[0].id;
+  // Filter client-side for the specific business
+  const existing = snap.docs.find((d) => d.data().businessId === safeBusinessId);
+  if (existing) {
+    return existing.id;
   }
 
+  // Create new chat thread
   const docRef = await addDoc(collection(db, 'chats'), {
     businessId: safeBusinessId,
     customerId: safeCustomerId,
+    businessOwnerId,
     businessName: safeBusinessName,
     customerName: safeCustomerName,
+    participants,
     lastMessage: '',
     lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
     unreadCustomer: 0,
     unreadBusiness: 0,
     createdAt: serverTimestamp(),
@@ -90,7 +114,9 @@ export async function sendMessage(
   const unreadField = senderRole === 'customer' ? 'unreadBusiness' : 'unreadCustomer';
   await updateDoc(chatRef, {
     lastMessage: text,
+    lastSenderId: senderId,
     lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
     [unreadField]: increment(1),
   });
 }
@@ -109,7 +135,7 @@ export async function markMessagesRead(
 }
 
 /**
- * Real-time listener for messages in a chat thread, ordered by creation time.
+ * Real-time listener for messages in a chat thread.
  * Returns the unsubscribe function.
  */
 export function listenToMessages(
@@ -135,25 +161,34 @@ export function listenToMessages(
 }
 
 /**
- * Fetches all chat threads for a given business (for the owner's inbox).
+ * Real-time listener for all chat threads where the given UID is a participant.
+ * Used for both business owner inbox and customer inbox.
+ * Returns the unsubscribe function.
  */
-export async function fetchBusinessChats(businessId: string): Promise<ChatThread[]> {
-  const q = query(
-    collection(db, 'chats'),
-    where('businessId', '==', businessId),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as ChatThread[];
-}
+export function listenToUserChats(
+  userId: string,
+  callback: (threads: ChatThread[]) => void,
+): () => void {
+  if (!userId) {
+    callback([]);
+    return () => {};
+  }
 
-/**
- * Fetches all chat threads for a given customer (their conversations).
- */
-export async function fetchCustomerChats(customerId: string): Promise<ChatThread[]> {
   const q = query(
     collection(db, 'chats'),
-    where('customerId', '==', customerId),
+    where('participants', 'array-contains', userId),
   );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as ChatThread[];
+
+  return onSnapshot(q, (snap) => {
+    const threads = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    })) as ChatThread[];
+    threads.sort((a, b) => {
+      const tA = a.lastMessageAt?.toMillis?.() ?? 0;
+      const tB = b.lastMessageAt?.toMillis?.() ?? 0;
+      return tB - tA;
+    });
+    callback(threads);
+  });
 }

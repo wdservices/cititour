@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, X, Send, Minus } from 'lucide-react';
 import { ensureChatExists, sendMessage, listenToMessages } from '@/lib/chat';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveChat } from '@/contexts/ActiveChatContext';
 
 interface ChatWidgetProps {
   businessId: string;
@@ -17,6 +18,7 @@ type WidgetState = 'closed' | 'open' | 'minimized';
 
 export function ChatWidget({ businessId, businessName, businessAvatar, isOpen, onOpenChange }: ChatWidgetProps) {
   const { user } = useAuth();
+  const { setActiveChatId } = useActiveChat();
   const [internalState, setInternalState] = useState<WidgetState>('closed');
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -35,6 +37,15 @@ export function ChatWidget({ businessId, businessName, businessAvatar, isOpen, o
       setInternalState(s);
     }
   };
+
+  // Sync active chat for notification suppression
+  useEffect(() => {
+    if (widgetState === 'open' && chatId) {
+      setActiveChatId(chatId);
+    } else {
+      setActiveChatId(null);
+    }
+  }, [widgetState, chatId, setActiveChatId]);
 
   useEffect(() => {
     if (widgetState !== 'open' || !user || chatId) return;

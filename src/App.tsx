@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-route
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
 import { RegionProvider } from "./contexts/RegionContext";
+import { ActiveChatProvider } from "./contexts/ActiveChatContext";
 import { useEffect } from "react";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AppShell from "./components/AppShell";
@@ -50,6 +51,7 @@ import StatePage from "./pages/StatePage";
 import BlogIndexPage from "./pages/BlogIndexPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import DocsPage from "./pages/DocsPage";
+import WebNotificationListener from "./components/WebNotificationListener";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +64,11 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/** Mounts the background chat notification listener (web). */
+function ChatNotificationListeners() {
+  return <WebNotificationListener />;
+}
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
@@ -80,6 +87,7 @@ const ProtectedRoutes = () => {
 
   return (
     <AppShell>
+      <ChatNotificationListeners />
       <Routes>
         <Route path="/explore" element={<CategoriesPage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
@@ -129,6 +137,7 @@ const ProtectedRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <ActiveChatProvider>
       <WalletProvider>
         <RegionProvider>
           <ThemeProvider>
@@ -161,6 +170,7 @@ const App = () => (
           </ThemeProvider>
         </RegionProvider>
       </WalletProvider>
+      </ActiveChatProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
