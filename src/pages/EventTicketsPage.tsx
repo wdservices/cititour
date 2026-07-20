@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { db } from "@/lib/firebase";
 import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
+import { NIGERIAN_STATES, NigerianState, STATE_CITIES } from "@/lib/nigerianStates";
 import { addDoc, collection, serverTimestamp, getDocs, updateDoc, doc, query, where, deleteDoc } from "firebase/firestore";
 import QRCode from "react-qr-code";
 import ImageUpload from "@/components/ImageUpload";
@@ -61,6 +62,8 @@ const EventTicketsPage = () => {
   const [venue, setVenue] = useState("");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
+  const [selectedState, setSelectedState] = useState<NigerianState | "">("");
+  const [selectedCity, setSelectedCity] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   
@@ -291,6 +294,8 @@ const EventTicketsPage = () => {
         venue,
         address,
         location,
+        state: selectedState,
+        city: selectedCity,
         startDate: new Date(date).toISOString(),
         endDate: endDate ? new Date(endDate).toISOString() : new Date(date).toISOString(),
         imageUrl: uploadedImageUrl,
@@ -896,6 +901,35 @@ const EventTicketsPage = () => {
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</Label>
                   <Input className="bg-background border-border text-foreground focus-visible:ring-primary/30 rounded-xl" value={location} onChange={(e) => setLocation(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State</Label>
+                  <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
+                    <SelectTrigger className="bg-background border-border text-foreground rounded-xl">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NIGERIAN_STATES.map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City</Label>
+                  <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+                    <SelectTrigger className="bg-background border-border text-foreground rounded-xl">
+                      <SelectValue placeholder={selectedState ? "Select city" : "Select a state first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(selectedState ? STATE_CITIES[selectedState] : []).map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

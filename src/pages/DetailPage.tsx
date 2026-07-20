@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import SEO from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { ChatWidget } from "@/components/ChatWidget";
 
 type DetailData = {
   title: string;
@@ -475,6 +476,16 @@ const DetailPage = () => {
           )}
         </section>
       </main>
+
+      {/* Chat with the business owner — floating widget, only rendered
+          once we actually have the business's real id and name loaded. */}
+      {id && data?.title && (
+        <ChatWidget
+          businessId={id}
+          businessName={data.title}
+          businessAvatar={data.image}
+        />
+      )}
     </div>
   );
 };
