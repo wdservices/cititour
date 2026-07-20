@@ -182,3 +182,42 @@ export function computeTicketRevenue(tickets: TicketRecord[]) {
 // flow yet). Revenue shown in the admin dashboard is ticket-commission-only
 // until that's built. Don't let "Total Revenue" be read as complete platform
 // revenue — it's currently a partial, honest figure, not a full one.
+
+// ── Wallet activity — every funding, spend, and withdrawal across every
+// user, via a collectionGroup query on wallets/{userId}/transactions.
+// This is the real, live schema the client writes to (contexts/
+// WalletContext.tsx) — confirmed against actual local testing, not assumed.
+
+export interface WalletTransaction {
+  id: string;
+  userId: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  description: string;
+  method?: string;
+  status?: string;
+  referenceNumber?: string;
+  createdAt?: any;
+}
+
+export function listenAllWalletTransactions(callback: (transactions: WalletTransaction[]) => void): Unsubscribe {
+  const q = query(collectionGroup(db, 'transactions'), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as WalletTransaction)));
+  });
+}
+
+export function computeWalletStats(transactions: WalletTransaction[]) {
+  let totalFunded = 0;
+  let totalSpentOrWithdrawn = 0;
+  let totalWithdrawn = 0;
+  for (const t of transactions) {
+    if (t.type === 'credit') {
+      totalFunded += t.amount || 0;
+    } else if (t.type === 'debit') {
+      totalSpentOrWithdrawn += t.amount || 0;
+      if (t.description === 'Wallet Withdrawal') totalWithdrawn += t.amount || 0;
+    }
+  }
+  return { totalFunded, totalSpentOrWithdrawn, totalWithdrawn };
+}
