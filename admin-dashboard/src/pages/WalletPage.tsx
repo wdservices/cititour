@@ -1,347 +1,109 @@
-import { useState } from 'react'
-import { DollarSign, TrendingUp, TrendingDown, CreditCard, Wallet, Download, Filter, Search } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowDownToLine, ArrowUpFromLine, Wallet as WalletIcon } from 'lucide-react'
+import { listenAllWalletTransactions, computeWalletStats, listenAllTickets, computeTicketRevenue, WalletTransaction, TicketRecord } from '../lib/adminData'
 
-interface Transaction {
-  id: string
-  type: 'commission' | 'ad_revenue' | 'subscription' | 'refund'
-  business: string
-  amount: number
-  commission: number
-  date: string
-  status: 'completed' | 'pending' | 'failed'
-  description: string
+function formatDate(ts: any): string {
+  if (!ts?.toDate) return '—'
+  return ts.toDate().toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-// Remove mock transactions; initialize with an empty list until real data integration
-const initialTransactions: Transaction[] = []
-
-// Remove mock revenue trend data; leave empty until hooked up to backend
-const revenueData: Array<{ month: string; commission: number; ads: number; subscription: number }> = []
-
-// Remove mock revenue source breakdown; leave empty until backend data is available
-const revenueSourceData: Array<{ name: string; value: number; color: string }> = []
-
 export default function WalletPage() {
-  const [transactions] = useState<Transaction[]>(initialTransactions)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'commission' | 'ad_revenue' | 'subscription' | 'refund'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'pending' | 'failed'>('all')
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([])
+  const [tickets, setTickets] = useState<TicketRecord[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.business.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = typeFilter === 'all' || transaction.type === typeFilter
-    const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter
-    return matchesSearch && matchesType && matchesStatus
-  })
+  useEffect(() => {
+    const unsubTx = listenAllWalletTransactions((data) => {
+      setTransactions(data)
+      setLoading(false)
+    })
+    const unsubTickets = listenAllTickets(setTickets)
+    return () => { unsubTx(); unsubTickets() }
+  }, [])
 
-  const totalRevenue = transactions.reduce((sum, t) => sum + (t.commission > 0 ? t.commission : 0), 0)
-  const monthlyRevenue = transactions
-    .filter(t => new Date(t.date).getMonth() === new Date().getMonth())
-    .reduce((sum, t) => sum + (t.commission > 0 ? t.commission : 0), 0)
-  const pendingAmount = transactions
-    .filter(t => t.status === 'pending')
-    .reduce((sum, t) => sum + t.commission, 0)
+  const { totalFunded, totalSpentOrWithdrawn, totalWithdrawn } = useMemo(() => computeWalletStats(transactions), [transactions])
+  const { platformCommission, grossFromSales } = useMemo(() => computeTicketRevenue(tickets), [tickets])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'failed': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'commission': return 'text-blue-600'
-      case 'ad_revenue': return 'text-green-600'
-      case 'subscription': return 'text-purple-600'
-      case 'refund': return 'text-red-600'
-      default: return 'text-gray-600'
-    }
-  }
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'commission': return DollarSign
-      case 'ad_revenue': return TrendingUp
-      case 'subscription': return CreditCard
-      case 'refund': return TrendingDown
-      default: return DollarSign
-    }
-  }
+  const statsCards = [
+    { title: 'Total Funded (all users)', value: `₦${totalFunded.toLocaleString()}`, icon: ArrowDownToLine, color: 'bg-palm text-white' },
+    { title: 'Total Spent (events, etc.)', value: `₦${(totalSpentOrWithdrawn - totalWithdrawn).toLocaleString()}`, icon: WalletIcon, color: 'bg-marigold text-ink' },
+    { title: 'Total Withdrawn', value: `₦${totalWithdrawn.toLocaleString()}`, icon: ArrowUpFromLine, color: 'bg-coral text-white' },
+    { title: 'Platform Commission (tickets)', value: `₦${platformCommission.toLocaleString()}`, icon: WalletIcon, color: 'bg-ink text-ivory' },
+  ]
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Wallet & Revenue</h1>
-        <button className="btn-primary flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export Report
-        </button>
+      <div>
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-ink">Wallet & Revenue</h1>
+        <p className="text-sm text-ink/60 mt-1">Live wallet activity across every user</p>
       </div>
 
-      {/* Revenue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
-              <div className="flex items-center mt-1">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-green-600 ml-1">+12% from last month</span>
-              </div>
-            </div>
-            <Wallet className="h-8 w-8 text-blue-500" />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">This Month</p>
-              <p className="text-2xl font-bold text-green-600">₱{monthlyRevenue.toLocaleString()}</p>
-              <div className="flex items-center mt-1">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-green-600 ml-1">+8% from last month</span>
-              </div>
-            </div>
-            <DollarSign className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">₱{pendingAmount.toLocaleString()}</p>
-              <p className="text-sm text-gray-500 mt-1">Awaiting processing</p>
-            </div>
-            <CreditCard className="h-8 w-8 text-yellow-500" />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transactions</p>
-              <p className="text-2xl font-bold text-purple-600">{transactions.length}</p>
-              <p className="text-sm text-gray-500 mt-1">This month</p>
-            </div>
-            <TrendingUp className="h-8 w-8 text-purple-500" />
-          </div>
-        </div>
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm text-ink/70">
+        These figures come directly from the same <code>wallets/&#123;userId&#125;/transactions</code> records
+        the client app writes on every fund, spend, and withdrawal — not a separate admin-only ledger.
+        Gross ticket sales volume across all events: ₦{grossFromSales.toLocaleString()}.
+        Marketplace purchases have no commission tracking yet, so they don't appear in "Platform Commission."
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Trend */}
-        <div className="card lg:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue Trend</h3>
-          {revenueData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value: any) => [`₱${(typeof value === 'number' ? value : 0).toLocaleString()}`, '']} />
-                <Line 
-                  type="monotone" 
-                  dataKey="commission" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  name="Commission"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ads" 
-                  stroke="#10B981" 
-                  strokeWidth={2}
-                  name="Ad Revenue"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="subscription" 
-                  stroke="#F59E0B" 
-                  strokeWidth={2}
-                  name="Subscriptions"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-sm text-gray-500">No revenue trend data</div>
-          )}
-        </div>
-
-        {/* Revenue Sources */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue Sources</h3>
-          {revenueSourceData.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={revenueSourceData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {revenueSourceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: any) => [`${typeof value === 'number' ? value : 0}%`, 'Percentage']} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 space-y-2">
-                {revenueSourceData.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm text-gray-600">{item.name}</span>
-                    </div>
-                    <span className="text-sm font-medium">{item.value}%</span>
-                  </div>
-                ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsCards.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <div key={stat.title} className="card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink/60">{stat.title}</p>
+                  <p className="font-display text-2xl font-extrabold text-ink mt-2">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-2xl`}>
+                  <Icon className="h-6 w-6" />
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="text-sm text-gray-500">No revenue source data</div>
-          )}
-        </div>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Filters */}
       <div className="card">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search transactions by business or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input pl-10 w-full"
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
-              className="input"
-            >
-              <option value="all">All Types</option>
-              <option value="commission">Commission</option>
-              <option value="ad_revenue">Ad Revenue</option>
-              <option value="subscription">Subscription</option>
-              <option value="refund">Refund</option>
-            </select>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="input"
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Transactions Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Transaction
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Business
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Commission
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => {
-                const TypeIcon = getTypeIcon(transaction.type)
-                return (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <TypeIcon className={`h-4 w-4 mr-3 ${getTypeColor(transaction.type)}`} />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 capitalize">
-                            {transaction.type.replace('_', ' ')}
-                          </div>
-                          <div className="text-sm text-gray-500">{transaction.description}</div>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.business}
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₱{transaction.amount.toLocaleString()}
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-sm font-medium ${
-                        transaction.commission >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.commission >= 0 ? '+' : ''}₱{transaction.commission.toLocaleString()}
+        <h3 className="font-display text-lg font-bold text-ink mb-4">Recent Transactions (all users)</h3>
+        {loading ? (
+          <p className="text-sm text-ink/50 py-8 text-center">Loading transactions...</p>
+        ) : transactions.length === 0 ? (
+          <p className="text-sm text-ink/50 py-8 text-center">No wallet activity recorded yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-semibold uppercase tracking-wider text-ink/50 border-b border-sand-200">
+                  <th className="pb-3">Type</th>
+                  <th className="pb-3">Description</th>
+                  <th className="pb-3">Amount</th>
+                  <th className="pb-3">Method</th>
+                  <th className="pb-3">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.slice(0, 100).map((t) => (
+                  <tr key={t.id} className="border-b border-sand-100 last:border-b-0">
+                    <td className="py-3">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${t.type === 'credit' ? 'bg-palm/10 text-palm' : 'bg-coral/10 text-coral'}`}>
+                        {t.type === 'credit' ? <ArrowDownToLine className="h-3 w-3" /> : <ArrowUpFromLine className="h-3 w-3" />}
+                        {t.type}
                       </span>
                     </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                        {transaction.status}
-                      </span>
+                    <td className="py-3 text-ink/80">{t.description}</td>
+                    <td className={`py-3 font-semibold ${t.type === 'credit' ? 'text-palm' : 'text-coral'}`}>
+                      {t.type === 'credit' ? '+' : '-'}₦{(t.amount || 0).toLocaleString()}
                     </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(transaction.date).toLocaleDateString()}
-                    </td>
+                    <td className="py-3 text-ink/60">{t.method || '—'}</td>
+                    <td className="py-3 text-ink/60">{formatDate(t.createdAt)}</td>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        
-        {filteredTransactions.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No transactions found matching your criteria.</p>
+                ))}
+              </tbody>
+            </table>
+            {transactions.length > 100 && (
+              <p className="text-xs text-ink/40 mt-3">Showing 100 most recent of {transactions.length} total transactions.</p>
+            )}
           </div>
         )}
       </div>

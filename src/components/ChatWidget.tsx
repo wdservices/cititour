@@ -38,7 +38,7 @@ export function ChatWidget({ businessId, businessName, businessAvatar, isOpen, o
 
   useEffect(() => {
     if (widgetState !== 'open' || !user || chatId) return;
-    ensureChatExists(businessId, user.uid, businessName, user.displayName || 'Customer')
+    ensureChatExists(businessId, user.id, businessName, user.name)
       .then(setChatId)
       .catch((err) => console.error('Failed to create chat:', err));
   }, [widgetState, businessId, businessName, user, chatId]);
@@ -66,7 +66,7 @@ export function ChatWidget({ businessId, businessName, businessAvatar, isOpen, o
     if (!draft.trim() || !chatId || !user) return;
     const text = draft.trim();
     setDraft('');
-    await sendMessage(chatId, user.uid, 'customer', text);
+    await sendMessage(chatId, user.id, 'customer', text);
   };
 
   if (!user) return null;

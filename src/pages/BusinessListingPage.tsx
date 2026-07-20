@@ -17,6 +17,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { X } from "lucide-react";
 import StampIcon from "@/components/StampIcon";
 import { logActivity } from "@/lib/activityLog";
+import { NIGERIAN_STATES, NigerianState, STATE_CITIES } from "@/lib/nigerianStates";
 
 const categories = [
   "Restaurant", "Hotel", "Event Venue", "Shopping", "Entertainment", 
@@ -34,6 +35,8 @@ const BusinessListingPage = () => {
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
   const [address, setAddress] = useState("");
+  const [selectedState, setSelectedState] = useState<NigerianState | "">("");
+  const [selectedCity, setSelectedCity] = useState("");
   const [hours, setHours] = useState("");
   const [priceRange, setPriceRange] = useState<string>("");
   const [email, setEmail] = useState("");
@@ -52,7 +55,7 @@ const BusinessListingPage = () => {
       navigate("/auth?force=true");
       return;
     }
-    if (!businessName || !category || !phone || !address || !email || !description) {
+    if (!businessName || !category || !phone || !address || !email || !description || !selectedState) {
       toast({ title: "Missing required fields", description: "Please fill all required fields marked with *.", variant: "destructive" });
       return;
     }
@@ -89,6 +92,8 @@ const BusinessListingPage = () => {
         rating: 0,
         price: priceRange || "",
         location: address,
+        state: selectedState,
+        city: selectedCity,
         phone,
         website: website || "",
         isOpen: true,
@@ -216,6 +221,35 @@ const BusinessListingPage = () => {
                       onChange={(e) => setAddress(e.target.value)}
                       className="bg-background border border-border"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="font-medium">State *</Label>
+                      <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
+                        <SelectTrigger className="bg-background border border-border">
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NIGERIAN_STATES.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="font-medium">City *</Label>
+                      <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+                        <SelectTrigger className="bg-background border border-border">
+                          <SelectValue placeholder={selectedState ? "Select city" : "Select a state first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(selectedState ? STATE_CITIES[selectedState] : []).map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
