@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Compass, Calendar, ShoppingBag, Wallet, Settings as SettingsIcon } from 'lucide-react-native';
-import { colors } from '../theme/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
 import LoginScreen from '../screens/LoginScreen';
@@ -14,22 +12,35 @@ import EventsScreen from '../screens/EventsScreen';
 import MarketplaceScreen from '../screens/MarketplaceScreen';
 import WalletScreen from '../screens/WalletScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ConversationsScreen from '../screens/ConversationsScreen';
+import ChatDetailScreen from '../screens/ChatDetailScreen';
+import MyDashboardScreen from '../screens/MyDashboardScreen';
+import FavouritesScreen from '../screens/FavouritesScreen';
 
-// Auth is now real: RootNavigator watches useAuth() and renders LoginScreen
-// until a real Firebase session exists, then switches to the main tab
-// navigator automatically. No manual "navigate to Home after login" call
-// needed anywhere — this is the single source of truth for that branch.
+import MainTabsContent from './MainTabsContent';
 
-const Tab = createBottomTabNavigator();
+const RootStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
 const EventsStack = createNativeStackNavigator();
+const MarketplaceStack = createNativeStackNavigator();
+const WalletStack = createNativeStackNavigator();
+const ConversationsStack = createNativeStackNavigator();
 
 function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
+      <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
     </HomeStack.Navigator>
+  );
+}
+
+function ConversationsStackScreen() {
+  return (
+    <ConversationsStack.Navigator screenOptions={{ headerShown: false }}>
+      <ConversationsStack.Screen name="ConversationsMain" component={ConversationsScreen} />
+      <ConversationsStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ animationEnabled: true }} />
+    </ConversationsStack.Navigator>
   );
 }
 
@@ -41,47 +52,38 @@ function EventsStackScreen() {
   );
 }
 
+function MarketplaceStackScreen() {
+  return (
+    <MarketplaceStack.Navigator screenOptions={{ headerShown: false }}>
+      <MarketplaceStack.Screen name="MarketplaceMain" component={MarketplaceScreen} />
+    </MarketplaceStack.Navigator>
+  );
+}
+
+function WalletStackScreen() {
+  return (
+    <WalletStack.Navigator screenOptions={{ headerShown: false }}>
+      <WalletStack.Screen name="WalletMain" component={WalletScreen} />
+    </WalletStack.Navigator>
+  );
+}
+
 function MainTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
-      }}
-    >
-      <Tab.Screen
-        name="Explore"
-        component={HomeStackScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Compass color={color} size={size} /> }}
-      />
-      <Tab.Screen
-        name="Events"
-        component={EventsStackScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} /> }}
-      />
-      <Tab.Screen
-        name="Marketplace"
-        component={MarketplaceScreen}
-        options={{ tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size} /> }}
-      />
-      <Tab.Screen
-        name="Wallet"
-        component={WalletScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Wallet color={color} size={size} /> }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ tabBarIcon: ({ color, size }) => <SettingsIcon color={color} size={size} /> }}
-      />
-    </Tab.Navigator>
+    <MainTabsContent
+      HomeStack={HomeStackScreen}
+      EventsStack={EventsStackScreen}
+      MarketplaceStack={MarketplaceStackScreen}
+      ConversationsStack={ConversationsStackScreen}
+      WalletStack={WalletStackScreen}
+      SettingsScreen={SettingsScreen}
+    />
   );
 }
 
 export default function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
@@ -93,7 +95,18 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabs /> : <LoginScreen />}
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+            <RootStack.Screen name="MainTabs" component={MainTabs} />
+            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ animationEnabled: true }} />
+            <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} options={{ animationEnabled: true }} />
+            <RootStack.Screen name="Favourites" component={FavouritesScreen} options={{ animationEnabled: true }} />
+          </>
+        ) : (
+          <RootStack.Screen name="Login" component={LoginScreen} />
+        )}
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }

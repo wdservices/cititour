@@ -1,10 +1,10 @@
 /**
- * theme.ts — ported directly from src/index.css design tokens, so the
- * native app visually matches the live website exactly, not an older
- * version of the design system.
+ * theme.ts — Complete glassmorphic design system for CitiTour
+ * All values pulled directly from the brand specification
  */
 
 export const colors = {
+  // Light theme (default)
   background: '#F5F7FA',
   foreground: '#0F172A',
 
@@ -22,19 +22,19 @@ export const colors = {
   muted: '#EEF1F5',
   mutedForeground: '#64748B',
 
-  accent: '#D9891F',         // Warm Marigold Yellow
+  accent: '#D9891F',         // Warm Marigold Gold
   accentForeground: '#FFFFFF',
 
-  success: '#10B981',
+  success: '#10B981',        // Palm Green
   successForeground: '#FFFFFF',
 
-  destructive: '#EF4444',
+  destructive: '#EF4444',    // Money Out Red
   destructiveForeground: '#FFFFFF',
 
   border: '#E2E8F0',
 };
 
-// Dark theme — user-toggleable in Settings, not the default.
+// Dark theme — user-toggleable in Settings
 export const darkColors = {
   background: '#0B0E14',
   foreground: '#F4EFE6',
@@ -67,23 +67,29 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 8,
-  md: 12,
+  xs: 8,
+  sm: 12,
+  md: 14,
   lg: 16,
-  xl: 24,
+  xl: 20,
   full: 999,
 };
 
+// Glass morphism opacity and blur presets
+export const glass = {
+  opacity: 0.7,           // Base glass opacity for light mode: rgba(255,255,255,0.7)
+  opacityDark: 0.65,      // Dark mode glass: rgba(18,22,31,0.65)
+  border: 'rgba(255,255,255,0.4)',  // Glass border hairline
+  blurAmount: 20,         // Backdrop blur in pixels
+};
+
 export const typography = {
-  // Match these to whatever font files you load via expo-font — e.g.
-  // 'ClashDisplay-Bold' for display, 'Inter-Regular'/'Inter-SemiBold' for body,
-  // mirroring the web app's font-display / font-sans split.
   display: {
-    fontFamily: 'System', // replace once custom fonts are loaded
+    fontFamily: 'BricolageGrotesque', // Will load via expo-font
     fontWeight: '800' as const,
   },
   body: {
-    fontFamily: 'System',
+    fontFamily: 'Inter',
     fontWeight: '400' as const,
   },
   sizes: {

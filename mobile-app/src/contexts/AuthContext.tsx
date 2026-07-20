@@ -7,7 +7,8 @@ import {
   sendPasswordResetEmail,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 
 // Same shape as the website's AuthContext (contexts/AuthContext.tsx) —
 // user.id / user.name, not Firebase's native user.uid / user.displayName —
@@ -38,6 +39,29 @@ function mapFirebaseUser(firebaseUser: FirebaseUser): User {
   };
 }
 
+// Same fix as the website's AuthContext — mirrors the Auth session into a
+// users/{uid} Firestore doc, since Firebase Auth itself can't be listed or
+// counted by a client-side SDK, and the admin dashboard needs a real
+// collection to read.
+async function mirrorUserToFirestore(firebaseUser: FirebaseUser) {
+  try {
+    const userRef = doc(db, 'users', firebaseUser.uid);
+    const existing = await getDoc(userRef);
+    await setDoc(
+      userRef,
+      {
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+        email: firebaseUser.email || '',
+        lastSeenAt: serverTimestamp(),
+        ...(!existing.exists() && { createdAt: serverTimestamp() }),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Failed to mirror user to Firestore:', error);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       setIsLoading(false);
+      if (firebaseUser) mirrorUserToFirestore(firebaseUser);
     });
     return unsubscribe;
   }, []);

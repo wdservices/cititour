@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, MapPin, Calendar, Hotel, Utensils, Compass } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { colors, spacing, radius, typography } from '../theme/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { spacing, radius, typography, glass } from '../theme/theme';
+import GlassHeader from '../components/GlassHeader';
+import PassportStampIcon from '../components/PassportStampIcon';
 
 // Same GPS-to-city heuristic as RegionContext.tsx on the website — kept in
 // sync so the native app's "Tour Lagos" / "Tour Abuja" branding matches.
@@ -16,15 +19,16 @@ function detectCityFromCoords(lat: number, lon: number): { code: string; label: 
   return { code: 'PH', label: 'Port Harcourt' };
 }
 
-const categories = [
-  { icon: Hotel, label: 'Hotels', color: colors.primary },
-  { icon: Utensils, label: 'Restaurants', color: colors.accent },
-  { icon: Calendar, label: 'Events', color: colors.success },
-  { icon: Compass, label: 'Fun Places', color: colors.primaryDark },
+const categories: Array<{ id: string; label: string; icon: 'home' | 'utensils' | 'calendar' | 'map-pin' | 'smile' | 'shopping-bag' | 'heart' | 'shopping-cart' }> = [
+  { id: 'hotels', label: 'Hotels', icon: 'home' },
+  { id: 'restaurants', label: 'Restaurants', icon: 'utensils' },
+  { id: 'events', label: 'Events', icon: 'calendar' },
+  { id: 'attractions', label: 'Attractions', icon: 'map-pin' },
 ];
 
 export default function HomeScreen({ navigation }: any) {
-  const [cityLabel, setCityLabel] = useState('Nigeria');
+  const { colors, isDark } = useTheme();
+  const [cityLabel, setCityLabel] = useState('Lagos');
 
   useEffect(() => {
     (async () => {
@@ -36,58 +40,209 @@ export default function HomeScreen({ navigation }: any) {
     })();
   }, []);
 
+  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
+  const inputBackgroundColor = isDark
+    ? `rgba(18, 22, 31, ${glassOpacity})`
+    : `rgba(255, 255, 255, ${glassOpacity})`;
+  const inputBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    headerContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg },
+    eyebrow: {
+      fontSize: typography.sizes.xs,
+      fontWeight: '700',
+      color: colors.accent,
+      letterSpacing: 1,
+      fontFamily: typography.body.fontFamily,
+    },
+    title: {
+      fontSize: typography.sizes.xxl,
+      fontWeight: '800',
+      color: colors.foreground,
+      marginTop: spacing.sm,
+      fontFamily: typography.display.fontFamily,
+    },
+    titleHighlight: { color: colors.primary },
+    searchBarContainer: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: inputBackgroundColor,
+      borderWidth: 1,
+      borderColor: inputBorderColor,
+      borderRadius: radius.full,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.foreground,
+      fontSize: typography.sizes.base,
+      fontFamily: typography.body.fontFamily,
+    },
+    categoryGrid: {
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.xl,
+      gap: spacing.lg,
+    },
+    categoryRow: { flexDirection: 'row', justifyContent: 'space-around', gap: spacing.md },
+    categoryItem: { alignItems: 'center', flex: 1 },
+    categoryLabel: {
+      fontSize: typography.sizes.sm,
+      fontWeight: '600',
+      color: colors.foreground,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+      fontFamily: typography.body.fontFamily,
+    },
+    section: { marginBottom: spacing.xl, paddingHorizontal: spacing.lg },
+    sectionTitle: {
+      fontSize: typography.sizes.lg,
+      fontWeight: '700',
+      color: colors.foreground,
+      marginBottom: spacing.md,
+      fontFamily: typography.display.fontFamily,
+    },
+    trendingScroll: { gap: spacing.md },
+    featuredCard: {
+      width: 160,
+      backgroundColor: isDark
+        ? 'rgba(18, 22, 31, 0.7)'
+        : 'rgba(255, 255, 255, 0.7)',
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: inputBorderColor,
+      overflow: 'hidden',
+      marginRight: spacing.md,
+    },
+    featuredImagePlaceholder: {
+      width: '100%',
+      height: 120,
+      backgroundColor: colors.muted,
+    },
+    featuredCardContent: { padding: spacing.md },
+    featuredCardTitle: {
+      fontSize: typography.sizes.sm,
+      fontWeight: '600',
+      color: colors.foreground,
+      fontFamily: typography.body.fontFamily,
+    },
+    featuredCardSubtitle: {
+      fontSize: typography.sizes.xs,
+      color: colors.mutedForeground,
+      marginTop: spacing.xs,
+      fontFamily: typography.body.fontFamily,
+    },
+    eventCard: {
+      backgroundColor: isDark
+        ? 'rgba(18, 22, 31, 0.7)'
+        : 'rgba(255, 255, 255, 0.7)',
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: inputBorderColor,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      marginBottom: spacing.md,
+    },
+    eventDateBadge: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.md,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eventDateDay: {
+      fontSize: typography.sizes.base,
+      fontWeight: '800',
+      color: colors.primaryForeground,
+      fontFamily: typography.display.fontFamily,
+    },
+    eventDateMonth: {
+      fontSize: typography.sizes.xs,
+      fontWeight: '700',
+      color: colors.primaryForeground,
+      fontFamily: typography.body.fontFamily,
+    },
+    eventContent: { flex: 1 },
+    eventTitle: {
+      fontSize: typography.sizes.base,
+      fontWeight: '600',
+      color: colors.foreground,
+      fontFamily: typography.body.fontFamily,
+    },
+    eventSubtitle: {
+      fontSize: typography.sizes.xs,
+      color: colors.mutedForeground,
+      marginTop: spacing.xs,
+      fontFamily: typography.body.fontFamily,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header — city-adaptive greeting, mirrors "Tour Lagos" branding */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>CITITOUR CONCIERGE</Text>
-            <Text style={styles.title}>
-              Tour <Text style={{ color: colors.primary }}>{cityLabel}</Text>
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.locationPill}>
-            <MapPin size={14} color={colors.primary} />
-            <Text style={styles.locationPillText}>{cityLabel}</Text>
-          </TouchableOpacity>
-        </View>
+        <GlassHeader
+          title={`Tour ${cityLabel}`}
+          subtitle="CITITOUR CONCIERGE"
+          locationPill={cityLabel}
+          leftIcon="menu"
+          rightIcon="bell"
+          onLeftPress={() => {}}
+          onRightPress={() => {}}
+        />
 
         {/* Search bar */}
-        <TouchableOpacity
-          style={styles.searchBar}
-          onPress={() => navigation.navigate('Search')}
-        >
-          <Search size={18} color={colors.mutedForeground} />
-          <Text style={styles.searchPlaceholder}>Search restaurants, events, hotels...</Text>
-        </TouchableOpacity>
+        <View style={styles.searchBarContainer}>
+          <View style={styles.searchBar}>
+            <Feather name="search" size={20} color={colors.mutedForeground} />
+            <TextInput
+              placeholder="Search restaurants, events..."
+              placeholderTextColor={colors.mutedForeground}
+              style={styles.searchInput}
+            />
+          </View>
+        </View>
 
-        {/* Category grid — passport-stamp motif, dashed circular rings */}
+        {/* Category grid — passport-stamp motif */}
         <View style={styles.categoryGrid}>
-          {categories.map((cat, i) => (
-            <TouchableOpacity
-              key={cat.label}
-              style={styles.categoryItem}
-              onPress={() => navigation.navigate('CategoryResults', { category: cat.label })}
-            >
-              <View style={[styles.stampRing, { borderColor: cat.color }]}>
-                <cat.icon size={26} color={cat.color} />
-              </View>
-              <Text style={styles.categoryLabel}>{cat.label}</Text>
-            </TouchableOpacity>
+          {categories.map((cat, idx) => (
+            <View key={idx} style={idx % 2 === 0 ? { flex: 1, flexDirection: 'row', gap: spacing.md } : undefined}>
+              {idx % 2 === 0 && (
+                <>
+                  <TouchableOpacity style={styles.categoryItem} onPress={() => navigation.navigate('CategoryResults', { category: cat.label })}>
+                    <PassportStampIcon category={cat.id as any} size={60} />
+                    <Text style={styles.categoryLabel}>{cat.label}</Text>
+                  </TouchableOpacity>
+                  {categories[idx + 1] && (
+                    <TouchableOpacity style={styles.categoryItem} onPress={() => navigation.navigate('CategoryResults', { category: categories[idx + 1].label })}>
+                      <PassportStampIcon category={categories[idx + 1].id as any} size={60} />
+                      <Text style={styles.categoryLabel}>{categories[idx + 1].label}</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
           ))}
         </View>
 
-        {/* Featured / trending section */}
+        {/* Trending section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Trending in {cityLabel}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trendingScroll}>
             {[1, 2, 3].map((i) => (
-              <TouchableOpacity key={i} style={styles.featuredCard}>
+              <View key={i} style={styles.featuredCard}>
                 <View style={styles.featuredImagePlaceholder} />
-                <Text style={styles.featuredCardTitle}>Featured Listing {i}</Text>
-                <Text style={styles.featuredCardSubtitle}>{cityLabel}</Text>
-              </TouchableOpacity>
+                <View style={styles.featuredCardContent}>
+                  <Text style={styles.featuredCardTitle}>Trending Place {i}</Text>
+                  <Text style={styles.featuredCardSubtitle}>{cityLabel}</Text>
+                </View>
+              </View>
             ))}
           </ScrollView>
         </View>
@@ -96,12 +251,12 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upcoming Events</Text>
           {[1, 2].map((i) => (
-            <TouchableOpacity key={i} style={styles.eventRow}>
+            <TouchableOpacity key={i} style={styles.eventCard} onPress={() => navigation.navigate('EventDetail', { id: i })}>
               <View style={styles.eventDateBadge}>
                 <Text style={styles.eventDateDay}>18</Text>
                 <Text style={styles.eventDateMonth}>JUL</Text>
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.eventContent}>
                 <Text style={styles.eventTitle}>Sample Event {i}</Text>
                 <Text style={styles.eventSubtitle}>{cityLabel} · From ₦5,000</Text>
               </View>
@@ -113,103 +268,3 @@ export default function HomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
-  eyebrow: {
-    fontSize: typography.sizes.xs,
-    fontWeight: '700',
-    color: colors.accent,
-    letterSpacing: 1.5,
-  },
-  title: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: '800',
-    color: colors.foreground,
-    marginTop: 4,
-  },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.primary + '15',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.full,
-  },
-  locationPillText: { fontSize: typography.sizes.xs, color: colors.primary, fontWeight: '600' },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.card,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchPlaceholder: { color: colors.mutedForeground, fontSize: typography.sizes.sm },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.xl,
-  },
-  categoryItem: { width: '23%', alignItems: 'center' },
-  stampRing: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  categoryLabel: { fontSize: 11, fontWeight: '600', color: colors.foreground, textAlign: 'center' },
-  section: { marginTop: spacing.xl, paddingHorizontal: spacing.md },
-  sectionTitle: { fontSize: typography.sizes.lg, fontWeight: '700', color: colors.foreground, marginBottom: spacing.sm },
-  featuredCard: { width: 160, marginRight: spacing.sm },
-  featuredImagePlaceholder: {
-    width: '100%',
-    height: 110,
-    borderRadius: radius.md,
-    backgroundColor: colors.muted,
-    marginBottom: 6,
-  },
-  featuredCardTitle: { fontSize: typography.sizes.sm, fontWeight: '600', color: colors.foreground },
-  featuredCardSubtitle: { fontSize: typography.sizes.xs, color: colors.mutedForeground },
-  eventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.card,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  eventDateBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eventDateDay: { fontSize: typography.sizes.base, fontWeight: '800', color: colors.primary },
-  eventDateMonth: { fontSize: 10, fontWeight: '700', color: colors.primary },
-  eventTitle: { fontSize: typography.sizes.sm, fontWeight: '600', color: colors.foreground },
-  eventSubtitle: { fontSize: typography.sizes.xs, color: colors.mutedForeground },
-});
