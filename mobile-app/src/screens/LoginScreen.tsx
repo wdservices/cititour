@@ -4,11 +4,8 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { spacing, radius, typography, glass } from '../theme/theme';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -66,250 +63,175 @@ export default function LoginScreen() {
     }
   };
 
-  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
-  const formBackgroundColor = isDark
-    ? `rgba(18, 22, 31, ${glassOpacity})`
-    : `rgba(255, 255, 255, ${glassOpacity})`;
-  const inputBackgroundColor = isDark
-    ? 'rgba(18, 22, 31, 0.5)'
-    : 'rgba(255, 255, 255, 0.6)';
-  const inputBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.xl },
-    logoWrap: { alignItems: 'center', marginBottom: spacing.xl },
-    logoCircle: {
-      width: 80, height: 80, borderRadius: radius.full, backgroundColor: colors.primary,
-      alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md,
-      shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5,
-    },
-    logoLetter: { color: colors.primaryForeground, fontSize: 36, fontWeight: '800', fontFamily: typography.display.fontFamily },
-    appName: { fontSize: typography.sizes.xl, fontWeight: '800', color: colors.foreground, fontFamily: typography.display.fontFamily },
-    tagline: { fontSize: typography.sizes.sm, color: colors.mutedForeground, marginTop: 4, textAlign: 'center', fontFamily: typography.body.fontFamily },
-    
-    formCard: { backgroundColor: formBackgroundColor, borderRadius: radius.lg, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.2)' : glass.border },
-    formContainer: { paddingHorizontal: spacing.lg, paddingVertical: spacing.xl },
-    
-    tabRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border },
-    tab: { paddingBottomassistant: spacing.md, flex: 1, alignItems: 'center' },
-    tabActive: { borderBottomWidth: 2, borderBottomColor: colors.primary, paddingBottom: spacing.md },
-    tabText: { fontSize: typography.sizes.base, fontWeight: '600', color: colors.mutedForeground, fontFamily: typography.body.fontFamily },
-    tabTextActive: { color: colors.primary },
-    
-    inputGroup: { marginBottom: spacing.lg },
-    inputLabel: { fontSize: typography.sizes.sm, fontWeight: '600', color: colors.foreground, marginBottom: spacing.sm, fontFamily: typography.body.fontFamily },
-    inputWrap: {
-      flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-      borderWidth: 1, borderColor: inputBorderColor, borderRadius: radius.md,
-      paddingHorizontal: spacing.md, backgroundColor: inputBackgroundColor,
-    },
-    input: { flex: 1, paddingVertical: spacing.md, fontSize: typography.sizes.base, color: colors.foreground, fontFamily: typography.body.fontFamily },
-    inputIcon: { width: 20, height: 20, justifyContent: 'center', alignItems: 'center' },
-    
-    termsRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.lg, gap: spacing.md },
-    checkbox: { width: 20, height: 20, borderWidth: 2, borderColor: colors.primary, borderRadius: spacing.xs, marginTop: spacing.xs, justifyContent: 'center', alignItems: 'center' },
-    termsText: { flex: 1, fontSize: typography.sizes.sm, color: colors.foreground, lineHeight: 20, fontFamily: typography.body.fontFamily },
-    termsLink: { color: colors.primary, fontWeight: '600' },
-    
-    errorText: { color: colors.destructive, fontSize: typography.sizes.sm, marginBottom: spacing.lg, textAlign: 'center', fontFamily: typography.body.fontFamily },
-    
-    buttonGap: { marginBottom: spacing.lg },
-    divider: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg, gap: spacing.md },
-    dividerLine: { flex: 1, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : colors.border },
-    dividerText: { fontSize: typography.sizes.xs, color: colors.mutedForeground, fontFamily: typography.body.fontFamily },
-    
-    googleButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.md, borderWidth: 1, borderColor: inputBorderColor, borderRadius: radius.full, paddingVertical: spacing.md, backgroundColor: inputBackgroundColor },
-    googleButtonText: { fontSize: typography.sizes.base, fontWeight: '600', color: colors.foreground, fontFamily: typography.body.fontFamily },
-    
-    toggleRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: spacing.xl },
-    toggleText: { fontSize: typography.sizes.sm, color: colors.mutedForeground, fontFamily: typography.body.fontFamily },
-    toggleLink: { fontSize: typography.sizes.sm, color: colors.primary, fontWeight: '700', fontFamily: typography.body.fontFamily },
-    
-    footerNote: { fontSize: typography.sizes.xs, color: colors.mutedForeground, textAlign: 'center', marginTop: spacing.lg, lineHeight: 16, fontFamily: typography.body.fontFamily },
-  });
+  const iconColor = colors.mutedForeground;
+  const iconSize = 18;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={s.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <View style={styles.logoWrap}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoLetter}>C</Text>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+          {/* ── Blue Header ── */}
+          <View style={s.header}>
+            <View style={s.logoCircle}>
+              <Text style={s.logoLetter}>C</Text>
             </View>
-            <Text style={styles.appName}>CitiTour</Text>
-            <Text style={styles.tagline}>
-              {isSignUp ? 'Create your account to explore' : 'Sign in to your account'}
+            <Text style={s.brand}>CitiTour</Text>
+            <Text style={s.subtitle}>
+              {isSignUp ? 'Create your account to explore Nigeria' : 'Welcome back — discover your city'}
             </Text>
           </View>
 
-          <View style={styles.formCard}>
-            <View style={styles.formContainer}>
-              {/* Tab Toggle */}
-              <View style={styles.tabRow}>
-                <TouchableOpacity
-                  style={[styles.tab, !isSignUp && styles.tabActive]}
-                  onPress={() => { setIsSignUp(false); setErrorMessage(null); }}
-                >
-                  <Text style={[styles.tabText, !isSignUp && styles.tabTextActive]}>Sign In</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, isSignUp && styles.tabActive]}
-                  onPress={() => { setIsSignUp(true); setErrorMessage(null); }}
-                >
-                  <Text style={[styles.tabText, isSignUp && styles.tabTextActive]}>Create Account</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Name Field (Sign Up Only) */}
-              {isSignUp && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Full Name</Text>
-                  <View style={styles.inputWrap}>
-                    <Feather name="user" size={20} color={colors.mutedForeground} />
-                    <TextInput
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Enter your full name"
-                      placeholderTextColor={colors.mutedForeground}
-                      style={styles.input}
-                    />
-                  </View>
-                </View>
-              )}
-
-              {/* Email Field */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email Address</Text>
-                <View style={styles.inputWrap}>
-                  <Feather name="mail" size={20} color={colors.mutedForeground} />
-                  <TextInput
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Enter your email"
-                    placeholderTextColor={colors.mutedForeground}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    style={styles.input}
-                  />
-                </View>
-              </View>
-
-              {/* Password Field */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <View style={styles.inputWrap}>
-                  <Feather name="lock" size={20} color={colors.mutedForeground} />
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Enter your password"
-                    placeholderTextColor={colors.mutedForeground}
-                    secureTextEntry={!showPassword}
-                    style={styles.input}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Feather
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      size={20}
-                      color={colors.mutedForeground}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Confirm Password Field (Sign Up Only) */}
-              {isSignUp && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Confirm Password</Text>
-                  <View style={styles.inputWrap}>
-                    <Feather name="lock" size={20} color={colors.mutedForeground} />
-                    <TextInput
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Confirm your password"
-                      placeholderTextColor={colors.mutedForeground}
-                      secureTextEntry={!showConfirmPassword}
-                      style={styles.input}
-                    />
-                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                      <Feather
-                        name={showConfirmPassword ? 'eye-off' : 'eye'}
-                        size={20}
-                        color={colors.mutedForeground}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-
-              {/* Terms Checkbox (Sign Up Only) */}
-              {isSignUp && (
-                <View style={styles.termsRow}>
-                  <TouchableOpacity
-                    style={[styles.checkbox, acceptTerms && { backgroundColor: colors.primary }]}
-                    onPress={() => setAcceptTerms(!acceptTerms)}
-                  >
-                    {acceptTerms && <Feather name="check" size={12} color={colors.primaryForeground} />}
-                  </TouchableOpacity>
-                  <Text style={styles.termsText}>
-                    I accept the{' '}
-                    <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                    <Text style={styles.termsLink}>Privacy Policy</Text>
-                  </Text>
-                </View>
-              )}
-
-              {/* Error Message */}
-              {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
-
-              {/* Submit Button */}
-              <View style={styles.buttonGap}>
-                <GlassButton
-                  label={isSignUp ? 'Create Account' : 'Sign In'}
-                  onPress={handleSubmit}
-                  disabled={isWorking}
-                  variant="solid"
-                />
-              </View>
-
-              {/* Forgot Password Link (Sign In Only) */}
-              {!isSignUp && (
-                <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'center', marginBottom: spacing.lg }}>
-                  <Text style={[styles.toggleLink, { fontSize: typography.sizes.sm }]}>Forgot password?</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Button */}
-              <TouchableOpacity style={styles.googleButton} activeOpacity={0.7}>
-                <Text style={styles.googleButtonText}>🔵 Continue with Google</Text>
+          {/* ── Form Card ── */}
+          <View style={s.card}>
+            {/* Tab Toggle */}
+            <View style={s.tabs}>
+              <TouchableOpacity
+                style={[s.tab, !isSignUp && s.tabActive]}
+                onPress={() => { setIsSignUp(false); setErrorMessage(null); }}
+              >
+                <Text style={[s.tabText, !isSignUp && s.tabTextActive]}>Sign In</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.tab, isSignUp && s.tabActive]}
+                onPress={() => { setIsSignUp(true); setErrorMessage(null); }}
+              >
+                <Text style={[s.tabText, isSignUp && s.tabTextActive]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Name (Sign Up) */}
+            {isSignUp && (
+              <View style={s.field}>
+                <Text style={s.label}>Full Name</Text>
+                <View style={s.inputRow}>
+                  <User size={iconSize} color={iconColor} />
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="John Doe"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={s.input}
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* Email */}
+            <View style={s.field}>
+              <Text style={s.label}>Email</Text>
+              <View style={s.inputRow}>
+                <Mail size={iconSize} color={iconColor} />
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@email.com"
+                  placeholderTextColor={colors.mutedForeground}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={s.input}
+                />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={s.field}>
+              <Text style={s.label}>Password</Text>
+              <View style={s.inputRow}>
+                <Lock size={iconSize} color={iconColor} />
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor={colors.mutedForeground}
+                  secureTextEntry={!showPassword}
+                  style={s.input}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  {showPassword
+                    ? <EyeOff size={iconSize} color={iconColor} />
+                    : <Eye size={iconSize} color={iconColor} />}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Confirm Password (Sign Up) */}
+            {isSignUp && (
+              <View style={s.field}>
+                <Text style={s.label}>Confirm Password</Text>
+                <View style={s.inputRow}>
+                  <Lock size={iconSize} color={iconColor} />
+                  <TextInput
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Re-enter password"
+                    placeholderTextColor={colors.mutedForeground}
+                    secureTextEntry={!showConfirmPassword}
+                    style={s.input}
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    {showConfirmPassword
+                      ? <EyeOff size={iconSize} color={iconColor} />
+                      : <Eye size={iconSize} color={iconColor} />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Terms (Sign Up) */}
+            {isSignUp && (
+              <TouchableOpacity style={s.termsRow} onPress={() => setAcceptTerms(!acceptTerms)} activeOpacity={0.7}>
+                <View style={[s.checkbox, acceptTerms && s.checkboxChecked]}>
+                  {acceptTerms && <Text style={s.checkMark}>✓</Text>}
+                </View>
+                <Text style={s.termsText}>
+                  I agree to the{' '}
+                  <Text style={s.termsLink}>Terms of Service</Text> and{' '}
+                  <Text style={s.termsLink}>Privacy Policy</Text>
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Error */}
+            {errorMessage ? <Text style={s.error}>{errorMessage}</Text> : null}
+
+            {/* Submit */}
+            <TouchableOpacity
+              style={[s.submitBtn, isWorking && s.submitBtnDisabled]}
+              onPress={handleSubmit}
+              disabled={isWorking}
+              activeOpacity={0.8}
+            >
+              {isWorking ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={s.submitText}>{isSignUp ? 'Create Account' : 'Sign In'}</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Forgot Password */}
+            {!isSignUp && (
+              <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'center', marginTop: 12 }}>
+                <Text style={s.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Toggle SignUp/SignIn */}
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleText}>
+          {/* Toggle */}
+          <View style={s.toggleRow}>
+            <Text style={s.toggleLabel}>
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}
             </Text>
             <TouchableOpacity onPress={() => { setIsSignUp(!isSignUp); setErrorMessage(null); }}>
-              <Text style={styles.toggleLink}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
+              <Text style={s.toggleLink}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Footer Note */}
-          {!isSignUp && (
-            <Text style={styles.footerNote}>
-              By continuing, you agree to our Terms of Service and Privacy Policy
-            </Text>
-          )}
+          {/* Footer */}
+          <Text style={s.footer}>
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </Text>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -318,17 +240,125 @@ export default function LoginScreen() {
 
 function friendlyAuthError(code?: string): string {
   switch (code) {
-    case 'auth/invalid-email':
-      return 'That email address looks invalid.';
+    case 'auth/invalid-email': return 'That email address looks invalid.';
     case 'auth/user-not-found':
     case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-      return 'Incorrect email or password.';
-    case 'auth/email-already-in-use':
-      return 'An account with this email already exists — try signing in instead.';
-    case 'auth/weak-password':
-      return 'Password should be at least 6 characters.';
-    default:
-      return 'Something went wrong. Please try again.';
+    case 'auth/invalid-credential': return 'Incorrect email or password.';
+    case 'auth/email-already-in-use': return 'An account with this email already exists — try signing in.';
+    case 'auth/weak-password': return 'Password should be at least 6 characters.';
+    default: return 'Something went wrong. Please try again.';
   }
 }
+
+const BLUE = '#1E88E5';
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F5F7FA' },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 40 },
+
+  /* Header */
+  header: {
+    backgroundColor: BLUE,
+    paddingTop: 32,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    alignItems: 'center',
+  },
+  logoCircle: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 12,
+  },
+  logoLetter: { color: '#fff', fontSize: 28, fontWeight: '800' },
+  brand: { color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 6, textAlign: 'center' },
+
+  /* Card */
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    marginTop: -20,
+    marginHorizontal: 4,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+
+  /* Tabs */
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  tabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+  tabText: { fontSize: 14, fontWeight: '600', color: '#94A3B8' },
+  tabTextActive: { color: BLUE },
+
+  /* Fields */
+  field: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 6 },
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5, borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 48,
+    gap: 10,
+  },
+  input: { flex: 1, fontSize: 15, color: '#0F172A', paddingVertical: 0 },
+
+  /* Terms */
+  termsRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, gap: 10 },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 6,
+    borderWidth: 1.5, borderColor: '#CBD5E1',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 1,
+  },
+  checkboxChecked: { backgroundColor: BLUE, borderColor: BLUE },
+  checkMark: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  termsText: { flex: 1, fontSize: 13, color: '#475569', lineHeight: 18 },
+  termsLink: { color: BLUE, fontWeight: '600' },
+
+  /* Error */
+  error: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 12 },
+
+  /* Submit */
+  submitBtn: {
+    backgroundColor: BLUE,
+    borderRadius: 12,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: BLUE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitBtnDisabled: { opacity: 0.6 },
+  submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+  /* Forgot */
+  forgotText: { color: BLUE, fontSize: 13, fontWeight: '600' },
+
+  /* Toggle */
+  toggleRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, gap: 6 },
+  toggleLabel: { fontSize: 14, color: '#64748B' },
+  toggleLink: { fontSize: 14, color: BLUE, fontWeight: '700' },
+
+  /* Footer */
+  footer: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 20, lineHeight: 16 },
+});

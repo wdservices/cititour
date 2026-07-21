@@ -31,14 +31,9 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   const styles = StyleSheet.create({
     glass: {
       backgroundColor,
-      borderRadius: radius.lg,
+      borderRadius: radius.sm,
       borderWidth: 1,
       borderColor: borderColorValue,
-      shadowColor: isDark ? '#000000' : '#000000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: 12,
-      elevation: 5,
     },
   });
 

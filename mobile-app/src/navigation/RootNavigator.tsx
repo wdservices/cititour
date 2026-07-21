@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -24,6 +24,7 @@ const HomeStack = createNativeStackNavigator();
 const EventsStack = createNativeStackNavigator();
 const MarketplaceStack = createNativeStackNavigator();
 const WalletStack = createNativeStackNavigator();
+const FavouritesStack = createNativeStackNavigator();
 const ConversationsStack = createNativeStackNavigator();
 
 function HomeStackScreen() {
@@ -32,6 +33,14 @@ function HomeStackScreen() {
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
     </HomeStack.Navigator>
+  );
+}
+
+function FavouritesStackScreen() {
+  return (
+    <FavouritesStack.Navigator screenOptions={{ headerShown: false }}>
+      <FavouritesStack.Screen name="FavouritesMain" component={FavouritesScreen} />
+    </FavouritesStack.Navigator>
   );
 }
 
@@ -48,6 +57,7 @@ function EventsStackScreen() {
   return (
     <EventsStack.Navigator screenOptions={{ headerShown: false }}>
       <EventsStack.Screen name="EventsMain" component={EventsScreen} />
+      <EventsStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
     </EventsStack.Navigator>
   );
 }
@@ -73,6 +83,7 @@ function MainTabs() {
     <MainTabsContent
       HomeStack={HomeStackScreen}
       EventsStack={EventsStackScreen}
+      FavouritesStack={FavouritesStackScreen}
       MarketplaceStack={MarketplaceStackScreen}
       ConversationsStack={ConversationsStackScreen}
       WalletStack={WalletStackScreen}

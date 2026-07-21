@@ -1,108 +1,110 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import React, { useMemo, useState } from 'react';
+import {
+  View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
+} from 'react-native';
+import { MapPin, Ticket } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
-import { spacing, radius, typography, glass } from '../theme/theme';
 import GlassHeader from '../components/GlassHeader';
-import GlassButton from '../components/GlassButton';
+import FilterPills from '../components/FilterPills';
+import { useExploreData } from '../lib/useExploreData';
+import { getMockImage } from '../lib/mockImages';
 
-const filters = ['All', 'Food & Drink', 'Music', 'Business', 'Sports'];
+const filters = ['All', 'Music', 'Food', 'Art', 'Nightlife'];
 
 export default function EventsScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const navigation = useNavigation<any>();
   const [activeFilter, setActiveFilter] = useState('All');
+  const { events, loading } = useExploreData();
 
-  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
-  const cardBackgroundColor = isDark
-    ? `rgba(18, 22, 31, ${glassOpacity})`
-    : `rgba(255, 255, 255, ${glassOpacity})`;
-  const cardBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    filterContainer: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-    filterChip: {
-      paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(30, 136, 229, 0.1)',
-      borderWidth: 1, borderColor: cardBorderColor, marginRight: spacing.md,
-    },
-    filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    filterChipText: { fontSize: typography.sizes.sm, color: colors.foreground, fontWeight: '600', fontFamily: typography.body.fontFamily },
-    filterChipTextActive: { color: colors.primaryForeground },
-    eventCard: {
-      backgroundColor: cardBackgroundColor, borderRadius: radius.lg, overflow: 'hidden',
-      borderWidth: 1, borderColor: cardBorderColor, marginHorizontal: spacing.lg, marginBottom: spacing.md,
-      shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
-    },
-    eventImagePlaceholder: { height: 160, backgroundColor: colors.muted, justifyContent: 'flex-end', alignItems: 'flex-end', padding: spacing.md },
-    priceBadge: { backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.full },
-    priceBadgeText: { color: colors.primaryForeground, fontSize: typography.sizes.sm, fontWeight: '700', fontFamily: typography.body.fontFamily },
-    eventContent: { padding: spacing.md },
-    eventCardTitle: { fontSize: typography.sizes.base, fontWeight: '700', color: colors.foreground, marginBottom: spacing.sm, fontFamily: typography.display.fontFamily },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
-    metaText: { fontSize: typography.sizes.xs, color: colors.mutedForeground, fontFamily: typography.body.fontFamily },
-  });
+  const filtered = useMemo(() => {
+    if (activeFilter === 'All') return events;
+    return events.filter((e) => e.category.toLowerCase().includes(activeFilter.toLowerCase()));
+  }, [events, activeFilter]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <GlassHeader title="Events" subtitle="Find what's happening" leftIcon="menu" />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <GlassHeader title="Events" subtitle="Upcoming in your city" />
+      <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} />
 
-      <View style={styles.filterContainer}>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 32 }} color={colors.primary} />
+      ) : (
         <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          data={filters}
-          keyExtractor={(f) => f}
+          data={filtered}
+          keyExtractor={(i) => i.id}
+          contentContainerStyle={s.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={[s.empty, { color: colors.mutedForeground }]}>No events listed yet.</Text>
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => setActiveFilter(item)}
-              style={[styles.filterChip, activeFilter === item && styles.filterChipActive]}
+              style={[s.eventCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              activeOpacity={0.85}
+              onPress={() =>
+                navigation.navigate('BusinessDetail', {
+                  businessId: item.id,
+                  businessName: item.title,
+                })
+              }
             >
-              <Text style={[styles.filterChipText, activeFilter === item && styles.filterChipTextActive]}>
-                {item}
-              </Text>
+              <View style={s.eventImage}>
+                <Image
+                  source={{ uri: item.image || getMockImage('Event') }}
+                  style={StyleSheet.absoluteFillObject}
+                  resizeMode="cover"
+                />
+                <View style={[s.priceBadge, { backgroundColor: colors.card }]}>
+                  <Ticket size={12} color={colors.foreground} strokeWidth={2} />
+                  <Text style={[s.priceBadgeText, { color: colors.foreground }]}>
+                    {item.price ? `₦${item.price}` : 'Free'}
+                  </Text>
+                </View>
+              </View>
+              <View style={s.eventContent}>
+                <View style={s.venueRow}>
+                  <MapPin size={13} color={colors.mutedForeground} strokeWidth={2} />
+                  <Text style={[s.venueText, { color: colors.mutedForeground }]}>
+                    {item.location || 'Venue TBA'}
+                  </Text>
+                </View>
+                <Text style={[s.eventTitle, { color: colors.foreground }]}>{item.title}</Text>
+                <Text style={[s.eventDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              </View>
             </TouchableOpacity>
           )}
         />
-      </View>
-
-      <FlatList
-        data={[1, 2, 3, 4, 5]}
-        keyExtractor={(i) => String(i)}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.eventCard}>
-            <View style={styles.eventImagePlaceholder}>
-              <View style={styles.priceBadge}>
-                <Text style={styles.priceBadgeText}>₦5,000</Text>
-              </View>
-            </View>
-            <View style={styles.eventContent}>
-              <Text style={styles.eventCardTitle}>Sample Event {item}</Text>
-              <View style={styles.metaRow}>
-                <Feather name="map-pin" size={14} color={colors.mutedForeground} />
-                <Text style={styles.metaText}>Eko Atlantic, Lagos</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <Feather name="calendar" size={14} color={colors.mutedForeground} />
-                <Text style={styles.metaText}>Jul 25, 2026 · 8:00 PM</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <Feather name="star" size={14} color={colors.accent} fill={colors.accent} />
-                <Text style={styles.metaText}>4.8 (89 reviews)</Text>
-              </View>
-              <GlassButton
-                label="Book Now"
-                onPress={() => {}}
-                variant="solid"
-                style={{ marginTop: spacing.md }}
-              />
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-    </SafeAreaView>
+      )}
+      <View style={{ height: 90 }} />
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  listContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 14 },
+  empty: { textAlign: 'center', marginTop: 40, fontSize: 14 },
+  eventCard: { borderRadius: 12, overflow: 'hidden', borderWidth: 1 },
+  eventImage: { height: 160, backgroundColor: '#E2E8F0' },
+  priceBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  priceBadgeText: { fontSize: 12, fontWeight: '600' },
+  eventContent: { padding: 14 },
+  venueRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 },
+  venueText: { fontSize: 12, fontWeight: '500' },
+  eventTitle: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3, marginBottom: 6 },
+  eventDesc: { fontSize: 13, lineHeight: 18 },
+});

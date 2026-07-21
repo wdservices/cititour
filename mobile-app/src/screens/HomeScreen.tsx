@@ -1,270 +1,267 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, RefreshControl,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Search, Menu, User } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { useTheme } from '../contexts/ThemeContext';
-import { spacing, radius, typography, glass } from '../theme/theme';
-import GlassHeader from '../components/GlassHeader';
-import PassportStampIcon from '../components/PassportStampIcon';
+import { useAuth } from '../contexts/AuthContext';
+import { useMainNavigation } from '../contexts/MainNavigationContext';
+import ExploreHero from '../components/ExploreHero';
+import ExploreCategoryShortcuts from '../components/ExploreCategoryShortcuts';
+import ListingCarousel from '../components/ListingCarousel';
+import {
+  useExploreData,
+  rotateListingWindow,
+  filterListings,
+  ExploreListing,
+} from '../lib/useExploreData';
 
-// Same GPS-to-city heuristic as RegionContext.tsx on the website — kept in
-// sync so the native app's "Tour Lagos" / "Tour Abuja" branding matches.
-function detectCityFromCoords(lat: number, lon: number): { code: string; label: string } {
-  if (lat > 11.5 && lon > 7.5 && lon < 9.5) return { code: 'KAN', label: 'Kano' };
-  if (lat > 10.0 && lon > 6.5 && lon < 8.5) return { code: 'KAD', label: 'Kaduna' };
-  if (lat > 8.0 && lon > 6.5) return { code: 'ABJ', label: 'Abuja' };
-  if (lat > 5.0 && lat <= 6.0 && lon > 6.5 && lon < 7.5) return { code: 'OWR', label: 'Owerri' };
-  if (lat > 6.0 && lon > 3.0 && lon < 4.5) return { code: 'LAG', label: 'Lagos' };
-  return { code: 'PH', label: 'Port Harcourt' };
+const ROTATE_MS = 8000;
+const VISIBLE_COUNT = 5;
+
+function detectCityFromCoords(lat: number, lon: number): string {
+  if (lat > 11.5 && lon > 7.5 && lon < 9.5) return 'Kano';
+  if (lat > 10.0 && lon > 6.5 && lon < 8.5) return 'Kaduna';
+  if (lat > 8.0 && lon > 6.5) return 'Abuja';
+  if (lat > 5.0 && lat <= 6.0 && lon > 6.5 && lon < 7.5) return 'Owerri';
+  if (lat > 6.0 && lon > 3.0 && lon < 4.5) return 'Lagos';
+  return 'Port Harcourt';
 }
 
-const categories: Array<{ id: string; label: string; icon: 'home' | 'utensils' | 'calendar' | 'map-pin' | 'smile' | 'shopping-bag' | 'heart' | 'shopping-cart' }> = [
-  { id: 'hotels', label: 'Hotels', icon: 'home' },
-  { id: 'restaurants', label: 'Restaurants', icon: 'utensils' },
-  { id: 'events', label: 'Events', icon: 'calendar' },
-  { id: 'attractions', label: 'Attractions', icon: 'map-pin' },
-];
+export default function HomeScreen({ navigation }: { navigation: any }) {
+  const { colors } = useTheme();
+  const { user } = useAuth();
+  const { openMenu, setActiveTab } = useMainNavigation();
+  const insets = useSafeAreaInsets();
+  const [cityLabel, setCityLabel] = useState('Port Harcourt');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [rotateTick, setRotateTick] = useState(0);
 
-export default function HomeScreen({ navigation }: any) {
-  const { colors, isDark } = useTheme();
-  const [cityLabel, setCityLabel] = useState('Lagos');
+  const { loading, businesses, events, marketplace, properties, refresh } = useExploreData();
 
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
       const location = await Location.getCurrentPositionAsync({});
-      const city = detectCityFromCoords(location.coords.latitude, location.coords.longitude);
-      setCityLabel(city.label);
+      setCityLabel(detectCityFromCoords(location.coords.latitude, location.coords.longitude));
     })();
   }, []);
 
-  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
-  const inputBackgroundColor = isDark
-    ? `rgba(18, 22, 31, ${glassOpacity})`
-    : `rgba(255, 255, 255, ${glassOpacity})`;
-  const inputBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
+  useEffect(() => {
+    const id = setInterval(() => setRotateTick((t) => t + 1), ROTATE_MS);
+    return () => clearInterval(id);
+  }, []);
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    headerContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg },
-    eyebrow: {
-      fontSize: typography.sizes.xs,
-      fontWeight: '700',
-      color: colors.accent,
-      letterSpacing: 1,
-      fontFamily: typography.body.fontFamily,
-    },
-    title: {
-      fontSize: typography.sizes.xxl,
-      fontWeight: '800',
-      color: colors.foreground,
-      marginTop: spacing.sm,
-      fontFamily: typography.display.fontFamily,
-    },
-    titleHighlight: { color: colors.primary },
-    searchBarContainer: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
-    searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      backgroundColor: inputBackgroundColor,
-      borderWidth: 1,
-      borderColor: inputBorderColor,
-      borderRadius: radius.full,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
-    },
-    searchInput: {
-      flex: 1,
-      color: colors.foreground,
-      fontSize: typography.sizes.base,
-      fontFamily: typography.body.fontFamily,
-    },
-    categoryGrid: {
-      paddingHorizontal: spacing.lg,
-      marginBottom: spacing.xl,
-      gap: spacing.lg,
-    },
-    categoryRow: { flexDirection: 'row', justifyContent: 'space-around', gap: spacing.md },
-    categoryItem: { alignItems: 'center', flex: 1 },
-    categoryLabel: {
-      fontSize: typography.sizes.sm,
-      fontWeight: '600',
-      color: colors.foreground,
-      textAlign: 'center',
-      marginTop: spacing.sm,
-      fontFamily: typography.body.fontFamily,
-    },
-    section: { marginBottom: spacing.xl, paddingHorizontal: spacing.lg },
-    sectionTitle: {
-      fontSize: typography.sizes.lg,
-      fontWeight: '700',
-      color: colors.foreground,
-      marginBottom: spacing.md,
-      fontFamily: typography.display.fontFamily,
-    },
-    trendingScroll: { gap: spacing.md },
-    featuredCard: {
-      width: 160,
-      backgroundColor: isDark
-        ? 'rgba(18, 22, 31, 0.7)'
-        : 'rgba(255, 255, 255, 0.7)',
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: inputBorderColor,
-      overflow: 'hidden',
-      marginRight: spacing.md,
-    },
-    featuredImagePlaceholder: {
-      width: '100%',
-      height: 120,
-      backgroundColor: colors.muted,
-    },
-    featuredCardContent: { padding: spacing.md },
-    featuredCardTitle: {
-      fontSize: typography.sizes.sm,
-      fontWeight: '600',
-      color: colors.foreground,
-      fontFamily: typography.body.fontFamily,
-    },
-    featuredCardSubtitle: {
-      fontSize: typography.sizes.xs,
-      color: colors.mutedForeground,
-      marginTop: spacing.xs,
-      fontFamily: typography.body.fontFamily,
-    },
-    eventCard: {
-      backgroundColor: isDark
-        ? 'rgba(18, 22, 31, 0.7)'
-        : 'rgba(255, 255, 255, 0.7)',
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: inputBorderColor,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.md,
-      marginBottom: spacing.md,
-    },
-    eventDateBadge: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.md,
-      backgroundColor: colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    eventDateDay: {
-      fontSize: typography.sizes.base,
-      fontWeight: '800',
-      color: colors.primaryForeground,
-      fontFamily: typography.display.fontFamily,
-    },
-    eventDateMonth: {
-      fontSize: typography.sizes.xs,
-      fontWeight: '700',
-      color: colors.primaryForeground,
-      fontFamily: typography.body.fontFamily,
-    },
-    eventContent: { flex: 1 },
-    eventTitle: {
-      fontSize: typography.sizes.base,
-      fontWeight: '600',
-      color: colors.foreground,
-      fontFamily: typography.body.fontFamily,
-    },
-    eventSubtitle: {
-      fontSize: typography.sizes.xs,
-      color: colors.mutedForeground,
-      marginTop: spacing.xs,
-      fontFamily: typography.body.fontFamily,
-    },
-  });
+  const toggleLike = (id: string) => {
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const filteredBiz = useMemo(
+    () => filterListings(businesses, searchQuery),
+    [businesses, searchQuery],
+  );
+  const filteredEvents = useMemo(
+    () => filterListings(events, searchQuery),
+    [events, searchQuery],
+  );
+  const filteredMkt = useMemo(
+    () => filterListings(marketplace, searchQuery),
+    [marketplace, searchQuery],
+  );
+  const filteredProps = useMemo(
+    () => filterListings(properties, searchQuery),
+    [properties, searchQuery],
+  );
+
+  const visibleBiz = useMemo(
+    () => rotateListingWindow(filteredBiz, VISIBLE_COUNT, rotateTick, 0),
+    [filteredBiz, rotateTick],
+  );
+  const visibleEvents = useMemo(
+    () => rotateListingWindow(filteredEvents, VISIBLE_COUNT, rotateTick, 2),
+    [filteredEvents, rotateTick],
+  );
+  const visibleMkt = useMemo(
+    () => rotateListingWindow(filteredMkt, VISIBLE_COUNT, rotateTick, 4),
+    [filteredMkt, rotateTick],
+  );
+  const visibleProps = useMemo(
+    () => rotateListingWindow(filteredProps, VISIBLE_COUNT, rotateTick, 6),
+    [filteredProps, rotateTick],
+  );
+
+  const openListing = (item: ExploreListing) => {
+    if (item.kind === 'marketplace') {
+      setActiveTab('marketplace');
+      return;
+    }
+    if (item.kind === 'property') {
+      setActiveTab('marketplace');
+      return;
+    }
+    if (item.kind === 'event') {
+      setActiveTab('events');
+      return;
+    }
+    navigation.navigate('BusinessDetail', {
+      businessId: item.id,
+      businessName: item.title,
+    });
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <GlassHeader
-          title={`Tour ${cityLabel}`}
-          subtitle="CITITOUR CONCIERGE"
-          locationPill={cityLabel}
-          leftIcon="menu"
-          rightIcon="bell"
-          onLeftPress={() => {}}
-          onRightPress={() => {}}
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* App header — single search (matches web: top bar only on mobile) */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 6,
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={openMenu} style={styles.iconBtn} accessibilityLabel="Menu">
+            <Menu size={22} color={colors.foreground} strokeWidth={1.75} />
+          </TouchableOpacity>
+          <View style={styles.brand}>
+            <Text style={[styles.brandTitle, { color: colors.primary }]}>CitiTour</Text>
+            <Text style={[styles.brandSub, { color: colors.mutedForeground }]}>Explore</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.avatar, { borderColor: `${colors.primary}40`, backgroundColor: colors.muted }]}
+            onPress={() => setActiveTab('profile')}
+          >
+            <User size={16} color={colors.mutedForeground} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.search, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Search size={18} color={colors.mutedForeground} strokeWidth={2} />
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search restaurants, events, hotels..."
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.searchInput, { color: colors.foreground }]}
+            returnKeyType="search"
+          />
+        </View>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.primary} />}
+        contentContainerStyle={styles.scroll}
+      >
+        <ExploreHero cityLabel={cityLabel} />
+        <ExploreCategoryShortcuts />
+
+        <View style={styles.discovered}>
+          <Text style={[styles.discoveredTitle, { color: colors.foreground }]}>
+            Discovered in {cityLabel}
+          </Text>
+          <Text style={[styles.discoveredSub, { color: colors.mutedForeground }]}>
+            Businesses, events, marketplace, and stays — refreshed every few seconds.
+          </Text>
+        </View>
+
+        <ListingCarousel
+          title="Local Businesses"
+          items={visibleBiz}
+          loading={loading}
+          viewAllLabel="View all"
+          onViewAll={() => setActiveTab('explore')}
+          onPressItem={openListing}
+          likedIds={likedIds}
+          onToggleLike={toggleLike}
+        />
+        <ListingCarousel
+          title="Upcoming Events"
+          items={visibleEvents}
+          loading={loading}
+          viewAllLabel="View all events"
+          onViewAll={() => setActiveTab('events')}
+          onPressItem={openListing}
+          likedIds={likedIds}
+          onToggleLike={toggleLike}
+          subtitle={(item) => (item.price ? `₦${item.price}` : 'Free')}
+        />
+        <ListingCarousel
+          title="Marketplace"
+          items={visibleMkt}
+          loading={loading}
+          viewAllLabel="View products"
+          onViewAll={() => setActiveTab('marketplace')}
+          onPressItem={openListing}
+          likedIds={likedIds}
+          onToggleLike={toggleLike}
+          subtitle={(item) => item.price || 'Price on request'}
+        />
+        <ListingCarousel
+          title="Properties & Stays"
+          items={visibleProps}
+          loading={loading}
+          viewAllLabel="View stays"
+          onViewAll={() => setActiveTab('marketplace')}
+          onPressItem={openListing}
+          likedIds={likedIds}
+          onToggleLike={toggleLike}
+          subtitle={(item) => item.price || '₦0/night'}
         />
 
-        {/* Search bar */}
-        <View style={styles.searchBarContainer}>
-          <View style={styles.searchBar}>
-            <Feather name="search" size={20} color={colors.mutedForeground} />
-            <TextInput
-              placeholder="Search restaurants, events..."
-              placeholderTextColor={colors.mutedForeground}
-              style={styles.searchInput}
-            />
-          </View>
-        </View>
-
-        {/* Category grid — passport-stamp motif */}
-        <View style={styles.categoryGrid}>
-          {categories.map((cat, idx) => (
-            <View key={idx} style={idx % 2 === 0 ? { flex: 1, flexDirection: 'row', gap: spacing.md } : undefined}>
-              {idx % 2 === 0 && (
-                <>
-                  <TouchableOpacity style={styles.categoryItem} onPress={() => navigation.navigate('CategoryResults', { category: cat.label })}>
-                    <PassportStampIcon category={cat.id as any} size={60} />
-                    <Text style={styles.categoryLabel}>{cat.label}</Text>
-                  </TouchableOpacity>
-                  {categories[idx + 1] && (
-                    <TouchableOpacity style={styles.categoryItem} onPress={() => navigation.navigate('CategoryResults', { category: categories[idx + 1].label })}>
-                      <PassportStampIcon category={categories[idx + 1].id as any} size={60} />
-                      <Text style={styles.categoryLabel}>{categories[idx + 1].label}</Text>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Trending section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trending in {cityLabel}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trendingScroll}>
-            {[1, 2, 3].map((i) => (
-              <View key={i} style={styles.featuredCard}>
-                <View style={styles.featuredImagePlaceholder} />
-                <View style={styles.featuredCardContent}>
-                  <Text style={styles.featuredCardTitle}>Trending Place {i}</Text>
-                  <Text style={styles.featuredCardSubtitle}>{cityLabel}</Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Upcoming events */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upcoming Events</Text>
-          {[1, 2].map((i) => (
-            <TouchableOpacity key={i} style={styles.eventCard} onPress={() => navigation.navigate('EventDetail', { id: i })}>
-              <View style={styles.eventDateBadge}>
-                <Text style={styles.eventDateDay}>18</Text>
-                <Text style={styles.eventDateMonth}>JUL</Text>
-              </View>
-              <View style={styles.eventContent}>
-                <Text style={styles.eventTitle}>Sample Event {i}</Text>
-                <Text style={styles.eventSubtitle}>{cityLabel} · From ₦5,000</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <View style={{ height: 96 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  iconBtn: { padding: 6, marginRight: 4 },
+  brand: { flex: 1 },
+  brandTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  brandSub: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  searchInput: { flex: 1, fontSize: 15, paddingVertical: 0 },
+  scroll: { paddingBottom: 16 },
+  discovered: { paddingHorizontal: 16, marginTop: 24 },
+  discoveredTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  discoveredSub: { fontSize: 14, marginTop: 6, lineHeight: 20 },
+});

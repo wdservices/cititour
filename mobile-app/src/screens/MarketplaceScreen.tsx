@@ -1,99 +1,118 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import React, { useMemo, useState } from 'react';
+import {
+  View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
+} from 'react-native';
+import { Heart, MapPin } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { spacing, radius, typography, glass } from '../theme/theme';
 import GlassHeader from '../components/GlassHeader';
-import GlassButton from '../components/GlassButton';
-
-const categories = ['Electronics', 'Fashion', 'Home', 'Vehicles', 'Property'];
+import FilterPills from '../components/FilterPills';
+import { useExploreData } from '../lib/useExploreData';
+import { getMockImage } from '../lib/mockImages';
 
 export default function MarketplaceScreen() {
-  const { colors, isDark } = useTheme();
-  const [activeCategory, setActiveCategory] = useState(0);
+  const { colors } = useTheme();
+  const [activeCategory, setActiveCategory] = useState('All');
+  const { marketplace, properties, loading } = useExploreData();
 
-  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
-  const cardBackgroundColor = isDark
-    ? `rgba(18, 22, 31, ${glassOpacity})`
-    : `rgba(255, 255, 255, ${glassOpacity})`;
-  const cardBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
+  const items = useMemo(() => {
+    const all = [...marketplace, ...properties];
+    if (activeCategory === 'All') return all;
+    if (activeCategory === 'Property') return properties;
+    return all.filter((i) => i.category.toLowerCase().includes(activeCategory.toLowerCase()));
+  }, [activeCategory, marketplace, properties]);
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    headerContainer: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    listItemButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full },
-    listItemButtonText: { color: colors.primaryForeground, fontSize: typography.sizes.xs, fontWeight: '700', fontFamily: typography.body.fontFamily },
-    categoryContainer: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-    categoryChip: {
-      paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(30, 136, 229, 0.1)',
-      borderWidth: 1, borderColor: cardBorderColor, marginRight: spacing.md,
-    },
-    categoryChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    categoryChipText: { fontSize: typography.sizes.sm, color: colors.foreground, fontWeight: '600', fontFamily: typography.body.fontFamily },
-    categoryChipTextActive: { color: colors.primaryForeground },
-    productCard: {
-      flex: 1, backgroundColor: cardBackgroundColor, borderRadius: radius.lg, overflow: 'hidden',
-      borderWidth: 1, borderColor: cardBorderColor,
-    },
-    productImagePlaceholder: { height: 140, backgroundColor: colors.muted, alignItems: 'flex-end', justifyContent: 'flex-end', padding: spacing.md },
-    heartButton: { width: 36, height: 36, borderRadius: radius.full, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-    productContent: { padding: spacing.md },
-    productTitle: { fontSize: typography.sizes.sm, fontWeight: '600', color: colors.foreground, fontFamily: typography.body.fontFamily },
-    productLocation: { fontSize: typography.sizes.xs, color: colors.mutedForeground, marginTop: spacing.xs, fontFamily: typography.body.fontFamily },
-    productPrice: { fontSize: typography.sizes.base, fontWeight: '700', color: colors.primary, marginTop: spacing.sm, fontFamily: typography.body.fontFamily },
-  });
+  const categories = ['All', 'Electronics', 'Fashion', 'Home', 'Property'];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <GlassHeader title="Marketplace" subtitle="Buy & sell local" leftIcon="menu" />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <GlassHeader title="Marketplace" subtitle="Products & stays" />
+      <FilterPills options={categories} active={activeCategory} onChange={setActiveCategory} />
 
-      <View style={styles.headerContainer}>
-        <GlassButton label="+ List Item" onPress={() => {}} size="sm" />
-      </View>
-
-      <View style={styles.categoryContainer}>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
+      ) : (
         <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          data={categories}
-          keyExtractor={(c) => c}
-          renderItem={({ item, index }) => (
+          data={items}
+          keyExtractor={(i) => `${i.kind}-${i.id}`}
+          numColumns={2}
+          contentContainerStyle={s.gridContent}
+          columnWrapperStyle={s.gridRow}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={[s.empty, { color: colors.mutedForeground }]}>No listings yet.</Text>
+          }
+          renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.categoryChip, activeCategory === index && styles.categoryChipActive]}
-              onPress={() => setActiveCategory(index)}
+              style={[s.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              activeOpacity={0.85}
             >
-              <Text style={[styles.categoryChipText, activeCategory === index && styles.categoryChipTextActive]}>
-                {item}
-              </Text>
+              <View style={s.productImage}>
+                <Image
+                  source={{ uri: item.image || getMockImage(item.category) }}
+                  style={StyleSheet.absoluteFillObject}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity style={s.heartBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Heart size={16} color="#fff" strokeWidth={2} />
+                </TouchableOpacity>
+              </View>
+              <View style={s.productContent}>
+                <Text style={[s.productCat, { color: colors.mutedForeground }]}>{item.category}</Text>
+                <Text style={[s.productName, { color: colors.foreground }]} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                {item.location ? (
+                  <View style={s.productLocationRow}>
+                    <MapPin size={11} color={colors.mutedForeground} strokeWidth={2} />
+                    <Text style={[s.productLocation, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {item.location}
+                    </Text>
+                  </View>
+                ) : null}
+                <Text style={[s.productPrice, { color: colors.primary }]}>
+                  {item.price || 'Price on request'}
+                </Text>
+              </View>
             </TouchableOpacity>
           )}
         />
-      </View>
+      )}
 
-      <FlatList
-        data={[1, 2, 3, 4, 5, 6]}
-        keyExtractor={(i) => String(i)}
-        numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md }}
-        columnWrapperStyle={{ gap: spacing.md }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.productCard}>
-            <View style={styles.productImagePlaceholder}>
-              <TouchableOpacity style={styles.heartButton}>
-                <Feather name="heart" size={18} color={colors.primaryForeground} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.productContent}>
-              <Text style={styles.productTitle} numberOfLines={1}>Product Item {item}</Text>
-              <Text style={styles.productLocation}>Lekki, Lagos</Text>
-              <Text style={styles.productPrice}>₦{(item * 150000).toLocaleString()}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-    </SafeAreaView>
+      <View style={{ height: 90 }} />
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  gridContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, gap: 12 },
+  gridRow: { gap: 12 },
+  empty: { textAlign: 'center', marginTop: 48, fontSize: 14 },
+  productCard: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  productImage: {
+    height: 120,
+    backgroundColor: '#E2E8F0',
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  productContent: { padding: 10 },
+  productCat: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
+  productName: { fontSize: 13, fontWeight: '700', marginTop: 2 },
+  productLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 },
+  productLocation: { fontSize: 11, flex: 1 },
+  productPrice: { fontSize: 13, fontWeight: '800', marginTop: 6 },
+});

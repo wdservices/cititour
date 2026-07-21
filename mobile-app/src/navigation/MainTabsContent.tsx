@@ -5,11 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import FloatingTabBar, { TabItem } from '../components/FloatingTabBar';
 import SideMenu from '../components/SideMenu';
+import { MainNavigationProvider, MainTabId } from '../contexts/MainNavigationContext';
 import { spacing } from '../theme/theme';
 
 interface MainTabsContentProps {
   HomeStack: React.ComponentType<any>;
   EventsStack: React.ComponentType<any>;
+  FavouritesStack: React.ComponentType<any>;
   MarketplaceStack: React.ComponentType<any>;
   ConversationsStack: React.ComponentType<any>;
   WalletStack: React.ComponentType<any>;
@@ -19,6 +21,7 @@ interface MainTabsContentProps {
 export default function MainTabsContent({
   HomeStack,
   EventsStack,
+  FavouritesStack,
   MarketplaceStack,
   ConversationsStack,
   WalletStack,
@@ -33,10 +36,9 @@ export default function MainTabsContent({
   const tabs: TabItem[] = [
     { name: 'explore', icon: 'compass', label: 'Explore' },
     { name: 'events', icon: 'calendar', label: 'Events' },
-    { name: 'marketplace', icon: 'shopping-bag', label: 'Marketplace' },
+    { name: 'saved', icon: 'bookmark', label: 'Saved' },
     { name: 'messages', icon: 'message-circle', label: 'Messages' },
-    { name: 'wallet', icon: 'wallet', label: 'Wallet' },
-    { name: 'menu', icon: 'menu', label: 'Menu' },
+    { name: 'profile', icon: 'user', label: 'Profile' },
   ];
 
   const menuSections = useMemo(
@@ -90,8 +92,8 @@ export default function MainTabsContent({
             label: 'Favourites',
             description: 'Your saved places',
             onPress: () => {
+              setActiveTab('saved');
               setMenuVisible(false);
-              navigation.navigate('Favourites');
             },
           },
           {
@@ -160,11 +162,12 @@ export default function MainTabsContent({
   );
 
   const handleTabChange = (tabName: string) => {
-    if (tabName === 'menu') {
-      setMenuVisible(true);
-    } else {
-      setActiveTab(tabName);
-    }
+    setActiveTab(tabName);
+  };
+
+  const navigateToTab = (tab: MainTabId) => {
+    if (tab === 'settings') setActiveTab('profile');
+    else setActiveTab(tab);
   };
 
   const styles = StyleSheet.create({
@@ -174,7 +177,7 @@ export default function MainTabsContent({
     },
     content: {
       flex: 1,
-      paddingBottom: 80, // Space for floating tab bar
+      paddingBottom: 72,
     },
   });
 
@@ -184,40 +187,45 @@ export default function MainTabsContent({
         return <HomeStack />;
       case 'events':
         return <EventsStack />;
-      case 'marketplace':
-        return <MarketplaceStack />;
+      case 'saved':
+        return <FavouritesStack />;
       case 'messages':
         return <ConversationsStack />;
-      case 'wallet':
-        return <WalletStack />;
+      case 'profile':
       case 'settings':
         return <SettingsScreen />;
+      case 'marketplace':
+        return <MarketplaceStack />;
+      case 'wallet':
+        return <WalletStack />;
       default:
         return <HomeStack />;
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>{renderScreen()}</View>
+    <MainNavigationProvider value={{ openMenu: () => setMenuVisible(true), setActiveTab: navigateToTab }}>
+      <View style={styles.container}>
+        <View style={styles.content}>{renderScreen()}</View>
 
-      <FloatingTabBar
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+        <FloatingTabBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
 
-      <SideMenu
-        visible={menuVisible}
-        onClose={() => setMenuVisible(false)}
-        userName={user?.displayName || 'User'}
-        userEmail={user?.email || 'user@example.com'}
-        sections={menuSections}
-        onLogout={() => {
-          setMenuVisible(false);
-          logout();
-        }}
-      />
-    </View>
+        <SideMenu
+          visible={menuVisible}
+          onClose={() => setMenuVisible(false)}
+          userName={user?.displayName || 'User'}
+          userEmail={user?.email || 'user@example.com'}
+          sections={menuSections}
+          onLogout={() => {
+            setMenuVisible(false);
+            logout();
+          }}
+        />
+      </View>
+    </MainNavigationProvider>
   );
 }

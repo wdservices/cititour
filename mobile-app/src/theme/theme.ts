@@ -1,17 +1,15 @@
 /**
- * theme.ts — Complete glassmorphic design system for CitiTour
- * All values pulled directly from the brand specification
+ * CitiTour — matches web app design tokens (index.css)
  */
 
 export const colors = {
-  // Light theme (default)
   background: '#F5F7FA',
   foreground: '#0F172A',
 
   card: '#FFFFFF',
   cardForeground: '#0F172A',
 
-  primary: '#1E88E5',        // Beautiful Blue
+  primary: '#1E88E5',
   primaryForeground: '#FFFFFF',
   primaryLight: '#5FB0F0',
   primaryDark: '#1565B8',
@@ -22,19 +20,18 @@ export const colors = {
   muted: '#EEF1F5',
   mutedForeground: '#64748B',
 
-  accent: '#D9891F',         // Warm Marigold Gold
+  accent: '#D9891F',
   accentForeground: '#FFFFFF',
 
-  success: '#10B981',        // Palm Green
+  success: '#10B981',
   successForeground: '#FFFFFF',
 
-  destructive: '#EF4444',    // Money Out Red
+  destructive: '#EF4444',
   destructiveForeground: '#FFFFFF',
 
   border: '#E2E8F0',
 };
 
-// Dark theme — user-toggleable in Settings
 export const darkColors = {
   background: '#0B0E14',
   foreground: '#F4EFE6',
@@ -75,21 +72,21 @@ export const radius = {
   full: 999,
 };
 
-// Glass morphism opacity and blur presets
 export const glass = {
-  opacity: 0.7,           // Base glass opacity for light mode: rgba(255,255,255,0.7)
-  opacityDark: 0.65,      // Dark mode glass: rgba(18,22,31,0.65)
-  border: 'rgba(255,255,255,0.4)',  // Glass border hairline
-  blurAmount: 20,         // Backdrop blur in pixels
+  opacity: 0.7,
+  opacityDark: 0.65,
+  border: 'rgba(255,255,255,0.4)',
+  blurAmount: 20,
 };
 
 export const typography = {
   display: {
-    fontFamily: 'BricolageGrotesque', // Will load via expo-font
+    fontFamily: 'System',
     fontWeight: '800' as const,
+    letterSpacing: -0.4,
   },
   body: {
-    fontFamily: 'Inter',
+    fontFamily: 'System',
     fontWeight: '400' as const,
   },
   sizes: {
@@ -99,6 +96,20 @@ export const typography = {
     lg: 18,
     xl: 22,
     xxl: 28,
-    display: 34,
+    display: 32,
   },
+};
+
+/** @deprecated use theme colors via useTheme() */
+export const concierge = {
+  background: colors.background,
+  surface: colors.card,
+  border: colors.border,
+  borderSubtle: colors.border,
+  primary: colors.primary,
+  accent: colors.accent,
+  heading: colors.foreground,
+  muted: colors.mutedForeground,
+  searchBg: colors.muted,
+  pillInactiveBg: 'transparent',
 };

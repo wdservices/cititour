@@ -1,132 +1,160 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import React from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+} from 'react-native';
+import {
+  Sun, Moon, Bell, Shield, CreditCard, HelpCircle, LogOut, ChevronRight,
+} from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { spacing, radius, typography, glass } from '../theme/theme';
-import GlassHeader from '../components/GlassHeader';
-import GlassCard from '../components/GlassCard';
 import { useAuth } from '../contexts/AuthContext';
+import GlassHeader from '../components/GlassHeader';
+
+const BLUE = '#1E88E5';
+
+const accountSettings = [
+  { icon: Bell, label: 'Notifications', color: BLUE },
+  { icon: Shield, label: 'Privacy & Safety', color: BLUE },
+  { icon: CreditCard, label: 'Payment Methods', color: BLUE },
+  { icon: HelpCircle, label: 'Help & Support', color: BLUE },
+];
 
 export default function SettingsScreen() {
-  const { colors, isDark, themeMode, setThemeMode } = useTheme();
+  const { colors, themeMode, setThemeMode } = useTheme();
   const { user, logout } = useAuth();
 
-  const glassOpacity = isDark ? glass.opacityDark : glass.opacity;
-  const cardBackgroundColor = isDark
-    ? `rgba(18, 22, 31, ${glassOpacity})`
-    : `rgba(255, 255, 255, ${glassOpacity})`;
-  const cardBorderColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)';
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
-    sectionLabel: {
-      fontSize: typography.sizes.xs, fontWeight: '700', color: colors.mutedForeground,
-      textTransform: 'uppercase' as const, letterSpacing: 0.5, marginBottom: spacing.md, marginTop: spacing.lg,
-      fontFamily: typography.body.fontFamily,
-    },
-    themeRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
-    themeOption: {
-      flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.lg,
-      borderRadius: radius.lg, borderWidth: 2, borderColor: cardBorderColor,
-      backgroundColor: 'transparent',
-    },
-    themeOptionActive: {
-      borderColor: colors.primary,
-      backgroundColor: isDark
-        ? 'rgba(94, 176, 240, 0.15)'
-        : 'rgba(30, 136, 229, 0.1)',
-    },
-    themeOptionIcon: { fontSize: 28 },
-    themeOptionText: {
-      fontSize: typography.sizes.sm, fontWeight: '600', color: colors.mutedForeground,
-      fontFamily: typography.body.fontFamily,
-    },
-    themeOptionTextActive: { color: colors.primary },
-    settingRow: {
-      flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-      backgroundColor: cardBackgroundColor, borderWidth: 1, borderColor: cardBorderColor,
-      borderRadius: radius.lg, marginBottom: spacing.md,
-    },
-    settingIcon: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-    settingLabel: {
-      flex: 1, fontSize: typography.sizes.base, fontWeight: '600', color: colors.foreground,
-      fontFamily: typography.body.fontFamily,
-    },
-    signOutButton: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.md,
-      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
-      borderWidth: 1, borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.2)',
-      borderRadius: radius.lg, paddingVertical: spacing.lg, marginTop: spacing.xl,
-    },
-    signOutText: {
-      color: colors.destructive, fontWeight: '700', fontSize: typography.sizes.base,
-      fontFamily: typography.body.fontFamily,
-    },
-  });
-
-  const settings = [
-    { icon: 'bell', label: 'Notifications' },
-    { icon: 'shield', label: 'Privacy & Security' },
-    { icon: 'help-circle', label: 'Help & Support' },
-  ];
-
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <GlassHeader title="Settings" subtitle="Account & Preferences" leftIcon="menu" />
+    <View style={s.container}>
+      <GlassHeader title="Tour Lagos" />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionLabel}>Appearance</Text>
-        <View style={styles.themeRow}>
-          {['light', 'dark', 'auto'].map((mode) => (
+      <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Large title */}
+        <Text style={s.bigTitle}>Settings</Text>
+        <Text style={s.subtitle}>Manage your account preferences and app experience.</Text>
+
+        {/* Appearance */}
+        <Text style={s.sectionTitle}>⚙️  Appearance</Text>
+        <View style={s.themeRow}>
+          {(['light', 'dark'] as const).map((mode) => (
             <TouchableOpacity
               key={mode}
-              style={[
-                styles.themeOption,
-                themeMode === mode && styles.themeOptionActive,
-              ]}
-              onPress={() => setThemeMode(mode as 'light' | 'dark' | 'auto')}
+              style={[s.themeCard, themeMode === mode && s.themeCardActive]}
+              onPress={() => setThemeMode(mode)}
+              activeOpacity={0.7}
             >
-              <Text style={styles.themeOptionIcon}>
-                {mode === 'light' && '☀️'}
-                {mode === 'dark' && '🌙'}
-                {mode === 'auto' && '⚙️'}
-              </Text>
-              <Text
-                style={[
-                  styles.themeOptionText,
-                  themeMode === mode && styles.themeOptionTextActive,
-                ]}
-              >
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              <View style={s.themeIconWrap}>
+                {mode === 'light' ? (
+                  <Sun size={28} color={BLUE} strokeWidth={1.5} />
+                ) : (
+                  <Moon size={28} color="#94A3B8" strokeWidth={1.5} />
+                )}
+              </View>
+              {themeMode === mode && (
+                <View style={s.themeCheck}>
+                  <Text style={s.themeCheckText}>✓</Text>
+                </View>
+              )}
+              <Text style={[s.themeLabel, themeMode === mode && s.themeLabelActive]}>
+                {mode === 'light' ? 'Light Mode' : 'Dark Mode'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionLabel}>Account</Text>
-        {settings.map((setting) => (
-          <TouchableOpacity
-            key={setting.label}
-            style={styles.settingRow}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingIcon}>
-              <Feather name={setting.icon as any} size={18} color={colors.primaryForeground} />
-            </View>
-            <Text style={styles.settingLabel}>{setting.label}</Text>
-            <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
-          </TouchableOpacity>
-        ))}
+        {/* Account */}
+        <Text style={s.sectionTitle}>👤  Account</Text>
+        <View style={s.accountCard}>
+          {accountSettings.map((item, i) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[s.accountRow, i < accountSettings.length - 1 && s.accountRowBorder]}
+              activeOpacity={0.7}
+            >
+              <View style={[s.accountIcon, { backgroundColor: item.color + '12' }]}>
+                <item.icon size={20} color={item.color} strokeWidth={2} />
+              </View>
+              <Text style={s.accountLabel}>{item.label}</Text>
+              <ChevronRight size={18} color="#CBD5E1" strokeWidth={2} />
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={logout}>
-          <Feather name="log-out" size={20} color={colors.destructive} />
-          <Text style={styles.signOutText}>
-            Sign Out{user?.email ? ` (${user.email})` : ''}
-          </Text>
+        {/* Log Out */}
+        <TouchableOpacity style={s.logoutBtn} onPress={logout} activeOpacity={0.7}>
+          <LogOut size={20} color="#EF4444" strokeWidth={2} />
+          <Text style={s.logoutText}>Log Out</Text>
         </TouchableOpacity>
+
+        {/* Version */}
+        <Text style={s.version}>Version 2.4.0 (Build 892)</Text>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
+
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+
+  bigTitle: {
+    fontSize: 32, fontWeight: '800', color: BLUE, marginTop: 8, marginBottom: 6,
+  },
+  subtitle: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 28 },
+
+  sectionTitle: {
+    fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 14,
+  },
+
+  /* Theme */
+  themeRow: { flexDirection: 'row', gap: 14, marginBottom: 28 },
+  themeCard: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 18, paddingVertical: 24,
+    alignItems: 'center', gap: 10,
+    borderWidth: 2, borderColor: '#E2E8F0',
+    position: 'relative',
+  },
+  themeCardActive: { borderColor: BLUE },
+  themeIconWrap: {
+    width: 60, height: 60, borderRadius: 30,
+    borderWidth: 2, borderStyle: 'dashed' as const,
+    borderColor: '#E2E8F0',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  themeCheck: {
+    position: 'absolute', top: 10, right: 10,
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center',
+  },
+  themeCheckText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  themeLabel: { fontSize: 14, fontWeight: '600', color: '#64748B' },
+  themeLabelActive: { color: BLUE },
+
+  /* Account */
+  accountCard: {
+    backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+  },
+  accountRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: 16, paddingVertical: 16,
+  },
+  accountRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  accountIcon: {
+    width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+  },
+  accountLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
+
+  /* Logout */
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.25)',
+    borderRadius: 16, paddingVertical: 16, marginTop: 28,
+    backgroundColor: 'rgba(239,68,68,0.04)',
+  },
+  logoutText: { fontSize: 16, fontWeight: '700', color: '#EF4444' },
+
+  version: {
+    fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 16,
+  },
+});
