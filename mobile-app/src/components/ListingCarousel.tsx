@@ -24,16 +24,8 @@ interface ListingCarouselProps {
 }
 
 export default function ListingCarousel({
-  title,
-  items,
-  loading,
-  viewAllLabel,
-  onViewAll,
-  onPressItem,
-  likedIds,
-  onToggleLike,
-  subtitle,
-  emptyLabel = 'Nothing here yet',
+  title, items, loading, viewAllLabel, onViewAll, onPressItem, likedIds, onToggleLike,
+  subtitle, emptyLabel = 'Nothing here yet',
 }: ListingCarouselProps) {
   const { colors } = useTheme();
 
@@ -71,7 +63,7 @@ export default function ListingCarousel({
                 activeOpacity={0.88}
                 onPress={() => onPressItem(item)}
               >
-                <View style={styles.imageWrap}>
+                <View style={[styles.imageWrap, { backgroundColor: colors.muted }]}>
                   <Image source={{ uri: img }} style={styles.image} resizeMode="cover" />
                   <TouchableOpacity
                     style={styles.heartBtn}
@@ -80,14 +72,14 @@ export default function ListingCarousel({
                   >
                     <Heart
                       size={14}
-                      color={liked ? '#EF4444' : '#fff'}
-                      fill={liked ? '#EF4444' : 'transparent'}
+                      color={liked ? colors.destructive : '#fff'}
+                      fill={liked ? colors.destructive : 'transparent'}
                       strokeWidth={2}
                     />
                   </TouchableOpacity>
                   {item.rating != null && item.rating > 0 && (
                     <View style={[styles.rating, { backgroundColor: colors.card }]}>
-                      <Star size={10} color="#FBBF24" fill="#FBBF24" strokeWidth={0} />
+                      <Star size={10} color={colors.warning} fill={colors.warning} strokeWidth={0} />
                       <Text style={[styles.ratingText, { color: colors.foreground }]}>{item.rating}</Text>
                     </View>
                   )}
@@ -131,46 +123,21 @@ export default function ListingCarousel({
 
 const styles = StyleSheet.create({
   section: { marginTop: 22 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 12 },
   title: { fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
   viewAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   viewAllText: { fontSize: 13, fontWeight: '700' },
   row: { paddingHorizontal: 16, gap: 10, paddingBottom: 4 },
-  card: {
-    width: LISTING_CARD_WIDTH,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  imageWrap: { height: IMAGE_H, backgroundColor: '#E2E8F0' },
+  card: { width: LISTING_CARD_WIDTH, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  imageWrap: { height: IMAGE_H },
   image: { width: '100%', height: '100%' },
   heartBtn: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center',
   },
   rating: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 999,
+    position: 'absolute', bottom: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999,
   },
   ratingText: { fontSize: 10, fontWeight: '700' },
   body: { paddingHorizontal: 10, paddingVertical: 9 },
@@ -179,31 +146,12 @@ const styles = StyleSheet.create({
   loc: { fontSize: 11, flex: 1 },
   sub: { fontSize: 11, fontWeight: '700', marginTop: 4 },
   viewMoreCard: {
-    width: LISTING_CARD_WIDTH,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    minHeight: IMAGE_H + 52,
+    width: LISTING_CARD_WIDTH, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center', padding: 12, minHeight: IMAGE_H + 52,
   },
-  viewMoreIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
+  viewMoreIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   viewMoreText: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
-  empty: {
-    marginHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 24,
-    alignItems: 'center',
-  },
+  empty: { marginHorizontal: 16, borderRadius: 12, borderWidth: 1, padding: 24, alignItems: 'center' },
   emptyTitle: { fontSize: 14, fontWeight: '700' },
   emptySub: { fontSize: 12, marginTop: 4, textAlign: 'center' },
 });

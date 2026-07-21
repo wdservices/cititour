@@ -1,80 +1,32 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, darkColors } from '../theme/theme';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { colors as lightColors, darkColors } from '../theme/theme';
 
-export type ThemeType = 'light' | 'dark' | 'auto';
+type ThemeMode = 'light' | 'dark';
 
-interface ThemeContextType {
+interface ThemeContextValue {
+  colors: typeof lightColors;
   isDark: boolean;
-  themeMode: ThemeType;
-  setThemeMode: (mode: ThemeType) => Promise<void>;
-  colors: typeof colors;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeType>('auto');
-  const [isLoaded, setIsLoaded] = useState(false);
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
 
-  // Load saved theme preference on mount
-  useEffect(() => {
-    loadThemePreference();
-  }, []);
-
-  const loadThemePreference = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('cititour_theme');
-      if (saved) {
-        setThemeModeState(saved as ThemeType);
-      }
-    } catch (error) {
-      console.log('[v0] Failed to load theme preference:', error);
-    } finally {
-      setIsLoaded(true);
-    }
-  };
-
-  const setThemeMode = async (mode: ThemeType) => {
-    try {
-      await AsyncStorage.setItem('cititour_theme', mode);
-      setThemeModeState(mode);
-    } catch (error) {
-      console.log('[v0] Failed to save theme preference:', error);
-    }
-  };
-
-  // Determine if dark mode is active
-  const isDark = 
-    themeMode === 'dark' || 
-    (themeMode === 'auto' && systemColorScheme === 'dark');
-
-  const currentColors = isDark ? darkColors : colors;
-
-  if (!isLoaded) {
-    return null;
-  }
+  const isDark = themeMode === 'dark';
+  const colors = isDark ? darkColors : lightColors;
 
   return (
-    <ThemeContext.Provider
-      value={{
-        isDark,
-        themeMode,
-        setThemeMode,
-        colors: currentColors,
-      }}
-    >
+    <ThemeContext.Provider value={{ colors, isDark, themeMode, setThemeMode }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
+}

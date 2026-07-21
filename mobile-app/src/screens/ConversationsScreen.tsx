@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircle } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import GlassHeader from '../components/GlassHeader';
-import { spacing, radius, typography } from '../theme/theme';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -21,18 +20,16 @@ interface Conversation {
   lastMessageAt: any;
   unreadByBusiness: number;
   unreadByCustomer: number;
+  participants?: string[];
 }
-
-const BLUE = '#1E88E5';
 
 export default function ConversationsScreen() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const isBusinessUser = false;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -41,80 +38,80 @@ export default function ConversationsScreen() {
       const chatsRef = collection(db, 'chats');
       const q = query(
         chatsRef,
-        where(isBusinessUser ? 'businessId' : 'customerId', '==', user.id),
+        where('participants', 'array-contains', user.id),
         orderBy('lastMessageAt', 'desc')
       );
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id, ...doc.data(),
-        })) as Conversation[];
+        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Conversation[];
         setConversations(data);
         setLoading(false);
-      });
+      }, () => setLoading(false));
       return unsubscribe;
-    }, [user?.id, isBusinessUser])
+    }, [user?.id])
   );
 
-  const handleSelectConversation = (conversation: Conversation) => {
+  const handleSelect = (conversation: Conversation) => {
+    const isBusiness = conversation.businessId === user?.id;
+    const otherName = isBusiness ? conversation.customerName : conversation.businessName;
     navigation.navigate('ChatDetail', {
       chatId: conversation.id,
-      otherUserName: isBusinessUser ? conversation.customerName : conversation.businessName,
+      otherUserName: otherName,
       businessId: conversation.businessId,
       customerId: conversation.customerId,
     });
   };
 
-  if (loading) {
-    return (
-      <View style={s.container}>
-        <GlassHeader title="Messages" subtitle="Your conversations" />
-        <View style={s.emptyContainer}>
-          <ActivityIndicator size="large" color={BLUE} />
-        </View>
-      </View>
-    );
-  }
-
   return (
-    <View style={s.container}>
-      <GlassHeader title="Messages" subtitle="Your conversations" />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
+        <Text style={[s.headerTitle, { color: colors.foreground }]}>Messages</Text>
+        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Your conversations</Text>
+      </View>
 
-      {conversations.length === 0 ? (
-        <View style={s.emptyContainer}>
-          <MessageCircle size={48} color="#CBD5E1" strokeWidth={1.5} />
-          <Text style={s.emptyText}>No conversations yet</Text>
-          <Text style={s.emptyDesc}>Start chatting with a business to begin!</Text>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
+      ) : conversations.length === 0 ? (
+        <View style={s.emptyState}>
+          <MessageCircle size={40} color={colors.mutedForeground} strokeWidth={1.5} />
+          <Text style={[s.emptyTitle, { color: colors.foreground }]}>No conversations yet</Text>
+          <Text style={[s.emptyDesc, { color: colors.mutedForeground }]}>
+            Start chatting with a business to begin
+          </Text>
         </View>
       ) : (
         <FlatList
           data={conversations}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(i) => i.id}
           contentContainerStyle={s.listContent}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
-            const unreadCount = isBusinessUser ? item.unreadByBusiness : item.unreadByCustomer;
-            const otherUserName = isBusinessUser ? item.customerName : item.businessName;
-            const formattedTime = item.lastMessageAt?.toDate
+            const isBusiness = item.businessId === user?.id;
+            const otherName = isBusiness ? item.customerName : item.businessName;
+            const unread = isBusiness ? item.unreadByBusiness : item.unreadByCustomer;
+            const time = item.lastMessageAt?.toDate
               ? item.lastMessageAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               : 'Recently';
             return (
               <TouchableOpacity
-                style={s.convoCard}
-                onPress={() => handleSelectConversation(item)}
+                style={[s.convoCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => handleSelect(item)}
                 activeOpacity={0.7}
               >
-                <View style={s.avatar}>
-                  <Text style={s.avatarText}>{otherUserName.charAt(0).toUpperCase()}</Text>
+                <View style={[s.avatar, { backgroundColor: colors.primary }]}>
+                  <Text style={s.avatarText}>{otherName?.charAt(0)?.toUpperCase() || 'U'}</Text>
                 </View>
                 <View style={s.convoContent}>
                   <View style={s.nameRow}>
-                    <Text style={s.name} numberOfLines={1}>{otherUserName}</Text>
-                    <Text style={s.timestamp}>{formattedTime}</Text>
+                    <Text style={[s.name, { color: colors.foreground }]} numberOfLines={1}>{otherName}</Text>
+                    <Text style={[s.timestamp, { color: colors.mutedForeground }]}>{time}</Text>
                   </View>
-                  <Text style={s.lastMessage} numberOfLines={1}>{item.lastMessage}</Text>
+                  <Text style={[s.lastMessage, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    {item.lastMessage || 'Start a conversation'}
+                  </Text>
                 </View>
-                {unreadCount > 0 && (
-                  <View style={s.unreadBadge}>
-                    <Text style={s.unreadText}>{unreadCount}</Text>
+                {unread > 0 && (
+                  <View style={[s.unreadBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={s.unreadText}>{unread}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -122,36 +119,28 @@ export default function ConversationsScreen() {
           }}
         />
       )}
-      <View style={{ height: 90 }} />
+      <View style={{ height: insets.bottom + 80 }} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#0F172A' },
-  emptyDesc: { fontSize: 13, color: '#94A3B8' },
-  listContent: { paddingHorizontal: 20, paddingVertical: 12, gap: 12 },
-
-  convoCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#fff', borderRadius: 18, padding: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  avatar: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  headerSub: { fontSize: 13, marginTop: 2 },
+  listContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 10 },
+  convoCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1, padding: 12 },
+  avatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   convoContent: { flex: 1 },
   nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 15, fontWeight: '700', color: '#0F172A', flex: 1 },
-  timestamp: { fontSize: 12, color: '#94A3B8' },
-  lastMessage: { fontSize: 13, color: '#64748B', marginTop: 4 },
-  unreadBadge: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center',
-  },
+  name: { fontSize: 15, fontWeight: '700', flex: 1 },
+  timestamp: { fontSize: 12 },
+  lastMessage: { fontSize: 13, marginTop: 3 },
+  unreadBadge: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   unreadText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  emptyState: { alignItems: 'center', marginTop: 80, gap: 10 },
+  emptyTitle: { fontSize: 16, fontWeight: '700' },
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
 });

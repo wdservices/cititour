@@ -2,159 +2,123 @@ import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
-import {
-  Sun, Moon, Bell, Shield, CreditCard, HelpCircle, LogOut, ChevronRight,
-} from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Sun, Moon, ChevronRight, LogOut } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import GlassHeader from '../components/GlassHeader';
-
-const BLUE = '#1E88E5';
-
-const accountSettings = [
-  { icon: Bell, label: 'Notifications', color: BLUE },
-  { icon: Shield, label: 'Privacy & Safety', color: BLUE },
-  { icon: CreditCard, label: 'Payment Methods', color: BLUE },
-  { icon: HelpCircle, label: 'Help & Support', color: BLUE },
-];
 
 export default function SettingsScreen() {
   const { colors, themeMode, setThemeMode } = useTheme();
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  const accountItems = [
+    { label: 'Notifications' },
+    { label: 'Privacy & Safety' },
+    { label: 'Payment Methods' },
+    { label: 'Help & Support' },
+  ];
 
   return (
-    <View style={s.container}>
-      <GlassHeader title="Tour Lagos" />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
+        <Text style={[s.headerTitle, { color: colors.foreground }]}>Settings</Text>
+      </View>
 
-      <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Large title */}
-        <Text style={s.bigTitle}>Settings</Text>
-        <Text style={s.subtitle}>Manage your account preferences and app experience.</Text>
+      <ScrollView contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 100 }]} showsVerticalScrollIndicator={false}>
+        {/* Profile card */}
+        <View style={[s.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[s.profileAvatar, { backgroundColor: colors.primary }]}>
+            <Text style={s.profileAvatarText}>
+              {user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+            </Text>
+          </View>
+          <View style={s.profileInfo}>
+            <Text style={[s.profileName, { color: colors.foreground }]} numberOfLines={1}>{user?.name || 'User'}</Text>
+            <Text style={[s.profileEmail, { color: colors.mutedForeground }]} numberOfLines={1}>{user?.email || 'user@example.com'}</Text>
+          </View>
+        </View>
 
         {/* Appearance */}
-        <Text style={s.sectionTitle}>⚙️  Appearance</Text>
-        <View style={s.themeRow}>
+        <Text style={[s.sectionTitle, { color: colors.mutedForeground }]}>Appearance</Text>
+        <View style={[s.themeRow, { gap: 12 }]}>
           {(['light', 'dark'] as const).map((mode) => (
             <TouchableOpacity
               key={mode}
-              style={[s.themeCard, themeMode === mode && s.themeCardActive]}
+              style={[
+                s.themeCard,
+                { backgroundColor: colors.card, borderColor: themeMode === mode ? colors.primary : colors.border },
+              ]}
               onPress={() => setThemeMode(mode)}
               activeOpacity={0.7}
             >
-              <View style={s.themeIconWrap}>
-                {mode === 'light' ? (
-                  <Sun size={28} color={BLUE} strokeWidth={1.5} />
-                ) : (
-                  <Moon size={28} color="#94A3B8" strokeWidth={1.5} />
-                )}
-              </View>
-              {themeMode === mode && (
-                <View style={s.themeCheck}>
-                  <Text style={s.themeCheckText}>✓</Text>
-                </View>
-              )}
-              <Text style={[s.themeLabel, themeMode === mode && s.themeLabelActive]}>
-                {mode === 'light' ? 'Light Mode' : 'Dark Mode'}
+              {mode === 'light'
+                ? <Sun size={22} color={colors.primary} strokeWidth={1.75} />
+                : <Moon size={22} color={colors.mutedForeground} strokeWidth={1.75} />}
+              <Text style={[s.themeLabel, { color: themeMode === mode ? colors.primary : colors.mutedForeground }]}>
+                {mode === 'light' ? 'Light' : 'Dark'}
               </Text>
+              {themeMode === mode && <View style={[s.themeDot, { backgroundColor: colors.primary }]} />}
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Account */}
-        <Text style={s.sectionTitle}>👤  Account</Text>
-        <View style={s.accountCard}>
-          {accountSettings.map((item, i) => (
+        <Text style={[s.sectionTitle, { color: colors.mutedForeground }]}>Account</Text>
+        <View style={[s.accountCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {accountItems.map((item, i) => (
             <TouchableOpacity
               key={item.label}
-              style={[s.accountRow, i < accountSettings.length - 1 && s.accountRowBorder]}
-              activeOpacity={0.7}
+              style={[s.accountRow, i < accountItems.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}
+              activeOpacity={0.6}
             >
-              <View style={[s.accountIcon, { backgroundColor: item.color + '12' }]}>
-                <item.icon size={20} color={item.color} strokeWidth={2} />
-              </View>
-              <Text style={s.accountLabel}>{item.label}</Text>
-              <ChevronRight size={18} color="#CBD5E1" strokeWidth={2} />
+              <Text style={[s.accountLabel, { color: colors.foreground }]}>{item.label}</Text>
+              <ChevronRight size={18} color={colors.mutedForeground} strokeWidth={2} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Log Out */}
-        <TouchableOpacity style={s.logoutBtn} onPress={logout} activeOpacity={0.7}>
-          <LogOut size={20} color="#EF4444" strokeWidth={2} />
-          <Text style={s.logoutText}>Log Out</Text>
+        {/* Logout */}
+        <TouchableOpacity
+          style={[s.logoutBtn, { borderColor: `${colors.destructive}40`, backgroundColor: `${colors.destructive}08` }]}
+          onPress={logout}
+          activeOpacity={0.7}
+        >
+          <LogOut size={19} color={colors.destructive} strokeWidth={2} />
+          <Text style={[s.logoutText, { color: colors.destructive }]}>Log Out</Text>
         </TouchableOpacity>
 
-        {/* Version */}
-        <Text style={s.version}>Version 2.4.0 (Build 892)</Text>
-
-        <View style={{ height: 100 }} />
+        <Text style={[s.version, { color: colors.mutedForeground }]}>Version 2.4.0</Text>
       </ScrollView>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20 },
 
-  bigTitle: {
-    fontSize: 32, fontWeight: '800', color: BLUE, marginTop: 8, marginBottom: 6,
-  },
-  subtitle: { fontSize: 14, color: '#64748B', lineHeight: 20, marginBottom: 28 },
+  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 28 },
+  profileAvatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  profileAvatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  profileInfo: { flex: 1 },
+  profileName: { fontSize: 16, fontWeight: '700' },
+  profileEmail: { fontSize: 13, marginTop: 2 },
 
-  sectionTitle: {
-    fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 14,
-  },
+  sectionTitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12, marginTop: 8 },
+  themeRow: { flexDirection: 'row', marginBottom: 28 },
+  themeCard: { flex: 1, borderRadius: 14, borderWidth: 1.5, paddingVertical: 20, alignItems: 'center', gap: 8, position: 'relative' },
+  themeLabel: { fontSize: 14, fontWeight: '600' },
+  themeDot: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4 },
 
-  /* Theme */
-  themeRow: { flexDirection: 'row', gap: 14, marginBottom: 28 },
-  themeCard: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 18, paddingVertical: 24,
-    alignItems: 'center', gap: 10,
-    borderWidth: 2, borderColor: '#E2E8F0',
-    position: 'relative',
-  },
-  themeCardActive: { borderColor: BLUE },
-  themeIconWrap: {
-    width: 60, height: 60, borderRadius: 30,
-    borderWidth: 2, borderStyle: 'dashed' as const,
-    borderColor: '#E2E8F0',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  themeCheck: {
-    position: 'absolute', top: 10, right: 10,
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: BLUE, alignItems: 'center', justifyContent: 'center',
-  },
-  themeCheckText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  themeLabel: { fontSize: 14, fontWeight: '600', color: '#64748B' },
-  themeLabelActive: { color: BLUE },
+  accountCard: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  accountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 15 },
+  accountLabel: { fontSize: 15, fontWeight: '500' },
 
-  /* Account */
-  accountCard: {
-    backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  accountRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingHorizontal: 16, paddingVertical: 16,
-  },
-  accountRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  accountIcon: {
-    width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-  },
-  accountLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderRadius: 14, paddingVertical: 15, marginTop: 28 },
+  logoutText: { fontSize: 16, fontWeight: '700' },
 
-  /* Logout */
-  logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.25)',
-    borderRadius: 16, paddingVertical: 16, marginTop: 28,
-    backgroundColor: 'rgba(239,68,68,0.04)',
-  },
-  logoutText: { fontSize: 16, fontWeight: '700', color: '#EF4444' },
-
-  version: {
-    fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 16,
-  },
+  version: { fontSize: 12, textAlign: 'center', marginTop: 20 },
 });

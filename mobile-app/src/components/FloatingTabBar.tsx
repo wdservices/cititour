@@ -26,29 +26,16 @@ interface FloatingTabBarProps {
   onTabChange: (tabName: string) => void;
 }
 
-export const FloatingTabBar: React.FC<FloatingTabBarProps> = ({
-  tabs,
-  activeTab,
-  onTabChange,
-}) => {
-  const { colors, isDark } = useTheme();
+export const FloatingTabBar: React.FC<FloatingTabBarProps> = ({ tabs, activeTab, onTabChange }) => {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, Platform.OS === 'ios' ? 8 : 6);
-
-  const barBg = isDark ? 'rgba(24, 24, 27, 0.92)' : 'rgba(255, 255, 255, 0.92)';
-  const borderColor = colors.border;
-  const activeColor = isDark ? '#FAFAFA' : colors.primary;
-  const inactive = colors.mutedForeground;
 
   return (
     <View
       style={[
         styles.container,
-        {
-          paddingBottom: bottomPad,
-          backgroundColor: barBg,
-          borderTopColor: borderColor,
-        },
+        { paddingBottom: bottomPad, backgroundColor: colors.card, borderTopColor: colors.border },
       ]}
     >
       {tabs.map((tab) => {
@@ -63,20 +50,12 @@ export const FloatingTabBar: React.FC<FloatingTabBarProps> = ({
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
           >
-            {isActive && (
-              <View
-                style={[
-                  styles.activePill,
-                  { backgroundColor: isDark ? 'rgba(250,250,250,0.08)' : 'rgba(9,9,11,0.06)' },
-                ]}
-              />
-            )}
             <IconComponent
               size={22}
-              color={isActive ? activeColor : inactive}
+              color={isActive ? colors.primary : colors.mutedForeground}
               strokeWidth={isActive ? 2.25 : 1.75}
             />
-            {isActive && <View style={[styles.dot, { backgroundColor: activeColor }]} />}
+            {isActive && <View style={[styles.dot, { backgroundColor: colors.primary }]} />}
           </TouchableOpacity>
         );
       })}
@@ -86,37 +65,15 @@ export const FloatingTabBar: React.FC<FloatingTabBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingTop: 10,
-    borderTopWidth: 1,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
+    paddingTop: 10, borderTopWidth: 1,
   },
   tabButton: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 6,
-    position: 'relative',
-    minHeight: 48,
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingVertical: 6, minHeight: 48,
   },
-  activePill: {
-    position: 'absolute',
-    width: 44,
-    height: 36,
-    borderRadius: 12,
-    top: 4,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 4,
-  },
+  dot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },
 });
 
 export default FloatingTabBar;

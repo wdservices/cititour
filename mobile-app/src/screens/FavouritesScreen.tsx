@@ -1,149 +1,147 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Heart, MapPin, Star } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Trash2, MapPin, Bookmark } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
-import { concierge } from '../theme/theme';
-import GlassHeader from '../components/GlassHeader';
-import FilterPills from '../components/FilterPills';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { getMockImage } from '../lib/mockImages';
 
-const tabs = ['All Saved', 'Hotels', 'Events'];
-
-const mockFavourites = [
-  {
-    id: '1', title: 'The Eko Reserve', category: 'LUXURY STAY', location: 'Victoria Island',
-    rating: 4.9, price: '$450/night', imageColor: '#1A5276',
-  },
-  {
-    id: '2', title: 'Vibe Lagos Concert', category: 'LIVE EXPERIENCE', location: 'Eko Hotel Gardens',
-    date: 'Oct 24', price: '$85', imageColor: '#8B5CF6',
-  },
-  {
-    id: '3', title: 'Artisanal Aso-Oke Set', category: 'MARKETPLACE', location: 'Lagos Artisan Hub',
-    sub: 'Limited Edition', price: '$1,200', imageColor: '#D9891F',
-  },
-  {
-    id: '4', title: 'Sky Restaurant', category: 'FINE DINING', location: 'Fine Dining',
-    rating: 4.7, price: '$$$$', imageColor: '#EC4899',
-  },
-];
+interface FavouriteItem {
+  id: string;
+  title: string;
+  category: string;
+  location: string;
+  image: string;
+  businessId?: string;
+}
 
 export default function FavouritesScreen() {
-  const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState('All Saved');
-  const [favourites, setFavourites] = useState(mockFavourites);
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const navigation = useNavigation<any>();
+  const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const toggleFavourite = (id: string) => {
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      (async () => {
+        setLoading(true);
+        try {
+          const q = query(collection(db, 'favourites'), where('userId', '==', user.id));
+          const snap = await getDocs(q);
+          const items = snap.docs.map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              title: data.title || data.name || 'Saved Place',
+              category: data.category || 'Business',
+              location: data.location || data.city || '',
+              image: data.image || (Array.isArray(data.images) && data.images[0]) || '',
+              businessId: data.businessId || '',
+            } as FavouriteItem;
+          });
+          setFavourites(items);
+        } catch (e) {
+          setFavourites([]);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, [user?.id])
+  );
+
+  const removeFavourite = async (id: string) => {
     setFavourites((prev) => prev.filter((f) => f.id !== id));
+    try { await deleteDoc(doc(db, 'favourites', id)); } catch {}
   };
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
-      <GlassHeader title="Saved" subtitle="Your bookmarks" />
+      <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
+        <Text style={[s.headerTitle, { color: colors.foreground }]}>Saved</Text>
+        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Your bookmarks</Text>
+      </View>
 
-      <FilterPills options={tabs} active={activeTab} onChange={setActiveTab} />
-
-      {/* Cards */}
-      <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
-        {favourites.map((fav) => (
-          <TouchableOpacity key={fav.id} style={s.favCard} activeOpacity={0.85}>
-            <View style={[s.favImage, { backgroundColor: fav.imageColor }]}>
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
+      ) : favourites.length === 0 ? (
+        <View style={s.emptyState}>
+          <Bookmark size={40} color={colors.mutedForeground} strokeWidth={1.5} />
+          <Text style={[s.emptyTitle, { color: colors.foreground }]}>No favourites yet</Text>
+          <Text style={[s.emptyDesc, { color: colors.mutedForeground }]}>
+            Start exploring and save your favourite places
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={favourites}
+          keyExtractor={(i) => i.id}
+          contentContainerStyle={s.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={[s.favCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TouchableOpacity
-                style={s.heartBtn}
-                onPress={() => toggleFavourite(fav.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={s.cardBody}
+                activeOpacity={0.85}
+                onPress={() => item.businessId && navigation.navigate('BusinessDetail', { businessId: item.businessId, businessName: item.title })}
               >
-                <Heart size={18} color={concierge.primary} fill={concierge.primary} strokeWidth={0} />
+                <View style={[s.favImage, { backgroundColor: colors.muted }]}>
+                  <Image
+                    source={{ uri: item.image || getMockImage(item.category) }}
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View style={s.favContent}>
+                  <Text style={[s.favCat, { color: colors.primary }]}>{item.category.toUpperCase()}</Text>
+                  <Text style={[s.favTitle, { color: colors.foreground }]} numberOfLines={1}>{item.title}</Text>
+                  {item.location ? (
+                    <View style={s.favLocRow}>
+                      <MapPin size={11} color={colors.mutedForeground} strokeWidth={2} />
+                      <Text style={[s.favLoc, { color: colors.mutedForeground }]} numberOfLines={1}>{item.location}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.removeBtn}
+                onPress={() => removeFavourite(item.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Trash2 size={18} color={colors.destructive} strokeWidth={2} />
               </TouchableOpacity>
             </View>
-            <View style={s.favOverlay}>
-              <View style={s.favBadgeRow}>
-                <View style={s.favBadge}>
-                  <Text style={s.favBadgeText}>{fav.category}</Text>
-                </View>
-                {fav.rating && (
-                  <View style={s.favRating}>
-                    <Star size={12} color="#F59E0B" fill="#F59E0B" strokeWidth={0} />
-                    <Text style={s.favRatingText}>{fav.rating}</Text>
-                  </View>
-                )}
-                {fav.date && (
-                  <View style={s.favBadge}>
-                    <Text style={s.favBadgeText}>{fav.date}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={s.favTitle}>{fav.title}</Text>
-              <View style={s.favBottom}>
-                <View style={s.favLocationRow}>
-                  <MapPin size={12} color="rgba(255,255,255,0.8)" strokeWidth={2} />
-                  <Text style={s.favLocationText}>{fav.location}</Text>
-                </View>
-                <Text style={s.favPrice}>{fav.price}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        {favourites.length === 0 && (
-          <View style={s.emptyState}>
-            <Text style={{ fontSize: 48 }}>❤️</Text>
-            <Text style={s.emptyTitle}>No favourites yet</Text>
-            <Text style={s.emptyDesc}>Start exploring and save your favourite places</Text>
-          </View>
-        )}
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          )}
+        />
+      )}
+      <View style={{ height: insets.bottom + 80 }} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 16 },
-
-  favCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    height: 220,
-    borderWidth: 1,
-    borderColor: concierge.borderSubtle,
-  },
-  favImage: { ...StyleSheet.absoluteFillObject },
-  favOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9,9,11,0.35)',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  favBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  favBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
-  },
-  favBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  favRating: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 4,
-  },
-  favRatingText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  heartBtn: {
-    position: 'absolute', top: 14, right: 14,
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center',
-  },
-  favTitle: { color: '#fff', fontSize: 22, fontWeight: '800' },
-  favBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  favLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
-  favLocationText: { color: 'rgba(255,255,255,0.85)', fontSize: 13 },
-  favPrice: { color: '#fff', fontSize: 16, fontWeight: '800' },
-
+  header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  headerSub: { fontSize: 13, marginTop: 2 },
+  listContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 10 },
+  favCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  cardBody: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  favImage: { width: 72, height: 72 },
+  favContent: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  favCat: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
+  favTitle: { fontSize: 14, fontWeight: '700', marginTop: 3 },
+  favLocRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  favLoc: { fontSize: 12 },
+  removeBtn: { padding: 16 },
   emptyState: { alignItems: 'center', marginTop: 80, gap: 10 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: concierge.heading },
-  emptyDesc: { fontSize: 14, color: concierge.muted, textAlign: 'center' },
+  emptyTitle: { fontSize: 16, fontWeight: '700' },
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
 });

@@ -26,6 +26,9 @@ export const colors = {
   success: '#10B981',
   successForeground: '#FFFFFF',
 
+  warning: '#F59E0B',
+  warningForeground: '#FFFFFF',
+
   destructive: '#EF4444',
   destructiveForeground: '#FFFFFF',
 
@@ -35,22 +38,33 @@ export const colors = {
 export const darkColors = {
   background: '#0B0E14',
   foreground: '#F4EFE6',
+
   card: '#12161F',
   cardForeground: '#F4EFE6',
+
   primary: '#5FB0F0',
   primaryForeground: '#0B0E14',
   primaryLight: '#8CC8F5',
   primaryDark: '#1E88E5',
+
   secondary: '#F4EFE6',
   secondaryForeground: '#0B0E14',
+
   muted: '#1B2028',
   mutedForeground: '#94A3B8',
+
   accent: '#F2A93B',
   accentForeground: '#0B0E14',
+
   success: '#34D399',
   successForeground: '#0B0E14',
+
+  warning: '#FBBF24',
+  warningForeground: '#0B0E14',
+
   destructive: '#F87171',
   destructiveForeground: '#0B0E14',
+
   border: '#2A3140',
 };
 
@@ -72,13 +86,6 @@ export const radius = {
   full: 999,
 };
 
-export const glass = {
-  opacity: 0.7,
-  opacityDark: 0.65,
-  border: 'rgba(255,255,255,0.4)',
-  blurAmount: 20,
-};
-
 export const typography = {
   display: {
     fontFamily: 'System',
@@ -98,18 +105,4 @@ export const typography = {
     xxl: 28,
     display: 32,
   },
-};
-
-/** @deprecated use theme colors via useTheme() */
-export const concierge = {
-  background: colors.background,
-  surface: colors.card,
-  border: colors.border,
-  borderSubtle: colors.border,
-  primary: colors.primary,
-  accent: colors.accent,
-  heading: colors.foreground,
-  muted: colors.mutedForeground,
-  searchBg: colors.muted,
-  pillInactiveBg: 'transparent',
 };

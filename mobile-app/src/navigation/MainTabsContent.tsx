@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigation } from '@react-navigation/native';
 import FloatingTabBar, { TabItem } from '../components/FloatingTabBar';
 import SideMenu from '../components/SideMenu';
 import { MainNavigationProvider, MainTabId } from '../contexts/MainNavigationContext';
-import { spacing } from '../theme/theme';
 
 interface MainTabsContentProps {
   HomeStack: React.ComponentType<any>;
@@ -27,7 +26,7 @@ export default function MainTabsContent({
   WalletStack,
   SettingsScreen,
 }: MainTabsContentProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { user, logout } = useAuth();
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState('explore');
@@ -46,186 +45,73 @@ export default function MainTabsContent({
       {
         title: 'Discover',
         items: [
-          {
-            icon: 'compass',
-            label: 'Explore',
-            description: 'Discover places',
-            onPress: () => {
-              setActiveTab('explore');
-              setMenuVisible(false);
-            },
-          },
-          {
-            icon: 'calendar',
-            label: 'Events',
-            description: 'Find events',
-            onPress: () => {
-              setActiveTab('events');
-              setMenuVisible(false);
-            },
-          },
-          {
-            icon: 'shopping-bag',
-            label: 'Marketplace',
-            description: 'Buy & sell',
-            onPress: () => {
-              setActiveTab('marketplace');
-              setMenuVisible(false);
-            },
-          },
+          { label: 'Explore', onPress: () => { setActiveTab('explore'); setMenuVisible(false); } },
+          { label: 'Events', onPress: () => { setActiveTab('events'); setMenuVisible(false); } },
+          { label: 'Marketplace', onPress: () => { setActiveTab('marketplace'); setMenuVisible(false); } },
         ],
       },
       {
         title: 'Dashboard',
         items: [
-          {
-            icon: 'layout-dashboard',
-            label: 'My Dashboard',
-            description: 'Manage your listings',
-            onPress: () => {
-              setMenuVisible(false);
-              navigation.navigate('MyDashboard');
-            },
-          },
-          {
-            icon: 'heart',
-            label: 'Favourites',
-            description: 'Your saved places',
-            onPress: () => {
-              setActiveTab('saved');
-              setMenuVisible(false);
-            },
-          },
-          {
-            icon: 'wallet',
-            label: 'Wallet',
-            description: 'Manage funds',
-            onPress: () => {
-              setActiveTab('wallet');
-              setMenuVisible(false);
-            },
-          },
-          {
-            icon: 'message-circle',
-            label: 'Messages',
-            description: 'Your conversations',
-            onPress: () => {
-              setActiveTab('messages');
-              setMenuVisible(false);
-            },
-          },
+          { label: 'My Dashboard', onPress: () => { setMenuVisible(false); navigation.navigate('MyDashboard'); } },
+          { label: 'Saved', onPress: () => { setActiveTab('saved'); setMenuVisible(false); } },
+          { label: 'Wallet', onPress: () => { setActiveTab('wallet'); setMenuVisible(false); } },
+          { label: 'Messages', onPress: () => { setActiveTab('messages'); setMenuVisible(false); } },
         ],
       },
       {
         title: 'Support',
         items: [
-          {
-            icon: 'share-2',
-            label: 'Share CitiTour',
-            description: 'Invite friends',
-            onPress: () => {
-              setMenuVisible(false);
-              // Share functionality
-            },
-          },
-          {
-            icon: 'message-square',
-            label: 'Feedback',
-            description: 'Help us improve',
-            onPress: () => {
-              setMenuVisible(false);
-              // Feedback functionality
-            },
-          },
-          {
-            icon: 'settings',
-            label: 'Settings & Privacy',
-            description: 'Account settings',
-            onPress: () => {
-              setActiveTab('settings');
-              setMenuVisible(false);
-            },
-          },
-          {
-            icon: 'help-circle',
-            label: 'Contact Support',
-            description: 'Get help',
-            onPress: () => {
-              setMenuVisible(false);
-              // Support functionality
-            },
-          },
+          { label: 'Share CitiTour', onPress: () => setMenuVisible(false) },
+          { label: 'Feedback', onPress: () => setMenuVisible(false) },
+          { label: 'Settings', onPress: () => { setActiveTab('settings'); setMenuVisible(false); } },
+          { label: 'Contact Support', onPress: () => setMenuVisible(false) },
         ],
       },
     ],
     [navigation]
   );
 
-  const handleTabChange = (tabName: string) => {
-    setActiveTab(tabName);
-  };
-
   const navigateToTab = (tab: MainTabId) => {
     if (tab === 'settings') setActiveTab('profile');
     else setActiveTab(tab);
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    content: {
-      flex: 1,
-      paddingBottom: 72,
-    },
-  });
-
   const renderScreen = () => {
     switch (activeTab) {
-      case 'explore':
-        return <HomeStack />;
-      case 'events':
-        return <EventsStack />;
-      case 'saved':
-        return <FavouritesStack />;
-      case 'messages':
-        return <ConversationsStack />;
+      case 'explore': return <HomeStack />;
+      case 'events': return <EventsStack />;
+      case 'saved': return <FavouritesStack />;
+      case 'messages': return <ConversationsStack />;
       case 'profile':
-      case 'settings':
-        return <SettingsScreen />;
-      case 'marketplace':
-        return <MarketplaceStack />;
-      case 'wallet':
-        return <WalletStack />;
-      default:
-        return <HomeStack />;
+      case 'settings': return <SettingsScreen />;
+      case 'marketplace': return <MarketplaceStack />;
+      case 'wallet': return <WalletStack />;
+      default: return <HomeStack />;
     }
   };
 
   return (
     <MainNavigationProvider value={{ openMenu: () => setMenuVisible(true), setActiveTab: navigateToTab }}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>{renderScreen()}</View>
 
-        <FloatingTabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
+        <FloatingTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         <SideMenu
           visible={menuVisible}
           onClose={() => setMenuVisible(false)}
-          userName={user?.displayName || 'User'}
+          userName={user?.name || 'User'}
           userEmail={user?.email || 'user@example.com'}
           sections={menuSections}
-          onLogout={() => {
-            setMenuVisible(false);
-            logout();
-          }}
+          onLogout={() => { setMenuVisible(false); logout(); }}
         />
       </View>
     </MainNavigationProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { flex: 1, paddingBottom: 72 },
+});

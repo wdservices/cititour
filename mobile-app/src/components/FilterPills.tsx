@@ -24,7 +24,7 @@ export function FilterPills({ options, active, onChange, style }: FilterPillsPro
           <TouchableOpacity
             key={option}
             onPress={() => onChange(option)}
-            activeOpacity={0.7}
+            activeOpacity={0.6}
             style={[
               styles.pill,
               isActive
@@ -48,21 +48,14 @@ export function FilterPills({ options, active, onChange, style }: FilterPillsPro
 }
 
 const styles = StyleSheet.create({
-  row: {
-    paddingHorizontal: 20,
-    gap: 8,
-    paddingVertical: 4,
-  },
+  row: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
   pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  label: { fontSize: 13, fontWeight: '600' },
 });
 
 export default FilterPills;

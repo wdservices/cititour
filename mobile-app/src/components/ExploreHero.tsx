@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions, Animated,
 } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { colors as themeColors } from '../theme/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: W } = Dimensions.get('window');
 const HERO_H = Math.round(W * 0.62);
@@ -40,6 +40,7 @@ interface ExploreHeroProps {
 }
 
 export default function ExploreHero({ cityLabel }: ExploreHeroProps) {
+  const { colors } = useTheme();
   const [index, setIndex] = useState(0);
   const fade = useRef(new Animated.Value(1)).current;
 
@@ -50,13 +51,8 @@ export default function ExploreHero({ cityLabel }: ExploreHeroProps) {
     });
   }, [fade]);
 
-  const goNext = useCallback(() => {
-    go((index + 1) % SLIDES.length);
-  }, [go, index]);
-
-  const goPrev = useCallback(() => {
-    go(index === 0 ? SLIDES.length - 1 : index - 1);
-  }, [go, index]);
+  const goNext = useCallback(() => go((index + 1) % SLIDES.length), [go, index]);
+  const goPrev = useCallback(() => go(index === 0 ? SLIDES.length - 1 : index - 1), [go, index]);
 
   useEffect(() => {
     const t = setInterval(goNext, 6000);
@@ -81,7 +77,7 @@ export default function ExploreHero({ cityLabel }: ExploreHeroProps) {
               <TouchableOpacity
                 key={s.id}
                 onPress={() => go(i)}
-                style={[styles.dot, i === index && styles.dotActive]}
+                style={[styles.dot, i === index && { backgroundColor: colors.primary, width: 22 }]}
                 accessibilityLabel={`Slide ${i + 1}`}
               />
             ))}
@@ -103,82 +99,25 @@ const styles = StyleSheet.create({
   hero: { height: HERO_H, borderRadius: 20, overflow: 'hidden' },
   image: { flex: 1, justifyContent: 'flex-end' },
   imageRadius: { borderRadius: 20 },
-  overlayTop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
-  overlayBottom: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    top: '40%',
-  },
+  overlayTop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
+  overlayBottom: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', top: '40%' },
   content: { padding: 20, zIndex: 2 },
   eyebrow: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
+    color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '700',
+    letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6,
   },
-  title: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 30,
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-    maxWidth: '92%',
-  },
-  dots: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    flexDirection: 'row',
-    gap: 6,
-    zIndex: 3,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-  },
-  dotActive: {
-    width: 22,
-    backgroundColor: themeColors.primary,
-  },
+  title: { color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5, lineHeight: 30 },
+  subtitle: { color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 20, marginTop: 8, maxWidth: '92%' },
+  dots: { position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', gap: 6, zIndex: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
   navLeft: {
-    position: 'absolute',
-    left: 12,
-    top: '45%',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 3,
+    position: 'absolute', left: 12, top: '45%', width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center', zIndex: 3,
   },
   navRight: {
-    position: 'absolute',
-    right: 12,
-    top: '45%',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 3,
+    position: 'absolute', right: 12, top: '45%', width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center', zIndex: 3,
   },
 });

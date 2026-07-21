@@ -10,9 +10,6 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
-// Same shape as the website's AuthContext (contexts/AuthContext.tsx) —
-// user.id / user.name, not Firebase's native user.uid / user.displayName —
-// so any shared logic (like chat.ts) behaves identically on both platforms.
 interface User {
   id: string;
   name: string;
@@ -26,6 +23,7 @@ interface AuthContextType {
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmailPassword: (email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -39,10 +37,6 @@ function mapFirebaseUser(firebaseUser: FirebaseUser): User {
   };
 }
 
-// Same fix as the website's AuthContext — mirrors the Auth session into a
-// users/{uid} Firestore doc, since Firebase Auth itself can't be listed or
-// counted by a client-side SDK, and the admin dashboard needs a real
-// collection to read.
 async function mirrorUserToFirestore(firebaseUser: FirebaseUser) {
   try {
     const userRef = doc(db, 'users', firebaseUser.uid);
@@ -87,13 +81,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
+  const loginWithGoogle = async () => {
+    // Expo Go / bare workflow: prompt-based Google sign-in via Firebase popup.
+    // In a native EAS build, replace with expo-auth-session + GoogleSignIn.
+    throw new Error('Google sign-in requires a native build with expo-auth-session.');
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, loginWithEmail, signUpWithEmailPassword, resetPassword, logout }}
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        loginWithEmail,
+        signUpWithEmailPassword,
+        resetPassword,
+        loginWithGoogle,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -102,6 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }
