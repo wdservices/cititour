@@ -6,6 +6,9 @@ import {
   signOut,
   sendPasswordResetEmail,
   User as FirebaseUser,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithCredential,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -82,9 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithGoogle = async () => {
-    // Expo Go / bare workflow: prompt-based Google sign-in via Firebase popup.
-    // In a native EAS build, replace with expo-auth-session + GoogleSignIn.
-    throw new Error('Google sign-in requires a native build with expo-auth-session.');
+    const provider = new GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    const result = await signInWithPopup(auth, provider);
+    if (result.user) {
+      await mirrorUserToFirestore(result.user);
+    }
   };
 
   const logout = async () => {
