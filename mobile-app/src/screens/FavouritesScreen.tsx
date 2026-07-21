@@ -3,9 +3,10 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Trash2, MapPin, Bookmark } from 'lucide-react-native';
+import { Trash2, MapPin, Bookmark, ArrowLeft } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -25,6 +26,7 @@ export default function FavouritesScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
+  const { setActiveTab } = useMainNavigation();
   const [favourites, setFavourites] = useState<FavouriteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,8 +67,15 @@ export default function FavouritesScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
-        <Text style={[s.headerTitle, { color: colors.foreground }]}>Saved</Text>
-        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Your bookmarks</Text>
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => setActiveTab('explore')} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.headerTitle, { color: colors.foreground }]}>Saved</Text>
+            <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Your bookmarks</Text>
+          </View>
+        </View>
       </View>
 
       {loading ? (
@@ -129,6 +138,8 @@ export default function FavouritesScreen() {
 const s = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  backBtn: { padding: 4 },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   headerSub: { fontSize: 13, marginTop: 2 },
   listContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 10 },

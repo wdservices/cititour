@@ -16,6 +16,7 @@ import ConversationsScreen from '../screens/ConversationsScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import MyDashboardScreen from '../screens/MyDashboardScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
 
 import MainTabsContent from './MainTabsContent';
 
@@ -66,6 +67,7 @@ function MarketplaceStackScreen() {
   return (
     <MarketplaceStack.Navigator screenOptions={{ headerShown: false }}>
       <MarketplaceStack.Screen name="MarketplaceMain" component={MarketplaceScreen} />
+      <MarketplaceStack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ animationEnabled: true }} />
     </MarketplaceStack.Navigator>
   );
 }

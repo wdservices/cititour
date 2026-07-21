@@ -80,7 +80,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           <View style={s.header}>
-            <Image source={require('../../assets/cititour-logo.png')} style={s.logo} resizeMode="contain" />
+            <Image source={require('../../assets/cititour-logo.png')} style={[s.logo, { tintColor: '#1E88E5' }]} resizeMode="contain" />
             <Text style={s.brand}>CitiTour</Text>
             <Text style={s.subtitle}>
               {isSignUp ? 'Create your account to explore Nigeria' : 'Welcome back — discover your city'}

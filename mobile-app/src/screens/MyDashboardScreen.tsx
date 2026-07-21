@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, MapPin, CreditCard as Edit3, Trash2, Package } from 'lucide-react-native';
+import { Plus, MapPin, CreditCard as Edit3, Trash2, Package, ArrowLeft } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,6 +64,9 @@ export default function MyDashboardScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+        </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>My Dashboard</Text>
         <TouchableOpacity
           style={[s.addBtn, { backgroundColor: colors.primary }]}
@@ -158,8 +161,9 @@ export default function MyDashboardScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1, gap: 12 },
+  backBtn: { padding: 4 },
+  headerTitle: { flex: 1, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   addBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { paddingHorizontal: 16, paddingTop: 16 },
 

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getAuth, browserLocalPersistence } from 'firebase/auth';
+import { initializeAuth, getAuth, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 let auth;
 try {
   if (Platform.OS === 'web') {
-    auth = initializeAuth(app, { persistence: browserLocalPersistence });
+    auth = initializeAuth(app, { persistence: inMemoryPersistence });
   } else {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getReactNativePersistence } = require('firebase/auth');

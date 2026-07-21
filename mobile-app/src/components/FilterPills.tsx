@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
+import { ScrollView, TouchableOpacity, Text, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface FilterPillsProps {
@@ -13,42 +13,45 @@ export function FilterPills({ options, active, onChange, style }: FilterPillsPro
   const { colors } = useTheme();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[styles.row, style]}
-    >
-      {options.map((option) => {
-        const isActive = option === active;
-        return (
-          <TouchableOpacity
-            key={option}
-            onPress={() => onChange(option)}
-            activeOpacity={0.6}
-            style={[
-              styles.pill,
-              isActive
-                ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                : { backgroundColor: 'transparent', borderColor: colors.border },
-            ]}
-          >
-            <Text
+    <View style={styles.wrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.row, style]}
+      >
+        {options.map((option) => {
+          const isActive = option === active;
+          return (
+            <TouchableOpacity
+              key={option}
+              onPress={() => onChange(option)}
+              activeOpacity={0.6}
               style={[
-                styles.label,
-                { color: isActive ? colors.primaryForeground : colors.mutedForeground },
+                styles.pill,
+                isActive
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: 'transparent', borderColor: colors.border },
               ]}
             >
-              {option}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+              <Text
+                style={[
+                  styles.label,
+                  { color: isActive ? colors.primaryForeground : colors.mutedForeground },
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
+  wrap: { height: 48 },
+  row: { paddingHorizontal: 16, gap: 8, alignItems: 'center', height: 48 },
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 6,

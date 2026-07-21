@@ -3,12 +3,13 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowDown, ArrowUp, Plus, Minus } from 'lucide-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { ArrowDown, ArrowUp, Plus, Minus, ArrowLeft } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { dataCache, cacheKey } from '../lib/cache';
 
 interface Transaction {
   id: string;
@@ -17,23 +18,39 @@ interface Transaction {
   type: 'credit' | 'debit';
 }
 
+interface WalletData {
+  balance: number;
+  transactions: Transaction[];
+}
+
+const WALLET_TTL = 2 * 60 * 1000; // 2 minutes for wallet
+
 export default function WalletScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadWallet = useCallback(async () => {
+  const loadWallet = useCallback(async (force = false) => {
     if (!user?.id) return;
+
+    const key = cacheKey('wallet', user.id);
+    if (!force && dataCache.has(key)) {
+      const cached = dataCache.get<WalletData>(key)!;
+      setBalance(cached.balance);
+      setTransactions(cached.transactions);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const walletRef = doc(db, 'wallets', user.id);
       const walletSnap = await getDoc(walletRef);
-      if (walletSnap.exists()) {
-        setBalance(walletSnap.data().balance || 0);
-      }
+      const bal = walletSnap.exists() ? (walletSnap.data().balance || 0) : 0;
 
       const txRef = collection(db, 'wallets', user.id, 'transactions');
       const txSnap = await getDocs(query(txRef, orderBy('createdAt', 'desc')));
@@ -47,6 +64,9 @@ export default function WalletScreen() {
           type: amount >= 0 ? ('credit' as const) : ('debit' as const),
         };
       });
+
+      dataCache.set(key, { balance: bal, transactions: txs }, WALLET_TTL);
+      setBalance(bal);
       setTransactions(txs);
     } catch {
       setBalance(0);
@@ -61,8 +81,13 @@ export default function WalletScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
-        <Text style={[s.headerTitle, { color: colors.foreground }]}>Wallet</Text>
-        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Manage your funds</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+        </TouchableOpacity>
+        <View style={s.headerTextWrap}>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>Wallet</Text>
+          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Manage your funds</Text>
+        </View>
       </View>
 
       <ScrollView
@@ -123,7 +148,9 @@ export default function WalletScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1, gap: 12 },
+  backBtn: { padding: 4 },
+  headerTextWrap: { flex: 1 },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   headerSub: { fontSize: 13, marginTop: 2 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 20 },

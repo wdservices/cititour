@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { fmt } from './fmt';
+import { dataCache, cacheKey } from './cache';
 
 export type ExploreListing = {
   id: string;
@@ -12,63 +13,125 @@ export type ExploreListing = {
   rating?: number;
   location?: string;
   price?: string;
+  promoPrice?: string;
+  condition?: string;
+  businessId?: string;
+  ownerId?: string;
+  state?: string;
+  city?: string;
+  lat?: number;
+  lon?: number;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  ticketTypes?: { name: string; price: string | number; quantity: string | number }[];
+  tags?: string[];
+  venue?: string;
   kind: 'business' | 'event' | 'marketplace' | 'property';
 };
 
-function mapBusiness(b: Record<string, unknown> & { id: string }): ExploreListing {
+export type ExploreData = {
+  businesses: ExploreListing[];
+  events: ExploreListing[];
+  marketplace: ExploreListing[];
+  properties: ExploreListing[];
+};
+
+export function mapBusiness(b: Record<string, unknown> & { id: string }): ExploreListing {
+  const ticketTypes = Array.isArray(b.ticketTypes)
+    ? (b.ticketTypes as any[]).map((t) => ({
+        name: fmt(t.name) || 'Ticket',
+        price: typeof t.price === 'number' ? t.price : Number(t.price) || 0,
+        quantity: typeof t.quantity === 'number' ? t.quantity : Number(t.quantity) || 0,
+      }))
+    : undefined;
+
   return {
     id: b.id,
     title: fmt(b.title) || fmt(b.name),
     description: fmt(b.description),
-    image: fmt(b.image) || (Array.isArray(b.images) && b.images[0] ? fmt(b.images[0]) : ''),
+    image: fmt(b.image) || fmt(b.imageUrl) || (Array.isArray(b.images) && b.images[0] ? fmt(b.images[0]) : ''),
     category: fmt(b.category),
     rating: typeof b.rating === 'number' ? b.rating : Number(b.rating) || 0,
     location: fmt(b.location) || fmt(b.city),
     price: fmt(b.price),
+    promoPrice: fmt(b.promoPrice) || undefined,
+    condition: fmt(b.condition) || undefined,
+    businessId: fmt(b.businessId) || undefined,
+    ownerId: fmt(b.ownerId) || fmt(b.userId) || fmt(b.uid) || undefined,
+    state: fmt(b.state) || undefined,
+    city: fmt(b.city) || undefined,
+    lat: typeof b.lat === 'number' ? b.lat : undefined,
+    lon: typeof b.lon === 'number' ? b.lon : undefined,
+    startDate: fmt(b.startDate) || undefined,
+    endDate: fmt(b.endDate) || undefined,
+    startTime: fmt(b.startTime) || undefined,
+    endTime: fmt(b.endTime) || undefined,
+    ticketTypes,
+    tags: Array.isArray(b.tags) ? b.tags.map(fmt).filter(Boolean) : undefined,
+    venue: fmt(b.venue) || undefined,
     kind: 'business',
   };
 }
 
-export function useExploreData() {
-  const [loading, setLoading] = useState(true);
-  const [businesses, setBusinesses] = useState<ExploreListing[]>([]);
-  const [events, setEvents] = useState<ExploreListing[]>([]);
-  const [marketplace, setMarketplace] = useState<ExploreListing[]>([]);
-  const [properties, setProperties] = useState<ExploreListing[]>([]);
-  const [error, setError] = useState<string | null>(null);
+const EXPLORE_CACHE_KEY = cacheKey('explore', 'all');
 
-  const load = useCallback(async () => {
+export function useExploreData() {
+  const cached = dataCache.get<ExploreData>(EXPLORE_CACHE_KEY);
+  const [loading, setLoading] = useState(!cached);
+  const [businesses, setBusinesses] = useState<ExploreListing[]>(cached?.businesses || []);
+  const [events, setEvents] = useState<ExploreListing[]>(cached?.events || []);
+  const [marketplace, setMarketplace] = useState<ExploreListing[]>(cached?.marketplace || []);
+  const [properties, setProperties] = useState<ExploreListing[]>(cached?.properties || []);
+  const [error, setError] = useState<string | null>(null);
+  const fetched = useRef(!!cached);
+
+  const load = useCallback(async (force = false) => {
+    if (!force && dataCache.has(EXPLORE_CACHE_KEY)) {
+      const c = dataCache.get<ExploreData>(EXPLORE_CACHE_KEY)!;
+      setBusinesses(c.businesses);
+      setEvents(c.events);
+      setMarketplace(c.marketplace);
+      setProperties(c.properties);
+      setLoading(false);
+      fetched.current = true;
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const [bizSnap, mktSnap, propSnap] = await Promise.all([
+      const [bizSnap, evtSnap, mktSnap, propSnap] = await Promise.all([
         getDocs(collection(db, 'businesses')),
+        getDocs(collection(db, 'events')),
         getDocs(collection(db, 'marketplace')),
         getDocs(collection(db, 'house_listings')),
       ]);
 
       const allBiz = bizSnap.docs.map((d) => mapBusiness({ id: d.id, ...d.data() }));
-      setBusinesses(
-        allBiz.filter((b) => b.category !== 'Event' && b.category !== 'Events'),
-      );
-      setEvents(
-        allBiz
-          .filter((b) => b.category === 'Event' || b.category === 'Events')
-          .map((b) => ({ ...b, kind: 'event' as const })),
-      );
-      setMarketplace(
-        mktSnap.docs.map((d) => ({
-          ...mapBusiness({ id: d.id, ...d.data() }),
-          kind: 'marketplace' as const,
-        })),
-      );
-      setProperties(
-        propSnap.docs.map((d) => ({
-          ...mapBusiness({ id: d.id, ...d.data() }),
-          kind: 'property' as const,
-          category: fmt(d.data().category) || 'Property',
-        })),
-      );
+      const biz = allBiz.filter((b) => b.category !== 'Event' && b.category !== 'Events');
+      const evt = evtSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'event' as const,
+      }));
+      const mkt = mktSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'marketplace' as const,
+      }));
+      const prop = propSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'property' as const,
+        category: fmt(d.data().category) || 'Property',
+      }));
+
+      dataCache.set<ExploreData>(EXPLORE_CACHE_KEY, { businesses: biz, events: evt, marketplace: mkt, properties: prop });
+
+      setBusinesses(biz);
+      setEvents(evt);
+      setMarketplace(mkt);
+      setProperties(prop);
+      fetched.current = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load listings');
     } finally {
@@ -77,13 +140,14 @@ export function useExploreData() {
   }, []);
 
   useEffect(() => {
-    load();
+    if (!fetched.current) load();
   }, [load]);
 
-  return { loading, error, businesses, events, marketplace, properties, refresh: load };
+  const refresh = useCallback(() => load(true), [load]);
+
+  return { loading, error, businesses, events, marketplace, properties, refresh };
 }
 
-/** Rotate a window of items so hidden listings surface over time */
 export function rotateListingWindow<T>(items: T[], count: number, tick: number, offset = 0): T[] {
   if (items.length === 0) return [];
   if (items.length <= count) return items;

@@ -3,9 +3,10 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapPin, Ticket } from 'lucide-react-native';
+import { MapPin, Ticket, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { FilterPills } from '../components/FilterPills';
 import { useExploreData } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';
@@ -16,6 +17,7 @@ export default function EventsScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const { setActiveTab } = useMainNavigation();
   const [activeFilter, setActiveFilter] = useState('All');
   const { events, loading } = useExploreData();
 
@@ -27,8 +29,15 @@ export default function EventsScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
-        <Text style={[s.headerTitle, { color: colors.foreground }]}>Events</Text>
-        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Upcoming in your city</Text>
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => setActiveTab('explore')} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.headerTitle, { color: colors.foreground }]}>Events</Text>
+            <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Upcoming in your city</Text>
+          </View>
+        </View>
       </View>
 
       <FilterPills options={FILTERS} active={activeFilter} onChange={setActiveFilter} />
@@ -53,7 +62,28 @@ export default function EventsScreen() {
             <TouchableOpacity
               style={[s.eventCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id, businessName: item.title })}
+              onPress={() => navigation.navigate('BusinessDetail', {
+                businessId: item.id,
+                businessName: item.title,
+                isEvent: true,
+                eventData: {
+                  startDate: item.startDate,
+                  startTime: item.startTime,
+                  endDate: item.endDate,
+                  endTime: item.endTime,
+                  ticketTypes: item.ticketTypes,
+                  tags: item.tags,
+                  venue: item.venue,
+                  lat: item.lat,
+                  lon: item.lon,
+                  image: item.image,
+                  description: item.description,
+                  location: item.location,
+                  price: item.price,
+                  category: item.category,
+                  ownerId: item.ownerId,
+                },
+              })}
             >
               <View style={[s.eventImage, { backgroundColor: colors.muted }]}>
                 <Image
@@ -97,6 +127,8 @@ export default function EventsScreen() {
 const s = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  backBtn: { padding: 4 },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   headerSub: { fontSize: 13, marginTop: 2 },
   listContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 12 },

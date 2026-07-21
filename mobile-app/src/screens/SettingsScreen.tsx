@@ -3,14 +3,16 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Sun, Moon, ChevronRight, LogOut } from 'lucide-react-native';
+import { Sun, Moon, ChevronRight, LogOut, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SettingsScreen() {
   const { colors, themeMode, setThemeMode } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
+  const { setActiveTab } = useMainNavigation();
 
   const accountItems = [
     { label: 'Notifications' },
@@ -22,7 +24,12 @@ export default function SettingsScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
-        <Text style={[s.headerTitle, { color: colors.foreground }]}>Settings</Text>
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => setActiveTab('explore')} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>Settings</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={[s.scrollContent, { paddingBottom: insets.bottom + 100 }]} showsVerticalScrollIndicator={false}>
@@ -97,6 +104,8 @@ export default function SettingsScreen() {
 const s = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  backBtn: { padding: 4 },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 20 },
 

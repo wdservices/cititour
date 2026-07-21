@@ -46,6 +46,7 @@ export default function MainTabsContent({
         title: 'Discover',
         items: [
           { label: 'Explore', onPress: () => { setActiveTab('explore'); setMenuVisible(false); } },
+          { label: 'Businesses', onPress: () => { setActiveTab('explore'); setMenuVisible(false); } },
           { label: 'Events', onPress: () => { setActiveTab('events'); setMenuVisible(false); } },
           { label: 'Marketplace', onPress: () => { setActiveTab('marketplace'); setMenuVisible(false); } },
         ],

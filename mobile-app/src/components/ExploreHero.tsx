@@ -64,7 +64,7 @@ export default function ExploreHero({ cityLabel }: ExploreHeroProps) {
   return (
     <View style={styles.wrap}>
       <Animated.View style={[styles.hero, { opacity: fade }]}>
-        <ImageBackground source={{ uri: slide.image }} style={styles.image} imageStyle={styles.imageRadius}>
+        <ImageBackground source={{ uri: slide.image }} style={styles.image} imageStyle={styles.imageRadius} resizeMode="cover">
           <View style={styles.overlayTop} />
           <View style={styles.overlayBottom} />
           <View style={styles.content}>
@@ -96,7 +96,7 @@ export default function ExploreHero({ cityLabel }: ExploreHeroProps) {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 16, marginBottom: 8 },
-  hero: { height: HERO_H, borderRadius: 20, overflow: 'hidden' },
+  hero: { height: HERO_H, borderRadius: 20, overflow: 'hidden', backgroundColor: '#1a1a1a' },
   image: { flex: 1, justifyContent: 'flex-end' },
   imageRadius: { borderRadius: 20 },
   overlayTop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },

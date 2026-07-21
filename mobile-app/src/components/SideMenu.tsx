@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView, Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../contexts/ThemeContext';
+import { ChevronRight } from 'lucide-react-native';
 
 const DRAWER_W = Math.min(Dimensions.get('window').width * 0.82, 320);
+const BLUE = '#1E88E5';
 
 interface MenuSection {
   title: string;
@@ -24,29 +25,37 @@ interface SideMenuProps {
 export const SideMenu: React.FC<SideMenuProps> = ({
   visible, onClose, userName = 'User', userEmail = 'user@example.com', sections, onLogout,
 }) => {
-  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(-DRAWER_W)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(slide, {
-      toValue: visible ? 0 : -DRAWER_W,
-      duration: visible ? 280 : 220,
-      useNativeDriver: true,
-    }).start();
-  }, [visible, slide]);
+    Animated.parallel([
+      Animated.timing(slide, {
+        toValue: visible ? 0 : -DRAWER_W,
+        duration: visible ? 280 : 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: visible ? 1 : 0,
+        duration: visible ? 280 : 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [visible, slide, backdropOpacity]);
 
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay}>
+    <View style={styles.absoluteFill}>
+      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={styles.backdropPress} onPress={onClose} />
+      </Animated.View>
+
       <Animated.View
-        style={[
-          styles.drawer,
-          { width: DRAWER_W, backgroundColor: colors.background, transform: [{ translateX: slide }] },
-        ]}
+        style={[styles.drawer, { transform: [{ translateX: slide }] }]}
       >
-        <View style={[styles.header, { paddingTop: insets.top + 24, backgroundColor: colors.primary }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -59,64 +68,87 @@ export const SideMenu: React.FC<SideMenuProps> = ({
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {sections.map((section, idx) => (
             <View key={idx} style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{section.title}</Text>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
               {section.items.map((item, itemIdx) => (
                 <TouchableOpacity
                   key={itemIdx}
                   style={styles.menuItem}
                   onPress={item.onPress}
-                  activeOpacity={0.5}
+                  activeOpacity={0.6}
                 >
-                  <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                  <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
                 </TouchableOpacity>
               ))}
             </View>
           ))}
         </ScrollView>
 
-        <View style={[styles.footer, { borderTopColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity onPress={onLogout} activeOpacity={0.5} style={styles.logoutBtn}>
-            <Text style={[styles.logoutText, { color: colors.destructive }]}>Log out</Text>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+          <TouchableOpacity onPress={onLogout} activeOpacity={0.6} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>Log out</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
-
-      <TouchableOpacity
-        style={styles.backdrop}
-        onPress={onClose}
-        activeOpacity={1}
-        accessibilityLabel="Close menu"
-      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, flexDirection: 'row' },
-  drawer: { height: '100%' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' },
-  header: { paddingHorizontal: 24, paddingBottom: 28 },
+  absoluteFill: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 999,
+    elevation: 999,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15,23,42,0.45)',
+  },
+  backdropPress: {
+    flex: 1,
+  },
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: DRAWER_W,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 20,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    backgroundColor: BLUE,
+  },
   avatar: {
-    width: 48, height: 48, borderRadius: 24,
+    width: 52, height: 52, borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
   },
-  avatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  avatarText: { color: '#fff', fontSize: 20, fontWeight: '800' },
   userName: { color: '#fff', fontSize: 18, fontWeight: '700' },
   userEmail: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 },
   content: { flex: 1, paddingTop: 16 },
-  sectionContainer: { marginBottom: 24 },
+  sectionContainer: { marginBottom: 20 },
   sectionTitle: {
-    fontSize: 11, fontWeight: '700',
-    paddingHorizontal: 24, marginBottom: 8,
+    fontSize: 11, fontWeight: '700', color: '#94A3B8',
+    paddingHorizontal: 24, marginBottom: 6,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
-  menuItem: { paddingHorizontal: 24, paddingVertical: 13 },
-  menuLabel: { fontSize: 15, fontWeight: '500' },
-  footer: { borderTopWidth: 1, paddingHorizontal: 24, paddingTop: 16 },
-  logoutBtn: { paddingVertical: 8 },
-  logoutText: { fontSize: 15, fontWeight: '600' },
+  menuItem: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, paddingVertical: 14,
+  },
+  menuLabel: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  footer: { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingHorizontal: 24, paddingTop: 16 },
+  logoutBtn: { paddingVertical: 8, alignItems: 'center' },
+  logoutText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },
 });
 
 export default SideMenu;

@@ -3,8 +3,10 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Heart, MapPin } from 'lucide-react-native';
+import { Heart, MapPin, ArrowLeft } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { FilterPills } from '../components/FilterPills';
 import { useExploreData } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';
@@ -14,6 +16,8 @@ const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Vehicles', 'Proper
 export default function MarketplaceScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
+  const { setActiveTab } = useMainNavigation();
   const [activeCategory, setActiveCategory] = useState('All');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const { marketplace, properties, loading } = useExploreData();
@@ -37,8 +41,15 @@ export default function MarketplaceScreen() {
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <View style={[s.header, { paddingTop: insets.top + 6, borderBottomColor: colors.border }]}>
-        <Text style={[s.headerTitle, { color: colors.foreground }]}>Marketplace</Text>
-        <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Products & stays</Text>
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => setActiveTab('explore')} style={s.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <ArrowLeft size={22} color={colors.foreground} strokeWidth={2} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.headerTitle, { color: colors.foreground }]}>Marketplace</Text>
+            <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Products & stays</Text>
+          </View>
+        </View>
       </View>
 
       <FilterPills options={CATEGORIES} active={activeCategory} onChange={setActiveCategory} />
@@ -67,6 +78,19 @@ export default function MarketplaceScreen() {
               <TouchableOpacity
                 style={[s.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 activeOpacity={0.85}
+                onPress={() => navigation.navigate('ProductDetail', {
+                  productId: item.id,
+                  productTitle: item.title,
+                  productImage: item.image,
+                  productCategory: item.category,
+                  productPrice: item.price,
+                  productPromoPrice: item.promoPrice,
+                  productCondition: item.condition,
+                  productLocation: item.location,
+                  productDescription: item.description,
+                  productBusinessId: item.businessId,
+                  productOwnerId: item.ownerId,
+                })}
               >
                 <View style={[s.productImage, { backgroundColor: colors.muted }]}>
                   <Image
@@ -119,6 +143,8 @@ export default function MarketplaceScreen() {
 const s = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  backBtn: { padding: 4 },
   headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
   headerSub: { fontSize: 13, marginTop: 2 },
   gridContent: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 10 },
