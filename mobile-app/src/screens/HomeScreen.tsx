@@ -181,7 +181,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           items={visibleBiz}
           loading={loading}
           viewAllLabel="View all"
-          onViewAll={() => setActiveTab('explore')}
+          onViewAll={() => navigation.navigate('BusinessesList')}
           onPressItem={openListing}
           likedIds={likedIds}
           onToggleLike={toggleLike}

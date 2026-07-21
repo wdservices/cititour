@@ -17,6 +17,7 @@ import ChatDetailScreen from '../screens/ChatDetailScreen';
 import MyDashboardScreen from '../screens/MyDashboardScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
+import BusinessesScreen from '../screens/BusinessesScreen';
 
 import MainTabsContent from './MainTabsContent';
 
@@ -32,6 +33,7 @@ function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="BusinessesList" component={BusinessesScreen} options={{ animationEnabled: true }} />
       <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
     </HomeStack.Navigator>
   );
@@ -112,6 +114,7 @@ export default function RootNavigator() {
         {isAuthenticated ? (
           <>
             <RootStack.Screen name="MainTabs" component={MainTabs} />
+            <RootStack.Screen name="BusinessesList" component={BusinessesScreen} options={{ animationEnabled: true }} />
             <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ animationEnabled: true }} />
             <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} options={{ animationEnabled: true }} />
             <RootStack.Screen name="Favourites" component={FavouritesScreen} options={{ animationEnabled: true }} />
