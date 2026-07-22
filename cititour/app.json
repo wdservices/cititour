@@ -17,7 +17,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E88E5"
       },
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.cititour.app",
@@ -26,6 +31,15 @@
         "NSLocationWhenInUseUsageDescription": "CitiTour uses your location to show hotels, restaurants and events near you, and to switch to your current city automatically."
       }
     },
-    "plugins": ["expo-location", "expo-font"]
+    "plugins": [
+      "expo-location",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "017bffc2-8175-4c32-afbf-7f16a54139d1"
+      }
+    },
+    "owner": "spellz49"
   }
 }
