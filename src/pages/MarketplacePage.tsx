@@ -10,6 +10,21 @@ import SEO from "@/components/SEO";
 import { useMarketplaceItems, fmt } from "@/lib/useFirestore";
 import { getMockImage } from "@/lib/mockImages";
 
+function isRecentlyListed(createdAt?: any): boolean {
+  if (!createdAt) return false;
+  try {
+    let ts: number;
+    if (typeof createdAt === "string") ts = new Date(createdAt).getTime();
+    else if (typeof createdAt === "number") ts = createdAt;
+    else if (createdAt?.seconds) ts = createdAt.seconds * 1000;
+    else return false;
+    if (isNaN(ts)) return false;
+    return Date.now() - ts < 24 * 60 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
 const PLACEHOLDER_IMG = "/placeholder.svg";
 
 const categories = [
@@ -44,6 +59,7 @@ const MarketplacePage = () => {
       promoPrice: fmt(raw.promoPrice) || "",
       category: String(raw.category || "Other"),
       rating: raw.rating || 0,
+      createdAt: raw.createdAt,
     }));
   }, [rawItems]);
 
@@ -268,6 +284,13 @@ const MarketplacePage = () => {
                     >
                       <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
                     </button>
+                    {isRecentlyListed(item.createdAt) && (
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider bg-emerald-500 text-white">
+                          Just Listed
+                        </span>
+                      </div>
+                    )}
                     {item.badge && (
                       <div className="absolute bottom-3 left-3">
                         <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>

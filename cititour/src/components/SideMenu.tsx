@@ -3,14 +3,17 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView, Pressable, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight } from 'lucide-react-native';
+import {
+  ChevronRight, Compass, Building2, Calendar, ShoppingBag, LayoutDashboard,
+  Bookmark, Wallet, MessageCircle, Share2, MessageSquare, Settings, Headphones,
+} from 'lucide-react-native';
 
 const DRAWER_W = Math.min(Dimensions.get('window').width * 0.82, 320);
 const BLUE = '#1E88E5';
 
 interface MenuSection {
   title: string;
-  items: Array<{ label: string; onPress: () => void }>;
+  items: Array<{ label: string; onPress: () => void; icon?: any }>;
 }
 
 interface SideMenuProps {
@@ -83,8 +86,11 @@ export const SideMenu: React.FC<SideMenuProps> = ({
                   onPress={item.onPress}
                   activeOpacity={0.6}
                 >
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                  <ChevronRight size={16} color="#94A3B8" strokeWidth={2} />
+                  <View style={styles.menuItemLeft}>
+                    {item.icon ? <item.icon size={18} color="#64748B" strokeWidth={2} /> : null}
+                    <Text style={styles.menuLabel}>{item.label}</Text>
+                  </View>
+                  <ChevronRight size={16} color="#CBD5E1" strokeWidth={2} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -149,15 +155,18 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingTop: 16 },
   sectionContainer: { marginBottom: 20 },
   sectionTitle: {
-    fontSize: 11, fontWeight: '700', color: '#94A3B8',
+    fontSize: 10, fontWeight: '700', color: '#94A3B8',
     paddingHorizontal: 24, marginBottom: 6,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 24, paddingVertical: 14,
+    paddingHorizontal: 24, paddingVertical: 11,
   },
-  menuLabel: { fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  menuItemLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+  },
+  menuLabel: { fontSize: 13, fontWeight: '600', color: '#334155' },
   footer: { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingHorizontal: 24, paddingTop: 16 },
   logoutBtn: { paddingVertical: 8, alignItems: 'center' },
   logoutText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },

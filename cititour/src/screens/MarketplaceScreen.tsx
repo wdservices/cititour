@@ -10,6 +10,7 @@ import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { FilterPills } from '../components/FilterPills';
 import { useExploreData } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';
+import { formatPrice, parsePrice, discountPercent, isRecentlyListed } from '../lib/formatPrice';
 
 const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Vehicles', 'Property'];
 
@@ -98,6 +99,15 @@ export default function MarketplaceScreen() {
                     style={StyleSheet.absoluteFillObject}
                     resizeMode="cover"
                   />
+                  {isRecentlyListed(item.createdAt) ? (
+                    <View style={s.justListedBadge}>
+                      <Text style={s.justListedText}>Just Listed</Text>
+                    </View>
+                  ) : discountPercent(item.price, item.promoPrice) > 0 ? (
+                    <View style={[s.discountBadge, { backgroundColor: colors.destructive }]}>
+                      <Text style={s.discountBadgeText}>-{discountPercent(item.price, item.promoPrice)}%</Text>
+                    </View>
+                  ) : null}
                   <TouchableOpacity
                     style={s.heartBtn}
                     onPress={() => toggleLike(item.id)}
@@ -126,9 +136,22 @@ export default function MarketplaceScreen() {
                       </Text>
                     </View>
                   ) : null}
-                  <Text style={[s.productPrice, { color: colors.primary }]}>
-                    {item.price || 'Price on request'}
-                  </Text>
+                  <View style={s.priceRow}>
+                    {parsePrice(item.promoPrice) > 0 && parsePrice(item.promoPrice) < parsePrice(item.price) ? (
+                      <>
+                        <Text style={[s.productPriceStrikethrough, { color: colors.mutedForeground }]}>
+                          {formatPrice(item.price)}
+                        </Text>
+                        <Text style={[s.productPrice, { color: colors.primary }]}>
+                          {formatPrice(item.promoPrice)}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text style={[s.productPrice, { color: colors.primary }]}>
+                        {item.price ? formatPrice(item.price) : 'Price on request'}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
             );
@@ -155,12 +178,23 @@ const s = StyleSheet.create({
     position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center',
   },
+  discountBadge: {
+    position: 'absolute', top: 8, left: 8, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  discountBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  justListedBadge: {
+    position: 'absolute', top: 8, left: 8, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+    backgroundColor: '#10B981',
+  },
+  justListedText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
   productContent: { padding: 10 },
   productCat: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
   productName: { fontSize: 13, fontWeight: '700', marginTop: 2 },
   productLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4 },
   productLocation: { fontSize: 11, flex: 1 },
-  productPrice: { fontSize: 13, fontWeight: '800', marginTop: 6 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 6 },
+  productPrice: { fontSize: 13, fontWeight: '800' },
+  productPriceStrikethrough: { fontSize: 11, fontWeight: '500', textDecorationLine: 'line-through' },
   emptyState: { alignItems: 'center', marginTop: 60, gap: 8 },
   emptyTitle: { fontSize: 16, fontWeight: '700' },
   emptyDesc: { fontSize: 13, textAlign: 'center' },

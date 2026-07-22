@@ -28,6 +28,7 @@ export type ExploreListing = {
   ticketTypes?: { name: string; price: string | number; quantity: string | number }[];
   tags?: string[];
   venue?: string;
+  createdAt?: string;
   kind: 'business' | 'event' | 'marketplace' | 'property';
 };
 
@@ -71,6 +72,16 @@ export function mapBusiness(b: Record<string, unknown> & { id: string }): Explor
     ticketTypes,
     tags: Array.isArray(b.tags) ? b.tags.map(fmt).filter(Boolean) : undefined,
     venue: fmt(b.venue) || undefined,
+    createdAt: (() => {
+      const v = b.createdAt;
+      if (!v) return undefined;
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number') return new Date(v).toISOString();
+      if (v && typeof v === 'object' && 'seconds' in v) {
+        return new Date((v as any).seconds * 1000).toISOString();
+      }
+      return fmt(v) || undefined;
+    })(),
     kind: 'business',
   };
 }

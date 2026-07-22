@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ensureChatExists } from '../lib/chat';
 import { getMockImage } from '../lib/mockImages';
 import { useProductDetail } from '../lib/useProductDetail';
+import { formatPrice, parsePrice } from '../lib/formatPrice';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,8 +61,7 @@ export default function ProductDetailScreen({ route }: any) {
   };
 
   const heroImage = productImage || getMockImage(productCategory);
-  const hasPromo = productPromoPrice && productPrice &&
-    Number(productPromoPrice.replace(/[^0-9]/g, '')) < Number(productPrice.replace(/[^0-9]/g, ''));
+  const hasPromo = parsePrice(productPromoPrice) > 0 && parsePrice(productPromoPrice) < parsePrice(productPrice);
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -121,11 +121,11 @@ export default function ProductDetailScreen({ route }: any) {
             <View style={s.priceRow}>
               {hasPromo ? (
                 <>
-                  <Text style={[s.priceOriginal, { color: colors.mutedForeground }]}>{productPrice}</Text>
-                  <Text style={[s.pricePromo, { color: colors.primary }]}>{productPromoPrice}</Text>
+                  <Text style={[s.priceOriginal, { color: colors.mutedForeground }]}>{formatPrice(productPrice)}</Text>
+                  <Text style={[s.pricePromo, { color: colors.primary }]}>{formatPrice(productPromoPrice)}</Text>
                 </>
               ) : (
-                <Text style={[s.priceMain, { color: colors.primary }]}>{productPrice || 'Price on request'}</Text>
+                <Text style={[s.priceMain, { color: colors.primary }]}>{productPrice ? formatPrice(productPrice) : 'Price on request'}</Text>
               )}
             </View>
             <View style={[s.secureRow, { backgroundColor: `${colors.primary}15`, borderColor: `${colors.primary}30` }]}>

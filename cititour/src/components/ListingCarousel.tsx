@@ -6,6 +6,7 @@ import { MapPin, Star, Heart, ChevronRight, ArrowRight } from 'lucide-react-nati
 import { useTheme } from '../contexts/ThemeContext';
 import { ExploreListing } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';
+import { isRecentlyListed } from '../lib/formatPrice';
 
 export const LISTING_CARD_WIDTH = 156;
 const IMAGE_H = Math.round((LISTING_CARD_WIDTH * 2) / 3);
@@ -65,6 +66,11 @@ export default function ListingCarousel({
               >
                 <View style={[styles.imageWrap, { backgroundColor: colors.muted }]}>
                   <Image source={{ uri: img }} style={styles.image} resizeMode="cover" />
+                  {isRecentlyListed(item.createdAt) ? (
+                    <View style={styles.justListedBadge}>
+                      <Text style={styles.justListedText}>Just Listed</Text>
+                    </View>
+                  ) : null}
                   <TouchableOpacity
                     style={styles.heartBtn}
                     onPress={() => onToggleLike(item.id)}
@@ -135,6 +141,11 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center',
   },
+  justListedBadge: {
+    position: 'absolute', top: 8, left: 8, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+    backgroundColor: '#10B981',
+  },
+  justListedText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
   rating: {
     position: 'absolute', bottom: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 3,
     paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999,

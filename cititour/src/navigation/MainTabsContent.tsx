@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
+import { Compass, Building2, Calendar, ShoppingBag, LayoutDashboard, Bookmark, Wallet, MessageCircle, Share2, MessageSquare, Settings, Headphones } from 'lucide-react-native';
+import { Share, Linking, Platform } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import FloatingTabBar, { TabItem } from '../components/FloatingTabBar';
@@ -77,28 +79,41 @@ export default function MainTabsContent({
       {
         title: 'Discover',
         items: [
-          { label: 'Explore', onPress: () => { setActiveTab('explore'); setMenuVisible(false); } },
-          { label: 'Businesses', onPress: () => { setMenuVisible(false); navigation.navigate('BusinessesList'); } },
-          { label: 'Events', onPress: () => { setActiveTab('events'); setMenuVisible(false); } },
-          { label: 'Marketplace', onPress: () => { setActiveTab('marketplace'); setMenuVisible(false); } },
+          { label: 'Explore', icon: Compass, onPress: () => { setActiveTab('explore'); setMenuVisible(false); } },
+          { label: 'Businesses', icon: Building2, onPress: () => { setMenuVisible(false); navigation.navigate('BusinessesList'); } },
+          { label: 'Events', icon: Calendar, onPress: () => { setActiveTab('events'); setMenuVisible(false); } },
+          { label: 'Marketplace', icon: ShoppingBag, onPress: () => { setActiveTab('marketplace'); setMenuVisible(false); } },
         ],
       },
       {
         title: 'Dashboard',
         items: [
-          { label: 'My Dashboard', onPress: () => { setMenuVisible(false); navigation.navigate('MyDashboard'); } },
-          { label: 'Saved', onPress: () => { setActiveTab('saved'); setMenuVisible(false); } },
-          { label: 'Wallet', onPress: () => { setActiveTab('wallet'); setMenuVisible(false); } },
-          { label: 'Messages', onPress: () => { setActiveTab('messages'); setMenuVisible(false); } },
+          { label: 'My Dashboard', icon: LayoutDashboard, onPress: () => { setMenuVisible(false); navigation.navigate('MyDashboard'); } },
+          { label: 'Saved', icon: Bookmark, onPress: () => { setActiveTab('saved'); setMenuVisible(false); } },
+          { label: 'Wallet', icon: Wallet, onPress: () => { setActiveTab('wallet'); setMenuVisible(false); } },
+          { label: 'Messages', icon: MessageCircle, onPress: () => { setActiveTab('messages'); setMenuVisible(false); } },
         ],
       },
       {
         title: 'Support',
         items: [
-          { label: 'Share CitiTour', onPress: () => setMenuVisible(false) },
-          { label: 'Feedback', onPress: () => setMenuVisible(false) },
-          { label: 'Settings', onPress: () => { setActiveTab('settings'); setMenuVisible(false); } },
-          { label: 'Contact Support', onPress: () => setMenuVisible(false) },
+          { label: 'Share CitiTour', icon: Share2, onPress: async () => {
+            setMenuVisible(false);
+            try {
+              await Share.share({
+                message: 'Check out CitiTour — discover businesses, events, and marketplace deals near you! https://cititour.ng',
+              });
+            } catch {}
+          }},
+          { label: 'Feedback', icon: MessageSquare, onPress: () => { setMenuVisible(false); navigation.navigate('Feedback'); } },
+          { label: 'Settings', icon: Settings, onPress: () => { setActiveTab('settings'); setMenuVisible(false); } },
+          { label: 'Contact Support', icon: Headphones, onPress: () => {
+            setMenuVisible(false);
+            const email = 'hello.bluewavestech@gmail.com';
+            const subject = encodeURIComponent('CitiTour Support');
+            const body = encodeURIComponent(`Hi CitiTour Support,\n\nI need help with:\n\n\nMy device: ${Platform.OS}\nApp version: 1.0.0`);
+            Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
+          }},
         ],
       },
     ],

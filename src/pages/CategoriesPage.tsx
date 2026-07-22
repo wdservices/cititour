@@ -8,6 +8,21 @@ import { getMockImage } from "@/lib/mockImages";
 import { useRegion } from "@/contexts/RegionContext";
 import { useBusinesses, useEvents, useMarketplaceItems, useHouseListings, fmt } from "@/lib/useFirestore";
 
+function isRecentlyListed(createdAt?: any): boolean {
+  if (!createdAt) return false;
+  try {
+    let ts: number;
+    if (typeof createdAt === "string") ts = new Date(createdAt).getTime();
+    else if (typeof createdAt === "number") ts = createdAt;
+    else if (createdAt?.seconds) ts = createdAt.seconds * 1000;
+    else return false;
+    if (isNaN(ts)) return false;
+    return Date.now() - ts < 24 * 60 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
 type ListingItem = {
   id: string;
   title: string;
@@ -17,6 +32,7 @@ type ListingItem = {
   rating?: number;
   location?: string;
   price?: string;
+  createdAt?: any;
 };
 
 const PLACEHOLDER_IMG = "/placeholder.svg";
@@ -37,7 +53,7 @@ const CategoriesPage = () => {
     return bizData
       .filter((b: any) => b.category !== "Event" && b.category !== "Events")
       .slice(0, 4)
-      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price) }));
+      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price), createdAt: b.createdAt }));
   }, [bizData]);
 
   const events = useMemo(() => {
@@ -45,17 +61,17 @@ const CategoriesPage = () => {
     return bizData
       .filter((b: any) => b.category === "Event" || b.category === "Events")
       .slice(0, 4)
-      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price) }));
+      .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price), createdAt: b.createdAt }));
   }, [bizData]);
 
   const marketplace = useMemo(() => {
     if (!mktData) return [];
-    return mktData.slice(0, 4).map((m: any) => ({ id: m.id, title: fmt(m.title), description: fmt(m.description), image: m.image || "", category: fmt(m.category), rating: m.rating || 0, location: fmt(m.location), price: fmt(m.price) }));
+    return mktData.slice(0, 4).map((m: any) => ({ id: m.id, title: fmt(m.title), description: fmt(m.description), image: m.image || "", category: fmt(m.category), rating: m.rating || 0, location: fmt(m.location), price: fmt(m.price), createdAt: m.createdAt }));
   }, [mktData]);
 
   const properties = useMemo(() => {
     if (!propData) return [];
-    return propData.slice(0, 4).map((p: any) => ({ id: p.id, title: fmt(p.title), description: fmt(p.description), image: p.image || "", category: fmt(p.category), rating: p.rating || 0, location: fmt(p.location), price: fmt(p.price) }));
+    return propData.slice(0, 4).map((p: any) => ({ id: p.id, title: fmt(p.title), description: fmt(p.description), image: p.image || "", category: fmt(p.category), rating: p.rating || 0, location: fmt(p.location), price: fmt(p.price), createdAt: p.createdAt }));
   }, [propData]);
 
   const toggleLike = (id: string) => {
@@ -118,6 +134,13 @@ const CategoriesPage = () => {
                   aria-label={likedIds.has(item.id) ? "Unlike" : "Like"}>
                   <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-red-500 text-red-500" : ""}`} />
                 </button>
+                {isRecentlyListed(item.createdAt) && (
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider bg-emerald-500 text-white">
+                      Just Listed
+                    </span>
+                  </div>
+                )}
                 {item.rating != null && item.rating > 0 && (
                   <div className="absolute bottom-3 left-3 bg-background/80 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /><span className="text-[11px] font-bold text-foreground">{r(item.rating)}</span>
