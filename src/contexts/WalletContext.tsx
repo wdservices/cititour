@@ -69,23 +69,32 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Load wallet data and transactions from Firestore when user changes
   useEffect(() => {
     const loadWallet = async () => {
-      if (!user) return;
-      const walletRef = doc(db, "wallets", user.id);
-      const walletSnap = await getDoc(walletRef);
-      if (walletSnap.exists()) {
-        const data: any = walletSnap.data();
-        setBalance(Number(data.balance || 0));
-      } else {
-        // Initialize wallet doc with zero balance
-        await setDoc(walletRef, {
-          userId: user.id,
-          balance: 0,
-          currency: "NGN",
-          status: "active",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
-        setBalance(0);
+      if (!user) {
+        console.log("[Wallet] No user, skipping load");
+        return;
+      }
+      console.log("[Wallet] Loading wallet for user:", user.id);
+      try {
+        const walletRef = doc(db, "wallets", user.id);
+        const walletSnap = await getDoc(walletRef);
+        if (walletSnap.exists()) {
+          const data: any = walletSnap.data();
+          console.log("[Wallet] Wallet doc found, balance:", data.balance);
+          setBalance(Number(data.balance || 0));
+        } else {
+          console.log("[Wallet] No wallet doc, creating one");
+          await setDoc(walletRef, {
+            userId: user.id,
+            balance: 0,
+            currency: "NGN",
+            status: "active",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+          setBalance(0);
+        }
+      } catch (e: any) {
+        console.error("[Wallet] Error loading wallet doc:", e?.code || e?.message || e);
       }
 
       // Fetch transactions from Firestore subcollection
@@ -93,6 +102,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const txRef = collection(db, "wallets", user.id, "transactions");
         const txQuery = query(txRef, orderBy("createdAt", "desc"));
         const txSnap = await getDocs(txQuery);
+        console.log("[Wallet] Transactions fetched:", txSnap.docs.length);
         const txList: Transaction[] = txSnap.docs.map((d) => {
           const data: any = d.data();
           const date = data.date || data.createdAt;
@@ -117,13 +127,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           };
         });
         setTransactions(txList);
-      } catch (e) {
-        console.error("Error loading transactions:", e);
-        // Transactions subcollection may not have security rules yet
+      } catch (e: any) {
+        console.error("[Wallet] Error loading transactions:", e?.code || e?.message || e);
         setTransactions([]);
       }
     };
-    loadWallet().catch((e) => console.error("Load wallet error", e));
+    loadWallet();
   }, [user]);
 
   // Keep local copy of transactions sorted (for UI)

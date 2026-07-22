@@ -84,8 +84,13 @@ const DetailPage = () => {
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, "businesses", id);
-        const snap = await getDoc(docRef);
+        let snap = await getDoc(doc(db, "businesses", id));
+        let source: "businesses" | "house_listings" = "businesses";
+
+        if (!snap.exists()) {
+          snap = await getDoc(doc(db, "house_listings", id));
+          source = "house_listings";
+        }
 
         if (snap.exists()) {
           const raw = snap.data() as any;
@@ -111,12 +116,21 @@ const DetailPage = () => {
             latitude: raw.latitude,
             longitude: raw.longitude,
             features: raw.features || raw.tags || [],
-            hours: raw.hours || "9:00 AM - 5:00 PM (Mon-Fri)", // default mock hours if none
+            hours: raw.hours || "9:00 AM - 5:00 PM (Mon-Fri)",
             hasTickets: raw.hasTickets || false,
             tags: raw.tags,
             isOpen: raw.isOpen !== undefined ? raw.isOpen : true,
             ownerId: raw.ownerId || raw.userId || raw.uid,
           });
+
+          if (source === "businesses") {
+            const [prodSnap, propSnap] = await Promise.all([
+              getDocs(query(collection(db, "marketplace"), where("businessId", "==", id))),
+              getDocs(query(collection(db, "house_listings"), where("businessId", "==", id))),
+            ]);
+            setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+            setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+          }
         } else {
           setData(null);
         }
@@ -131,15 +145,13 @@ const DetailPage = () => {
     fetchDetail();
   }, [id, categorySlug]);
 
-  // Backfill ownerId if missing (old listings created before chat feature)
+  // Backfill ownerId if missing (old listings created before chat feature) — businesses only
   useEffect(() => {
     if (!id || !user || ownerUid === user.id) return;
     const backfill = async () => {
       try {
-        // Set ownerId on the business doc
         await updateDoc(doc(db, "businesses", id), { ownerId: user.id });
         setOwnerUid(user.id);
-        // Backfill participants on existing chats for this business
         const chatsSnap = await getDocs(
           query(collection(db, "chats"), where("businessId", "==", id))
         );
@@ -149,28 +161,12 @@ const DetailPage = () => {
             await updateDoc(chatDoc.ref, { participants: arrayUnion(user.id) });
           }
         }
-      } catch { /* ignore */ }
+      } catch { /* ignore — may be a house_listings doc, not businesses */ }
     };
     if (!ownerUid) backfill();
   }, [id, user, ownerUid]);
 
-  // Fetch child products & properties for this business
-  useEffect(() => {
-    if (!id) return;
-    const fetchChildren = async () => {
-      try {
-        const [prodSnap, propSnap] = await Promise.all([
-          getDocs(query(collection(db, "marketplace"), where("businessId", "==", id))),
-          getDocs(query(collection(db, "house_listings"), where("businessId", "==", id))),
-        ]);
-        setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      } catch (err) {
-        console.error("Error fetching business children:", err);
-      }
-    };
-    fetchChildren();
-  }, [id]);
+  // Fetch child products & properties handled inside fetchDetail for businesses
 
   useEffect(() => {
     if (!id) return;
