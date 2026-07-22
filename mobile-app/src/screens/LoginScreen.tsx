@@ -65,13 +65,8 @@ export default function LoginScreen() {
     try {
       await loginWithGoogle();
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        setErrorMessage(null);
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setErrorMessage(null);
-      } else {
-        setErrorMessage('Google sign-in failed. Please try again.');
-      }
+      console.error('Google sign-in error:', error);
+      setErrorMessage('Google sign-in failed. Please try again.');
     } finally {
       setIsWorking(false);
     }

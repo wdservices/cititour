@@ -7,8 +7,8 @@ import {
   sendPasswordResetEmail,
   User as FirebaseUser,
   GoogleAuthProvider,
-  signInWithPopup,
-  signInWithCredential,
+  signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -64,6 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        mirrorUserToFirestore(result.user);
+      }
+    }).catch((err) => {
+      console.error('Google redirect result error:', err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
       setIsLoading(false);
@@ -88,10 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
-    const result = await signInWithPopup(auth, provider);
-    if (result.user) {
-      await mirrorUserToFirestore(result.user);
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   const logout = async () => {
