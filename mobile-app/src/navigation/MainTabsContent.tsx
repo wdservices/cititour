@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import FloatingTabBar, { TabItem } from '../components/FloatingTabBar';
@@ -17,6 +18,27 @@ interface MainTabsContentProps {
   SettingsScreen: React.ComponentType<any>;
 }
 
+function detectCityFromCoords(lat: number, lon: number): string {
+  if (lat > 11.5 && lon > 7.5 && lon < 9.5) return 'Kano';
+  if (lat > 10.0 && lon > 6.5 && lon < 8.5) return 'Kaduna';
+  if (lat > 8.0 && lon > 6.5) return 'Abuja';
+  if (lat > 5.0 && lat <= 6.0 && lon > 6.5 && lon < 7.5) return 'Owerri';
+  if (lat > 6.0 && lon > 3.0 && lon < 4.5) return 'Lagos';
+  return 'Port Harcourt';
+}
+
+function cityToBrand(city: string): string {
+  switch (city) {
+    case 'Lagos': return 'TourLAG';
+    case 'Abuja': return 'TourABJ';
+    case 'Port Harcourt': return 'TourRIV';
+    case 'Kano': return 'TourKAN';
+    case 'Owerri': return 'TourOWR';
+    case 'Kaduna': return 'TourKAD';
+    default: return 'CitiTour';
+  }
+}
+
 export default function MainTabsContent({
   HomeStack,
   EventsStack,
@@ -31,6 +53,16 @@ export default function MainTabsContent({
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState('explore');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [brandName, setBrandName] = useState('CitiTour');
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const location = await Location.getCurrentPositionAsync({});
+      setBrandName(cityToBrand(detectCityFromCoords(location.coords.latitude, location.coords.longitude)));
+    })();
+  }, []);
 
   const tabs: TabItem[] = [
     { name: 'explore', icon: 'compass', label: 'Explore' },
@@ -104,6 +136,8 @@ export default function MainTabsContent({
           onClose={() => setMenuVisible(false)}
           userName={user?.name || 'User'}
           userEmail={user?.email || 'user@example.com'}
+          photoURL={user?.photoURL}
+          brandName={brandName}
           sections={menuSections}
           onLogout={() => { setMenuVisible(false); logout(); }}
         />

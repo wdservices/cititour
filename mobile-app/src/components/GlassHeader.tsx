@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
 } from 'react-native';
 import { Menu, ArrowLeft, User } from 'lucide-react-native';
 
@@ -15,6 +15,7 @@ interface GlassHeaderProps {
   onMenu?: () => void;
   showProfile?: boolean;
   onProfile?: () => void;
+  photoURL?: string | null;
 }
 
 export const GlassHeader: React.FC<GlassHeaderProps> = ({
@@ -26,6 +27,7 @@ export const GlassHeader: React.FC<GlassHeaderProps> = ({
   onMenu,
   showProfile = true,
   onProfile,
+  photoURL,
 }) => {
   return (
     <View style={s.header}>
@@ -48,7 +50,11 @@ export const GlassHeader: React.FC<GlassHeaderProps> = ({
 
       <TouchableOpacity style={s.profileBtn} onPress={onProfile} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <View style={s.profileAvatar}>
-          <User size={18} color="#fff" strokeWidth={2} />
+          {photoURL ? (
+            <Image source={{ uri: photoURL }} style={s.profileImage} />
+          ) : (
+            <User size={18} color="#fff" strokeWidth={2} />
+          )}
         </View>
       </TouchableOpacity>
     </View>
@@ -72,6 +78,10 @@ const s = StyleSheet.create({
   profileAvatar: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 36, height: 36, borderRadius: 18,
   },
 });
 

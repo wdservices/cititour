@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView, Pressable,
+  View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, ScrollView, Pressable, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight } from 'lucide-react-native';
@@ -18,12 +18,14 @@ interface SideMenuProps {
   onClose: () => void;
   userName?: string;
   userEmail?: string;
+  photoURL?: string | null;
+  brandName?: string;
   sections: MenuSection[];
   onLogout: () => void;
 }
 
 export const SideMenu: React.FC<SideMenuProps> = ({
-  visible, onClose, userName = 'User', userEmail = 'user@example.com', sections, onLogout,
+  visible, onClose, userName = 'User', userEmail = 'user@example.com', photoURL, brandName, sections, onLogout,
 }) => {
   const insets = useSafeAreaInsets();
   const slide = useRef(new Animated.Value(-DRAWER_W)).current;
@@ -57,12 +59,17 @@ export const SideMenu: React.FC<SideMenuProps> = ({
       >
         <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-            </Text>
+            {photoURL ? (
+              <Image source={{ uri: photoURL }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>
+                {userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+              </Text>
+            )}
           </View>
           <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
           <Text style={styles.userEmail} numberOfLines={1}>{userEmail}</Text>
+          {brandName ? <Text style={styles.brandName}>{brandName}</Text> : null}
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -130,10 +137,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 52, height: 52, borderRadius: 26,
   },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: '800' },
   userName: { color: '#fff', fontSize: 18, fontWeight: '700' },
   userEmail: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 },
+  brandName: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', marginTop: 6 },
   content: { flex: 1, paddingTop: 16 },
   sectionContainer: { marginBottom: 20 },
   sectionTitle: {

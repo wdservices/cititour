@@ -17,6 +17,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  photoURL?: string | null;
 }
 
 interface AuthContextType {
@@ -37,6 +38,7 @@ function mapFirebaseUser(firebaseUser: FirebaseUser): User {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
     email: firebaseUser.email || '',
+    photoURL: firebaseUser.photoURL,
   };
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, RefreshControl,
+  View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, RefreshControl, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Menu, User } from 'lucide-react-native';
@@ -28,6 +28,18 @@ function detectCityFromCoords(lat: number, lon: number): string {
   if (lat > 5.0 && lat <= 6.0 && lon > 6.5 && lon < 7.5) return 'Owerri';
   if (lat > 6.0 && lon > 3.0 && lon < 4.5) return 'Lagos';
   return 'Port Harcourt';
+}
+
+function cityToBrand(city: string): string {
+  switch (city) {
+    case 'Lagos': return 'TourLAG';
+    case 'Abuja': return 'TourABJ';
+    case 'Port Harcourt': return 'TourRIV';
+    case 'Kano': return 'TourKAN';
+    case 'Owerri': return 'TourOWR';
+    case 'Kaduna': return 'TourKAD';
+    default: return 'CitiTour';
+  }
 }
 
 export default function HomeScreen({ navigation }: { navigation: any }) {
@@ -136,14 +148,18 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
             <Menu size={22} color={colors.foreground} strokeWidth={1.75} />
           </TouchableOpacity>
           <View style={styles.brand}>
-            <Text style={[styles.brandTitle, { color: colors.primary }]}>CitiTour</Text>
+            <Text style={[styles.brandTitle, { color: colors.primary }]}>{cityToBrand(cityLabel)}</Text>
             <Text style={[styles.brandSub, { color: colors.mutedForeground }]}>Explore</Text>
           </View>
           <TouchableOpacity
             style={[styles.avatar, { borderColor: `${colors.primary}40`, backgroundColor: colors.muted }]}
             onPress={() => setActiveTab('profile')}
           >
-            <User size={16} color={colors.mutedForeground} strokeWidth={2} />
+            {user?.photoURL ? (
+              <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+            ) : (
+              <User size={16} color={colors.mutedForeground} strokeWidth={2} />
+            )}
           </TouchableOpacity>
         </View>
         <View style={[styles.search, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -249,6 +265,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   search: {
     flexDirection: 'row',
