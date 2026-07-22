@@ -90,6 +90,12 @@ async function main() {
     process.exit(1);
   }
 
+  // Skip prerendering on Vercel — headless Chromium isn't reliably available
+  if (process.env.VERCEL) {
+    console.log('Skipping prerender on Vercel.');
+    return;
+  }
+
   // 1. Serve the built app locally so the headless browser can visit it
   const server = createServer((req, res) =>
     handler(req, res, {
@@ -106,7 +112,10 @@ async function main() {
   // routes = [...routes, ...dynamicRoutes];
 
   // 3. Launch headless Chrome once, reuse for every route.
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+  });
 
   for (const route of routes) {
     try {
