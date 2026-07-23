@@ -72,13 +72,13 @@ export default function BlogPostPage() {
     dateModified: post.updatedDate || post.publishedDate,
     image: post.coverImage,
     description: post.metaDescription,
-    author: { "@type": "Organization", name: "CitiTour" },
+    author: { "@type": "Organization", name: "Citivas" },
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title={`${post.title} | CitiTour`}
+        title={`${post.title} | Citivas`}
         description={post.metaDescription}
         canonicalUrl={`/blog/${post.slug}`}
         ogType="article"
@@ -89,7 +89,7 @@ export default function BlogPostPage() {
 
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <Button asChild variant="ghost" size="sm"><Link to="/blog"><ArrowLeft className="w-4 h-4 mr-1" /> Blog</Link></Button>
         </div>
       </header>
@@ -184,9 +184,9 @@ export default function BlogPostPage() {
 
           <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
             <p className="font-display font-bold text-foreground mb-2">Ready to book?</p>
-            <p className="text-sm text-muted-foreground mb-4">Find and book verified venues, hotels and restaurants on CitiTour.</p>
+            <p className="text-sm text-muted-foreground mb-4">Find and book verified venues, hotels and restaurants on Citivas.</p>
             <Link to="/explore" className="inline-block rounded-full bg-primary text-primary-foreground px-5 py-2 text-sm font-semibold hover:opacity-90">
-              Explore CitiTour
+              Explore Citivas
             </Link>
           </div>
         </aside>
@@ -194,7 +194,7 @@ export default function BlogPostPage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} CitiTour</p>
+          <p>&copy; {new Date().getFullYear()} Citivas</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

@@ -83,8 +83,8 @@ const MarketplacePage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Marketplace | CititourNG"
-        description="Buy and sell electronics, fashion, vehicles, property and more on the CititourNG marketplace."
+        title="Marketplace | CitivasNG"
+        description="Buy and sell electronics, fashion, vehicles, property and more on the CitivasNG marketplace."
         keywords={["marketplace", "buy", "sell", "Nigeria", "electronics", "fashion", "vehicles", "property"]}
         canonicalUrl={`${window.location.origin}/marketplace`}
       />

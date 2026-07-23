@@ -24,16 +24,16 @@ export const DOC_SECTIONS: DocSection[] = [
     description: 'Create your account and start exploring cities across Nigeria.',
     topics: [
       {
-        id: 'what-is-cititour',
-        title: 'What is CitiTour?',
-        description: 'CitiTour is Nigeria\'s urban concierge — a platform to discover places, book events, shop locally, and split bills with friends. Whether you\'re in Lagos, Abuja, Port Harcourt, or Kano, CitiTour helps you find the best restaurants, hotels, fun places, events, and marketplace products in your city.',
+        id: 'what-is-Citivas',
+        title: 'What is Citivas?',
+        description: 'Citivas is Nigeria\'s urban concierge — a platform to discover places, book events, shop locally, and split bills with friends. Whether you\'re in Lagos, Abuja, Port Harcourt, or Kano, Citivas helps you find the best restaurants, hotels, fun places, events, and marketplace products in your city.',
       },
       {
         id: 'create-account',
         title: 'Creating Your Account',
         description: 'You can sign up using your email address or Google account.',
         steps: [
-          'Visit the CitiTour website and click "Get Started" or "Sign In".',
+          'Visit the Citivas website and click "Get Started" or "Sign In".',
           'On the auth page, toggle to "Sign Up" mode.',
           'Enter your full name, email address, and create a password.',
           'Accept the Terms of Use and Privacy Policy.',
@@ -48,7 +48,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'sign-in',
         title: 'Signing In',
-        description: 'Access your CitiTour account.',
+        description: 'Access your Citivas account.',
         steps: [
           'Go to the auth page (click "Sign In" from the landing page).',
           'Enter your registered email and password.',
@@ -65,7 +65,7 @@ export const DOC_SECTIONS: DocSection[] = [
           'Enter your registered email address.',
           'Check your inbox for a password reset link from Firebase.',
           'Click the link and create a new password.',
-          'Return to CitiTour and sign in with your new password.',
+          'Return to Citivas and sign in with your new password.',
         ],
         tips: [
           'Check your spam/junk folder if you don\'t see the email.',
@@ -104,7 +104,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'preferences',
         title: 'App Preferences',
-        description: 'Customize your CitiTour experience.',
+        description: 'Customize your Citivas experience.',
         steps: [
           'Go to Settings (from the sidebar menu).',
           'In the Account tab, you can change your Region & Branding.',
@@ -344,7 +344,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'dashboard-overview',
         title: 'Dashboard Overview',
-        description: 'Your command center for managing everything on CitiTour.',
+        description: 'Your command center for managing everything on Citivas.',
         steps: [
           'Click your profile avatar in the top-right corner → "My Dashboard".',
           'The overview shows stat cards: Businesses, Products, Properties, Events.',
@@ -367,7 +367,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'create-listing',
         title: 'Creating a New Listing',
-        description: 'Add a business, product, property, or event to CitiTour.',
+        description: 'Add a business, product, property, or event to Citivas.',
         steps: [
           'In your dashboard, click "Create New" or use a Quick Action button.',
           'Choose the listing type: Business, Product, Property, or Event.',
@@ -407,7 +407,7 @@ export const DOC_SECTIONS: DocSection[] = [
           'Click the Delete icon (trash) on the listing card.',
           'Step 1: "Are you sure?" — Click "Yes, Continue" to proceed.',
           'Step 2: "Final Confirmation" — Click "Delete Permanently" to confirm.',
-          'The listing and its images are removed from CitiTour.',
+          'The listing and its images are removed from Citivas.',
         ],
         tips: [
           'This action cannot be undone.',
@@ -555,10 +555,10 @@ export const DOC_SECTIONS: DocSection[] = [
       },
       {
         id: 'referral-program',
-        title: 'Share CitiTour Referral Program',
-        description: 'Earn rewards by inviting friends to CitiTour.',
+        title: 'Share Citivas Referral Program',
+        description: 'Earn rewards by inviting friends to Citivas.',
         steps: [
-          'Go to "Share CitiTour" in the sidebar menu.',
+          'Go to "Share Citivas" in the sidebar menu.',
           'Your unique referral code is displayed.',
           'Click "Copy" to copy your code or shareable link.',
           'Share via WhatsApp, Facebook, Twitter, Instagram, or Email.',
@@ -658,7 +658,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'feedback',
         title: 'Submitting Feedback',
-        description: 'Help us improve CitiTour with your suggestions.',
+        description: 'Help us improve Citivas with your suggestions.',
         steps: [
           'Click "Feedback" in the sidebar menu.',
           'Select feedback type: General, Bug Report, Feature Request, or Business Inquiry.',
@@ -689,7 +689,7 @@ export const DOC_SECTIONS: DocSection[] = [
       {
         id: 'what-is-split-it',
         title: 'What is Split It?',
-        description: 'Split It is CitiTour\'s bill-splitting feature. Snap a receipt, tag who ordered what, and let the app calculate fair shares — no more awkward math or uneven splits.',
+        description: 'Split It is Citivas\'s bill-splitting feature. Snap a receipt, tag who ordered what, and let the app calculate fair shares — no more awkward math or uneven splits.',
       },
       {
         id: 'how-split-it-works',

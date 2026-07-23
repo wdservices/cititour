@@ -184,7 +184,7 @@ const ProfileDashboard = () => {
   // ── Generate Event Report (PDF/CSV) ──
   const generateEventReport = () => {
     const lines: string[] = [];
-    lines.push("CititourNG — Event Report");
+    lines.push("CitivasNG — Event Report");
     lines.push(`Generated: ${new Date().toLocaleString()}`);
     lines.push("");
     lines.push(`Total Events: ${eventAnalytics.totalEvents}`);

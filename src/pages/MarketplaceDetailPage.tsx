@@ -219,7 +219,7 @@ const MarketplaceDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 lg:pb-8">
-      <SEO title={`${product.title} | CititourNG`} description={product.description} />
+      <SEO title={`${product.title} | CitivasNG`} description={product.description} />
 
       {/* Mobile Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/50">
@@ -318,7 +318,7 @@ const MarketplaceDetailPage = () => {
               </div>
               <div className="mt-4 flex items-center gap-2 text-success font-medium text-xs bg-success/10 w-fit px-3 py-1.5 rounded-lg border border-success/20">
                 <ShieldCheck className="w-4 h-4" />
-                Secure payment through CitiTour
+                Secure payment through Citivas
               </div>
             </div>
 

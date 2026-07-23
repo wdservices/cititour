@@ -168,7 +168,7 @@ const CategoriesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title={`Explore ${brandName} | CititourNG`} description="Discover businesses, events, marketplace, and properties across Nigeria."
+      <SEO title={`Explore ${brandName} | CitivasNG`} description="Discover businesses, events, marketplace, and properties across Nigeria."
         keywords={["Nigeria", "restaurants", "hotels", "events", "marketplace", "properties"]} canonicalUrl={`${window.location.origin}/explore`} ogImage="/favicon.ico" />
       <main className="pb-12">
         <HeroSlider /><CategoryGrid />

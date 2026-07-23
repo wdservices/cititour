@@ -137,8 +137,8 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="CitiTour Help Center — User Guide & Documentation"
-        description="Complete guide to using CitiTour. Learn how to discover places, book events, shop on the marketplace, manage your wallet, and more."
+        title="Citivas Help Center — User Guide & Documentation"
+        description="Complete guide to using Citivas. Learn how to discover places, book events, shop on the marketplace, manage your wallet, and more."
         canonicalUrl="/docs"
       />
 
@@ -147,8 +147,8 @@ export default function DocsPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/cititour-logo.png" alt="CitiTour" className="w-8 h-8 rounded-lg object-contain" style={{ filter: 'brightness(0) invert(33%) sepia(98%) saturate(3463%) hue-rotate(195deg) brightness(97%) contrast(96%)' }} />
-              <span className="font-display text-2xl font-extrabold">CitiTour</span>
+              <img src="/citivas-logo.png" alt="Citivas" className="w-8 h-8 rounded-lg object-cover" />
+              <span className="font-display text-2xl font-extrabold">Citivas</span>
             </Link>
             <span className="text-muted-foreground text-sm hidden md:inline">/</span>
             <span className="text-sm font-medium hidden md:inline">Help Center</span>
@@ -244,10 +244,10 @@ export default function DocsPage() {
               User Guide
             </div>
             <h1 className="font-display text-4xl md:text-6xl font-extrabold mb-4">
-              CitiTour Help Center
+              Citivas Help Center
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl">
-              Everything you need to know about using CitiTour — from creating your account
+              Everything you need to know about using Citivas — from creating your account
               to managing listings, buying event tickets, and funding your wallet.
             </p>
           </div>

@@ -25,7 +25,7 @@ export const blogPosts: BlogPost[] = [
       'A complete, price-checked guide to the best wedding and party venues in Lagos in 2026 — from budget-friendly halls to luxury 5-star event centers.',
     category: 'Event Centers',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 7,
     body: `
@@ -65,7 +65,7 @@ so lock in a date early if you want one of these.
 - How many hours does the rental cover, and what's the overtime fee?
 - Is parking included, and how many cars can it hold?
 
-Book directly through CitiTour to compare verified pricing and availability
+Book directly through Citivas to compare verified pricing and availability
 across Lagos venues in one place, and split payment with a partner or family
 member using Split It.
     `,
@@ -79,7 +79,7 @@ member using Split It.
       { q: 'Which Lagos event centers allow outside catering?', a: 'This varies by venue — some require you to use their in-house catering team exclusively, while others allow outside caterers for a corkage-style fee. Always confirm this before booking.' },
       { q: "What's the average cost of a small (100-guest) event space in Lagos?", a: 'Smaller intimate venues suited to under 150 guests typically range from ₦800,000 to ₦2 million depending on location and finish level.' },
       { q: 'Are there garden/outdoor wedding venues in Lagos?', a: 'Yes — Lagos has several garden and outdoor-ceremony venues, particularly around Lekki and Badagry, popular for both the ceremony and a more relaxed reception style.' },
-      { q: 'Can I book and pay a deposit for a Lagos event center online?', a: 'Yes — through CitiTour you can view verified venue pricing, check availability, and pay a deposit directly in-app, including splitting the cost with a partner via Split It.' },
+      { q: 'Can I book and pay a deposit for a Lagos event center online?', a: 'Yes — through Citivas you can view verified venue pricing, check availability, and pay a deposit directly in-app, including splitting the cost with a partner via Split It.' },
     ],
   },
   {
@@ -89,7 +89,7 @@ member using Split It.
       'Everything you need to know about booking a wedding venue in Abuja in 2026 — pricing by hall size, best areas, and what to confirm before you pay a deposit.',
     category: 'Event Centers',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -122,10 +122,10 @@ venues sit slightly lower but weather becomes a real planning factor
 outside the dry season.
 
 Compare verified Abuja venues, check real-time availability, and split the
-deposit with your partner directly through CitiTour.
+deposit with your partner directly through Citivas.
     `,
     faq: [
-      { q: 'What are the top wedding venues in Abuja right now?', a: 'Popular choices span Maitama and Wuse-based halls, plus several dedicated event centers built specifically for large Nigerian wedding receptions — CitiTour lists verified options with current pricing across these areas.' },
+      { q: 'What are the top wedding venues in Abuja right now?', a: 'Popular choices span Maitama and Wuse-based halls, plus several dedicated event centers built specifically for large Nigerian wedding receptions — Citivas lists verified options with current pricing across these areas.' },
       { q: 'How much do Abuja event centers charge per hall size?', a: 'Smaller halls (150–300 guests) typically run ₦1.5–2.5 million, while large 500+ capacity venues range from ₦3–6 million depending on location and included services.' },
       { q: 'Which Abuja venues are best for traditional (Igbo/Yoruba/Hausa) wedding ceremonies?', a: 'Look for venues with flexible outdoor and indoor combination layouts — these accommodate the more elaborate seating and procession needs of a traditional engagement ceremony.' },
       { q: 'Are there hotel-based wedding venues in Abuja with in-house catering?', a: 'Yes — several Abuja hotels offer ballroom event spaces with in-house catering teams, which can simplify vendor coordination compared to a standalone event center.' },
@@ -134,7 +134,7 @@ deposit with your partner directly through CitiTour.
       { q: 'Do Abuja venues require a security deposit before booking?', a: 'Most require a deposit (commonly 30–50% of the total) to hold a date, with the balance due closer to the event — confirm the cancellation policy before paying.' },
       { q: "What's the best season to host an outdoor wedding in Abuja?", a: 'The dry season (roughly November through March) is far more reliable for outdoor Abuja events, avoiding the unpredictability of the rainy season.' },
       { q: 'Are there budget-friendly venues in Abuja under ₦2 million?', a: 'Yes, particularly in Wuse and Garki, though expect simpler finishes and fewer included services at this price point.' },
-      { q: 'Can I get a virtual tour of an Abuja event center before booking?', a: 'Many venues now offer photo galleries or video walkthroughs online — CitiTour listings aim to include verified photos so you can shortlist venues before an in-person visit.' },
+      { q: 'Can I get a virtual tour of an Abuja event center before booking?', a: 'Many venues now offer photo galleries or video walkthroughs online — Citivas listings aim to include verified photos so you can shortlist venues before an in-person visit.' },
     ],
   },
   {
@@ -144,7 +144,7 @@ deposit with your partner directly through CitiTour.
       "A price-checked guide to Port Harcourt's best wedding reception halls, from budget GRA venues to large multi-purpose event centers.",
     category: 'Event Centers',
     city: 'Port Harcourt',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -171,7 +171,7 @@ is usually included at premium venues but worth explicitly confirming at
 mid-range ones.
 
 Browse verified Port Harcourt venues with real capacity and pricing details
-on CitiTour, and manage guest ticketing for larger receptions directly
+on Citivas, and manage guest ticketing for larger receptions directly
 in-app.
     `,
     faq: [
@@ -184,7 +184,7 @@ in-app.
       { q: "What's the difference between a marquee and an indoor hall pricing-wise?", a: 'Marquee/tent setups are often slightly cheaper than fully built indoor halls, but tenting, flooring, and cooling costs can close that gap depending on guest count.' },
       { q: 'Which Port Harcourt event centers are closest to the airport?', a: 'Venues along or near Airport Road and the Trans Amadi corridor tend to offer the shortest transfer times from Port Harcourt International Airport.' },
       { q: 'Can I combine a church/traditional ceremony venue with the reception hall?', a: 'Some larger venue complexes offer both a chapel/outdoor ceremony space and a separate reception hall on the same grounds — worth asking about directly if you want to avoid a second venue transfer.' },
-      { q: "How do I confirm an event center's availability for my wedding date?", a: 'CitiTour shows real-time availability for listed Port Harcourt venues, letting you check and reserve a date without multiple back-and-forth calls.' },
+      { q: "How do I confirm an event center's availability for my wedding date?", a: 'Citivas shows real-time availability for listed Port Harcourt venues, letting you check and reserve a date without multiple back-and-forth calls.' },
     ],
   },
   {
@@ -194,7 +194,7 @@ in-app.
       "A guide to Lagos's best restaurants across budgets — from authentic local buka-style spots to fine dining in Victoria Island and Lekki.",
     category: 'Restaurants',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -225,7 +225,7 @@ tend to be the go-to for group hangouts rather than intimate dinners —
 worth distinguishing when picking a spot for a birthday versus a date night.
 
 Discover and book tables at verified Lagos restaurants directly through
-CitiTour, with real reviews from other diners.
+Citivas, with real reviews from other diners.
     `,
     faq: [
       { q: 'What are the best restaurants in Victoria Island right now?', a: "Victoria Island hosts many of Lagos's top-rated seafood, Asian fusion, and continental restaurants, generally at the premium end of the city's dining scene." },
@@ -237,7 +237,7 @@ CitiTour, with real reviews from other diners.
       { q: 'Which Lagos restaurants are best for a business lunch?', a: 'Look for restaurants with quieter, well-spaced seating and efficient service — several VI and Ikoyi spots cater specifically to this crowd during weekday lunch hours.' },
       { q: 'What restaurants in Lagos offer rooftop or ocean-view dining?', a: 'A handful of Victoria Island and Lekki restaurants offer genuine skyline or waterfront views, usually commanding a premium over otherwise comparable indoor seating.' },
       { q: 'Where can I get the best suya or grilled meat in Lagos?', a: 'Suya spots are scattered across the city, with particularly strong reputations in Allen Avenue, Opebi, and various roadside spots that locals swear by over more formal restaurant versions.' },
-      { q: 'Which Lagos restaurants deliver through Jumia Food or Glovo?', a: 'Most mid-to-large Lagos restaurants now support delivery through at least one major platform — check individual restaurant listings on CitiTour for confirmed delivery options.' },
+      { q: 'Which Lagos restaurants deliver through Jumia Food or Glovo?', a: 'Most mid-to-large Lagos restaurants now support delivery through at least one major platform — check individual restaurant listings on Citivas for confirmed delivery options.' },
     ],
   },
   {
@@ -247,7 +247,7 @@ CitiTour, with real reviews from other diners.
       'Where to eat in Port Harcourt in 2026 — affordable local spots, date-night restaurants, and the best isi ewu and nkwobi in the city.',
     category: 'Restaurants',
     city: 'Port Harcourt',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 5,
     body: `
@@ -276,10 +276,10 @@ Port Harcourt's nightlife-adjacent restaurant scene stays active later than
 many other Nigerian cities, particularly around GRA.
 
 Explore verified Port Harcourt restaurant listings, with real reviews and
-delivery options, on CitiTour.
+delivery options, on Citivas.
     `,
     faq: [
-      { q: 'What are the top-rated restaurants in Port Harcourt right now?', a: "Port Harcourt's top spots span Asian fusion, Italian/pizza, and authentic local Niger Delta cuisine — CitiTour's Port Harcourt listings track current ratings and reviews." },
+      { q: 'What are the top-rated restaurants in Port Harcourt right now?', a: "Port Harcourt's top spots span Asian fusion, Italian/pizza, and authentic local Niger Delta cuisine — Citivas's Port Harcourt listings track current ratings and reviews." },
       { q: 'Where can I find affordable but good food in Port Harcourt?', a: 'Fast-casual pizza and continental spots tend to offer the best value-for-money, typically ranging ₦5,000–15,000 per person.' },
       { q: 'Which Port Harcourt restaurants are best for date night?', a: 'Restaurants with a more intimate, lounge-style layout — often found in GRA — tend to suit date night better than the larger, louder group-dining spots.' },
       { q: 'Are there authentic Rivers/Niger Delta cuisine spots in Port Harcourt?', a: 'Yes — several restaurants specialize specifically in local Niger Delta dishes like pepper soup, seafood, and traditional sides, often recommended more by word of mouth than online listings.' },
@@ -298,7 +298,7 @@ delivery options, on CitiTour.
       'From fine dining to affordable local spots — a complete guide to where to eat in Abuja in 2026, organized by budget and occasion.',
     category: 'Restaurants',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -324,7 +324,7 @@ and surrounding areas — often better value than equivalent Lagos spots.
 Areas with restaurants and bars in close proximity make for an easier
 night-out plan without needing to drive across the city between stops.
 
-Find and book Abuja restaurants across every budget on CitiTour.
+Find and book Abuja restaurants across every budget on Citivas.
     `,
     faq: [
       { q: 'What are the best fine-dining restaurants in Abuja?', a: "Abuja's fine-dining scene is concentrated mostly around the Central Business District and Maitama, with continental and international menus catering to a professional and diplomatic clientele." },
@@ -346,7 +346,7 @@ Find and book Abuja restaurants across every budget on CitiTour.
       'A complete Lagos hotel guide for 2026 — 5-star luxury, business-conference-ready hotels, and budget options under ₦30,000/night.',
     category: 'Hotels',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -380,7 +380,7 @@ security.
 December ("Detty December") sees Lagos hotel prices spike significantly —
 book well in advance if visiting during this period.
 
-Compare and book verified Lagos hotels across every budget on CitiTour.
+Compare and book verified Lagos hotels across every budget on Citivas.
     `,
     faq: [
       { q: 'What are the best 5-star hotels in Lagos?', a: "Lagos's top-tier hotels are concentrated in Victoria Island and Ikoyi, offering full business and leisure amenities at premium rates." },
@@ -389,7 +389,7 @@ Compare and book verified Lagos hotels across every budget on CitiTour.
       { q: 'Which Lagos hotels have the best pools or rooftop bars?', a: 'Premium Victoria Island and Ikoyi hotels generally offer the most impressive pool and rooftop amenities.' },
       { q: 'Are there hotels in Lagos suitable for business conferences?', a: 'Yes — several Victoria Island and Ikoyi hotels have dedicated conference facilities designed for corporate events.' },
       { q: "What's the best hotel area for tourists — Victoria Island, Ikeja, or Lekki?", a: 'Victoria Island offers the most tourist-friendly mix of restaurants, nightlife, and attractions within walking or short driving distance; Lekki is a strong alternative with a more relaxed pace.' },
-      { q: 'Which Lagos hotels offer airport shuttle service?', a: 'Many mid-to-large hotels offer paid or complimentary airport shuttle service — confirm directly with the hotel or check the listing on CitiTour.' },
+      { q: 'Which Lagos hotels offer airport shuttle service?', a: 'Many mid-to-large hotels offer paid or complimentary airport shuttle service — confirm directly with the hotel or check the listing on Citivas.' },
       { q: "What's the average hotel price in Lagos during December/detty December season?", a: 'Prices commonly rise 30–50% or more during December compared to off-peak months, driven by the seasonal surge in events and homecoming travelers.' },
       { q: 'How far in advance should I book a Lagos hotel for the holidays?', a: 'Book at least 2–3 months ahead for December travel — popular hotels sell out and prices climb the closer it gets to the holiday period.' },
     ],
@@ -401,7 +401,7 @@ Compare and book verified Lagos hotels across every budget on CitiTour.
       "A 2026 guide to Abuja's best hotels for government/business travel, conferences, and leisure stays — by area, price, and amenities.",
     category: 'Hotels',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 5,
     body: `
@@ -427,7 +427,7 @@ areas.
 Serviced apartments and extended-stay hotel options are common in Abuja,
 suited to longer business assignments.
 
-Compare Abuja hotel pricing and amenities, and book directly, on CitiTour.
+Compare Abuja hotel pricing and amenities, and book directly, on Citivas.
     `,
     faq: [
       { q: "What are the top hotels near Abuja's government/diplomatic zone?", a: 'Hotels in and around Asokoro and the Central Business District offer the closest proximity to government and diplomatic offices.' },
@@ -449,7 +449,7 @@ Compare Abuja hotel pricing and amenities, and book directly, on CitiTour.
       'From beaches to parks to hidden cultural spots — the best things to do in Lagos on a weekend, for every budget.',
     category: 'Recreation',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
@@ -483,7 +483,7 @@ Several of Lagos's best weekend activities — parks, markets, waterfront
 walks — cost little to nothing beyond transport.
 
 Plan your Lagos weekend and discover verified recreational spots on
-CitiTour.
+Citivas.
     `,
     faq: [
       { q: 'What are the top tourist attractions in Lagos?', a: "Popular attractions include Lekki Conservation Centre, Freedom Park, Nike Art Gallery, and various beach destinations, alongside Lagos Island's historical sites." },
@@ -505,7 +505,7 @@ CitiTour.
       'Beyond Aso Rock and government buildings — the best recreational activities, parks, and nightlife spots in Abuja for 2026.',
     category: 'Recreation',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 5,
     body: `
@@ -533,7 +533,7 @@ generally more low-key than Lagos's scene but with a strong, loyal local
 following.
 
 Discover recreational activities and things to do across Abuja on
-CitiTour.
+Citivas.
     `,
     faq: [
       { q: 'What are the best recreational parks in Abuja?', a: 'Several parks across Abuja offer family-friendly green space, though options are somewhat more limited compared to Lagos.' },
@@ -555,7 +555,7 @@ CitiTour.
       "A guide to Port Harcourt's best parks, nightlife, and family-friendly recreational spots for 2026.",
     category: 'Recreation',
     city: 'Port Harcourt',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 5,
     body: `
@@ -581,7 +581,7 @@ Several parks and recreational spots across the city cater specifically
 to family visits, with more casual, lower-cost options than some of
 Lagos's equivalent venues.
 
-Find and explore Port Harcourt's recreational spots on CitiTour.
+Find and explore Port Harcourt's recreational spots on Citivas.
     `,
     faq: [
       { q: 'What is Port Harcourt Pleasure Park known for?', a: "It's one of the city's most iconic public recreation spaces, popular for casual visits, events, and as a general gathering spot." },
@@ -602,7 +602,7 @@ Find and explore Port Harcourt's recreational spots on CitiTour.
     metaDescription:
       "Planning your first trip to Nigeria? Here's what to know about the best cities to visit, food to try, and how to plan a multi-city itinerary.",
     category: 'Travel Guide',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 7,
     body: `
@@ -639,7 +639,7 @@ conditions when planning.
 
 ## Planning across multiple cities
 
-CitiTour is built specifically for this — as you move between Lagos,
+Citivas is built specifically for this — as you move between Lagos,
 Abuja, Port Harcourt, and other supported cities, the app adapts to show
 you verified local hotels, restaurants, and events in whichever city
 you're currently in.
@@ -653,24 +653,24 @@ you're currently in.
       { q: 'What cultural festivals should tourists plan a trip around?', a: "The Calabar Carnival in December and the Kano Durbar Festival are among Nigeria's most visually striking and well-known cultural events." },
       { q: 'How do I get around between Nigerian cities — flights, road, or rail?', a: 'Domestic flights are the fastest option between major cities; road travel is common for shorter distances, and limited rail options exist on certain routes.' },
       { q: 'What should I know about Nigerian visa requirements before visiting?', a: 'Visa requirements vary by nationality — check current requirements directly with Nigerian immigration or your nearest Nigerian embassy well ahead of travel, as policies can change.' },
-      { q: "What's the best way to book hotels and activities across multiple Nigerian cities?", a: 'CitiTour is designed specifically for this, adapting to show verified local listings as you move between supported cities.' },
-      { q: 'Are there Nigeria-specific travel apps that help plan an itinerary?', a: 'CitiTour covers hotels, restaurants, events, and recreational activities across multiple Nigerian cities in one app, adapting automatically based on your location.' },
+      { q: "What's the best way to book hotels and activities across multiple Nigerian cities?", a: 'Citivas is designed specifically for this, adapting to show verified local listings as you move between supported cities.' },
+      { q: 'Are there Nigeria-specific travel apps that help plan an itinerary?', a: 'Citivas covers hotels, restaurants, events, and recreational activities across multiple Nigerian cities in one app, adapting automatically based on your location.' },
     ],
   },
   {
-    slug: 'how-to-list-your-business-on-cititour',
-    title: 'How to List Your Business on CitiTour: A Complete Guide for Nigerian Businesses',
+    slug: 'how-to-list-your-business-on-citivas',
+    title: 'How to List Your Business on Citivas: A Complete Guide for Nigerian Businesses',
     metaDescription:
-      'A step-by-step guide for hotels, restaurants, and event centers on how to list a business on CitiTour, reach more customers, and manage bookings.',
+      'A step-by-step guide for hotels, restaurants, and event centers on how to list a business on Citivas, reach more customers, and manage bookings.',
     category: 'Travel Guide',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-18',
     readingMinutes: 6,
     body: `
-## Why list your business on CitiTour
+## Why list your business on Citivas
 
 Whether you run a hotel, restaurant, event center, or recreational venue,
-CitiTour connects your business directly with people actively searching for
+Citivas connects your business directly with people actively searching for
 what you offer in your city — without needing your own booking website or
 marketing budget.
 
@@ -684,35 +684,35 @@ to convert better.
 ## Managing bookings
 
 Once listed, businesses can manage incoming bookings, respond to
-inquiries, and track performance directly through the CitiTour dashboard —
+inquiries, and track performance directly through the Citivas dashboard —
 no separate booking software needed.
 
 ## Getting more visibility
 
 Listings with complete information, verified photos, and consistent
-positive reviews rank higher within CitiTour's city and category pages.
+positive reviews rank higher within Citivas's city and category pages.
 Businesses can also explore promoted placement options to increase
 visibility further.
 
 ## Is there a cost to list?
 
-CitiTour does not currently charge to list a business — revenue is earned
+Citivas does not currently charge to list a business — revenue is earned
 through optional commissions on completed bookings and transactions, not
 upfront listing fees.
 
-Ready to get started? Create your business listing directly on CitiTour.
+Ready to get started? Create your business listing directly on Citivas.
     `,
     faq: [
-      { q: 'Is it free to list my business on CitiTour?', a: 'Yes — there is currently no fee to create a business listing on CitiTour.' },
-      { q: 'What types of businesses can list on CitiTour?', a: 'Hotels, restaurants, event centers, recreational venues, Airbnb/short-let hosts, and general local businesses can all create listings.' },
+      { q: 'Is it free to list my business on Citivas?', a: 'Yes — there is currently no fee to create a business listing on Citivas.' },
+      { q: 'What types of businesses can list on Citivas?', a: 'Hotels, restaurants, event centers, recreational venues, Airbnb/short-let hosts, and general local businesses can all create listings.' },
       { q: 'How long does it take to get approved and go live?', a: 'Most complete listings with accurate information are reviewed and go live quickly — incomplete or unverifiable listings may take longer as details are confirmed.' },
-      { q: 'Can I manage bookings and messages directly through CitiTour?', a: 'Yes — the business dashboard lets you manage bookings, respond to customer inquiries, and track performance in one place.' },
+      { q: 'Can I manage bookings and messages directly through Citivas?', a: 'Yes — the business dashboard lets you manage bookings, respond to customer inquiries, and track performance in one place.' },
       { q: 'Do I need professional photos to list my business?', a: "Professional photos aren't required but significantly improve how a listing performs — clear, well-lit photos of your actual venue are strongly recommended." },
-      { q: 'How does CitiTour make money if listing is free?', a: 'CitiTour earns a small commission on completed bookings and ticket sales rather than charging businesses to list — you only pay when you actually get business through the platform.' },
+      { q: 'How does Citivas make money if listing is free?', a: 'Citivas earns a small commission on completed bookings and ticket sales rather than charging businesses to list — you only pay when you actually get business through the platform.' },
       { q: 'Can I update my pricing and availability myself?', a: 'Yes — business owners can update their own listing details, pricing, and availability directly through their dashboard at any time.' },
-      { q: 'Will my business show up when someone searches for my city specifically?', a: "Yes — CitiTour organizes listings by city, so your business appears to users browsing or searching within your specific location." },
-      { q: 'Can I promote my business for more visibility?', a: 'CitiTour offers promoted placement options for businesses wanting additional visibility beyond standard listing placement.' },
-      { q: 'What happens if I get a booking through CitiTour — how do I get paid?', a: "Payments for bookings made through CitiTour are processed through the platform's payment system and made available to withdraw to your bank account, minus the applicable commission." },
+      { q: 'Will my business show up when someone searches for my city specifically?', a: "Yes — Citivas organizes listings by city, so your business appears to users browsing or searching within your specific location." },
+      { q: 'Can I promote my business for more visibility?', a: 'Citivas offers promoted placement options for businesses wanting additional visibility beyond standard listing placement.' },
+      { q: 'What happens if I get a booking through Citivas — how do I get paid?', a: "Payments for bookings made through Citivas are processed through the platform's payment system and made available to withdraw to your bank account, minus the applicable commission." },
     ],
   },
   {
@@ -722,7 +722,7 @@ Ready to get started? Create your business listing directly on CitiTour.
       'From rooftop views in VI to intimate spots on the Mainland — the best restaurants in Lagos for date night in 2026, with price ranges and booking tips.',
     category: 'Restaurants',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-15',
     readingMinutes: 6,
     body: `
@@ -753,7 +753,7 @@ Island venues deliver world-class food with stunning views.
 
 - Always make a reservation, especially for Friday and Saturday evenings.
 - Check if the restaurant has a dress code — some upscale spots enforce smart casual.
-- Use CitiTour to verify opening hours and read recent reviews before going.
+- Use Citivas to verify opening hours and read recent reviews before going.
 - Consider traffic — plan to arrive early or choose a spot close to your side of the city.
     `,
     faq: [
@@ -766,7 +766,7 @@ Island venues deliver world-class food with stunning views.
       { q: 'Can I find vegetarian or vegan food in Lagos?', a: 'While still growing, the plant-based scene in Lagos is expanding. Several restaurants on the Island now offer dedicated vegetarian and vegan menu options.' },
       { q: 'What are the best rooftop restaurants in Lagos?', a: 'Rooftop dining options include Nok by Alara, Sky Lounge (VI), and several hotel rooftop bars with restaurant service overlooking the Lagos lagoon.' },
       { q: 'Do Lagos restaurants accept card payments?', a: 'Most restaurants accept card payments via POS terminals. Some smaller spots are cash-only, so it\'s wise to have some cash on hand as backup.' },
-      { q: 'Can I book a restaurant through CitiTour?', a: 'Yes — CitiTour lists restaurants with verified details including location, menu highlights, and contact information. You can check reviews and find the best spots near you.' },
+      { q: 'Can I book a restaurant through Citivas?', a: 'Yes — Citivas lists restaurants with verified details including location, menu highlights, and contact information. You can check reviews and find the best spots near you.' },
     ],
   },
   {
@@ -776,7 +776,7 @@ Island venues deliver world-class food with stunning views.
       'A curated list of the best hotels in Lagos for business travelers and leisure guests — with pricing, amenities, and location breakdown for 2026.',
     category: 'Hotels',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-12',
     readingMinutes: 7,
     body: `
@@ -809,7 +809,7 @@ chain hotels at significantly lower rates than their Island counterparts.
 
 ## Booking tips
 
-- Book directly through the hotel or via CitiTour for the best rates.
+- Book directly through the hotel or via Citivas for the best rates.
 - Check if breakfast, Wi-Fi, and airport transfers are included.
 - During peak seasons (December, conferences), rates can double — book early.
 - If you're staying for a week or more, ask about long-stay discounts.
@@ -834,7 +834,7 @@ chain hotels at significantly lower rates than their Island counterparts.
       'From beach outings to art galleries and nightlife — the ultimate list of things to do in Lagos on a weekend in 2026.',
     category: 'Recreation',
     city: 'Lagos',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-10',
     readingMinutes: 8,
     body: `
@@ -858,7 +858,7 @@ music to food festivals, the options are endless.
 
 ## Food & drink
 
-- Attend a food festival or pop-up — check CitiTour Events for what's on.
+- Attend a food festival or pop-up — check Citivas Events for what's on.
 - Explore the Lekki food corridor — dozens of restaurants in walking distance.
 - Try a Lagos street food tour — suya, akara, pounded yam, and more.
 
@@ -874,7 +874,7 @@ music to food festivals, the options are endless.
 - Filmhouse IMAX in Lekki for a movie afternoon.
 - Lekki Conservation Centre for a nature walk through the mangroves.
 
-Find all upcoming events and activities on CitiTour — from concerts to food
+Find all upcoming events and activities on Citivas — from concerts to food
 festivals to wellness retreats.
     `,
     faq: [
@@ -883,7 +883,7 @@ festivals to wellness retreats.
       { q: 'What is there to do in Lagos for free?', a: 'Free activities include visiting the Nike Art Gallery, walking along Bar Beach, exploring markets like Balogun and Lekki Market, and attending free outdoor events.' },
       { q: 'What are the best family activities in Lagos?', a: 'Family-friendly options include Lekki Conservation Centre, Filmhouse IMAX, the Nike Art Gallery, beach outings to Tarkwa Bay, and various parks and play areas.' },
       { q: 'How do I get around Lagos on weekends?', a: 'Use ride-hailing apps (Bolt, Uber) for the most convenient transport. For beaches, you\'ll need to arrange a speedboat from designated jetties. Traffic is lighter on weekends.' },
-      { q: 'What events happen in Lagos on weekends?', a: 'Lagos has events every weekend — from music concerts and food festivals to art exhibitions and wellness events. Check CitiTour Events for what\'s happening this weekend.' },
+      { q: 'What events happen in Lagos on weekends?', a: 'Lagos has events every weekend — from music concerts and food festivals to art exhibitions and wellness events. Check Citivas Events for what\'s happening this weekend.' },
       { q: 'Are there outdoor activities in Lagos?', a: 'Yes — beach trips, Lekki Conservation Centre nature walk, kayaking, boat cruises, and outdoor fitness classes are all popular weekend activities.' },
       { q: 'What is the best area for nightlife in Lagos?', a: 'Victoria Island and Lekki are the main nightlife hubs, with numerous bars, clubs, and lounges. Ikoyi also has a growing nightlife scene with more upscale options.' },
       { q: 'Can I take a day trip from Lagos?', a: 'Popular day trips include Badagry (historic slave trade sites), Epe Fish Market, and Lekki Conservation Centre. Most are 1–2 hours from central Lagos.' },
@@ -897,7 +897,7 @@ festivals to wellness retreats.
       'A complete guide to the best event venues in Abuja for weddings, conferences, and parties — with 2026 pricing and booking tips.',
     category: 'Event Centers',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-08',
     readingMinutes: 7,
     body: `
@@ -950,7 +950,7 @@ halls suitable for 200–400 guests.
       'Everything you need to know about moving to Abuja — neighborhoods, cost of living, safety, schools, and how to settle in quickly.',
     category: 'Travel Guide',
     city: 'Abuja',
-    coverImage: '/cititour-blogpost-image.jpg',
+    coverImage: '/citivas-blogpost-image.jpg',
     publishedDate: '2026-07-05',
     readingMinutes: 9,
     body: `
@@ -998,7 +998,7 @@ particularly in the Maitama, Wuse, and Garki areas.
       { q: 'What healthcare facilities are available in Abuja?', a: 'Abuja has quality private hospitals including Cedarcrest, Nyark, and the National Hospital. For specialized care, many residents travel to Lagos or abroad.' },
       { q: 'Is traffic bad in Abuja?', a: 'Compared to Lagos, Abuja traffic is much lighter. Peak hours (7–9 AM, 4–7 PM) can see congestion on major roads, but commute times are generally shorter.' },
       { q: 'Can I find Nigerian food in Abuja?', a: 'Absolutely — Abuja has excellent Nigerian food across all price ranges, from street food to upscale restaurants. The city also has growing international dining options.' },
-      { q: 'How do I find accommodation in Abuja?', a: 'Use CitiTour to browse verified listings, or check property listing sites. Real estate agents in Wuse and Garki are also helpful for finding both short and long-term rentals.' },
+      { q: 'How do I find accommodation in Abuja?', a: 'Use Citivas to browse verified listings, or check property listing sites. Real estate agents in Wuse and Garki are also helpful for finding both short and long-term rentals.' },
       { q: 'What is there to do in Abuja for fun?', a: 'Abuja offers hiking at Zuma Rock and Abuja Hills, the National Mosque and Church, Jabi Lake activities, restaurants, nightlife in Wuse and Maitama, and cultural events.' },
     ],
   },

@@ -81,8 +81,8 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
           <View style={s.header}>
-            <Image source={require('../../assets/cititour-logo.png')} style={[s.logo, { tintColor: '#1E88E5' }]} resizeMode="contain" />
-            <Text style={s.brand}>CitiTour</Text>
+            <Image source={require('../../assets/citivas-logo.png')} style={s.logo} resizeMode="contain" />
+            <Text style={s.brand}>Citivas</Text>
             <Text style={s.subtitle}>
               {isSignUp ? 'Create your account to explore Nigeria' : 'Welcome back — discover your city'}
             </Text>
@@ -251,7 +251,7 @@ const s = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 40 },
 
   header: { paddingTop: 24, paddingBottom: 28, alignItems: 'center' },
-  logo: { width: 56, height: 56, marginBottom: 12 },
+  logo: { width: 80, height: 80, marginBottom: 12, borderRadius: 16 },
   brand: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
   subtitle: { fontSize: 14, marginTop: 6, textAlign: 'center' },
 

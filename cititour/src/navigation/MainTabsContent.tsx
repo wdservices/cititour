@@ -37,7 +37,7 @@ function cityToBrand(city: string): string {
     case 'Kano': return 'TourKAN';
     case 'Owerri': return 'TourOWR';
     case 'Kaduna': return 'TourKAD';
-    default: return 'CitiTour';
+    default: return 'Citivas';
   }
 }
 
@@ -55,7 +55,7 @@ export default function MainTabsContent({
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState('explore');
   const [menuVisible, setMenuVisible] = useState(false);
-  const [brandName, setBrandName] = useState('CitiTour');
+  const [brandName, setBrandName] = useState('Citivas');
 
   useEffect(() => {
     (async () => {
@@ -97,11 +97,11 @@ export default function MainTabsContent({
       {
         title: 'Support',
         items: [
-          { label: 'Share CitiTour', icon: Share2, onPress: async () => {
+          { label: 'Share Citivas', icon: Share2, onPress: async () => {
             setMenuVisible(false);
             try {
               await Share.share({
-                message: 'Check out CitiTour — discover businesses, events, and marketplace deals near you! https://cititour.ng',
+                message: 'Check out Citivas — discover businesses, events, and marketplace deals near you! https://citivas.ng',
               });
             } catch {}
           }},
@@ -110,8 +110,8 @@ export default function MainTabsContent({
           { label: 'Contact Support', icon: Headphones, onPress: () => {
             setMenuVisible(false);
             const email = 'hello.bluewavestech@gmail.com';
-            const subject = encodeURIComponent('CitiTour Support');
-            const body = encodeURIComponent(`Hi CitiTour Support,\n\nI need help with:\n\n\nMy device: ${Platform.OS}\nApp version: 1.0.0`);
+            const subject = encodeURIComponent('Citivas Support');
+            const body = encodeURIComponent(`Hi Citivas Support,\n\nI need help with:\n\n\nMy device: ${Platform.OS}\nApp version: 1.0.0`);
             Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
           }},
         ],

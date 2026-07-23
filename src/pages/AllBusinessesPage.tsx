@@ -141,7 +141,7 @@ const AllBusinessesPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="All Businesses | CititourNG"
+        title="All Businesses | CitivasNG"
         description="Browse all premium business spots in Lagos & Port Harcourt."
         keywords={["all businesses", "Nigeria", "restaurants", "hotels", "shopping", "lifestyle"]}
         canonicalUrl={`${window.location.origin}/businesses`}

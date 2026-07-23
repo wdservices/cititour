@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 import { blogPosts } from "@/content/blogPosts";
@@ -18,14 +18,14 @@ export default function BlogIndexPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="CitiTour Blog — Nigeria Travel, Events & Hospitality Guides"
+        title="Citivas Blog — Nigeria Travel, Events & Hospitality Guides"
         description="Guides to the best event centers, restaurants, hotels and things to do across Lagos, Abuja, Port Harcourt and beyond."
         canonicalUrl="/blog"
       />
 
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <Button asChild className="rounded-full"><Link to="/auth">Sign in</Link></Button>
         </div>
       </header>
@@ -33,7 +33,7 @@ export default function BlogIndexPage() {
       <section className="py-16 md:py-24 border-b border-border">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-xs font-bold uppercase tracking-widest text-primary mb-3">Field notes</div>
-          <h1 className="font-display text-5xl md:text-6xl font-extrabold mb-4">The CitiTour Journal</h1>
+          <h1 className="font-display text-5xl md:text-6xl font-extrabold mb-4">The Citivas Journal</h1>
           <p className="text-muted-foreground text-lg">City guides, venue reviews, and how-to articles for navigating Nigeria's biggest cities.</p>
         </div>
       </section>
@@ -98,7 +98,7 @@ export default function BlogIndexPage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} CitiTour</p>
+          <p>&copy; {new Date().getFullYear()} Citivas</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

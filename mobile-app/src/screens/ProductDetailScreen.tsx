@@ -130,7 +130,7 @@ export default function ProductDetailScreen({ route }: any) {
             </View>
             <View style={[s.secureRow, { backgroundColor: `${colors.primary}15`, borderColor: `${colors.primary}30` }]}>
               <ShieldCheck size={15} color={colors.primary} strokeWidth={2} />
-              <Text style={[s.secureText, { color: colors.primary }]}>Secure payment through CitiTour</Text>
+              <Text style={[s.secureText, { color: colors.primary }]}>Secure payment through Citivas</Text>
             </View>
           </View>
         </View>

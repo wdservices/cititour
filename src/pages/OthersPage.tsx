@@ -61,7 +61,7 @@ const OthersPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Others | CititourNG"
+        title="Others | CitivasNG"
         description="Browse businesses that don't fit common categories. Discover unique services and offerings across Nigeria."
         keywords={["others", "misc", "unique", "Nigeria", "business", "services"]}
         canonicalUrl={`${window.location.origin}/others`}

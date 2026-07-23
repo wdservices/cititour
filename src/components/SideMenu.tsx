@@ -45,7 +45,7 @@ const menuItems = [
   {
     section: "Support",
     items: [
-      { icon: Share, title: "Share CitiTour", description: "Invite friends" },
+      { icon: Share, title: "Share Citivas", description: "Invite friends" },
       { icon: MessageSquare, title: "Feedback", description: "Help us improve" },
       { icon: Settings, title: "Settings & Privacy", description: "Account settings" },
       { icon: HelpCircle, title: "Contact Support", description: "Get help" },
@@ -190,7 +190,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
         </Button>
         
         <div className="mt-4 flex flex-col items-center gap-1 justify-center">
-          <img src="/cititour-logo.png" alt={`${brandName} Logo`} className="h-6 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
+          <img src="/citivas-logo.png" alt={`${brandName} Logo`} className="h-6 w-6 rounded-md object-cover" />
           <p className="text-[10px] text-muted-foreground/60 mt-1">
             By Bluewaves Technologies
           </p>

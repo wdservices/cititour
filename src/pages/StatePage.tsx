@@ -32,8 +32,8 @@ export default function StatePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title={`${state.cityLabel} Guide — Best Hotels, Restaurants & Events | CitiTour`}
-        description={`Discover the best of ${state.cityLabel}: hotels, restaurants, events and hidden gems curated by locals on CitiTour.`}
+        title={`${state.cityLabel} Guide — Best Hotels, Restaurants & Events | Citivas`}
+        description={`Discover the best of ${state.cityLabel}: hotels, restaurants, events and hidden gems curated by locals on Citivas.`}
         canonicalUrl={canonical}
         keywords={[`${state.cityLabel} hotels`, `${state.cityLabel} restaurants`, `${state.cityLabel} events`, `things to do in ${state.cityLabel}`]}
         robots={state.populated ? "index, follow" : "noindex, follow"}
@@ -42,7 +42,7 @@ export default function StatePage() {
 
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <nav className="hidden md:flex items-center gap-5 text-sm">
             {STATES.filter(s => s.populated).map(s => (
               <Link key={s.slug} to={`/nigeria/${s.slug}`}
@@ -59,7 +59,7 @@ export default function StatePage() {
         <section className="py-32 text-center container mx-auto px-4 max-w-2xl">
           <h1 className="font-display text-5xl font-extrabold mb-4">{state.hero}</h1>
           <p className="text-muted-foreground mb-8">{state.intro}</p>
-          <Button asChild className="rounded-full"><Link to="/">Back to CitiTour</Link></Button>
+          <Button asChild className="rounded-full"><Link to="/">Back to Citivas</Link></Button>
         </section>
       ) : (
         <>
@@ -96,7 +96,7 @@ export default function StatePage() {
               <h2 className="font-display text-4xl md:text-5xl font-extrabold mb-14">Explore {state.cityLabel}</h2>
               <div className="grid sm:grid-cols-3 gap-x-8 gap-y-14">
                 {[
-                  { icon: Hotel, title: `Best hotels in ${state.cityLabel}`, to: "/hotels", body: "Luxury, boutique and business hotels\u2014verified by CitiTour.", ring: 'border-primary text-primary', rotate: '-rotate-3' },
+                  { icon: Hotel, title: `Best hotels in ${state.cityLabel}`, to: "/hotels", body: "Luxury, boutique and business hotels\u2014verified by Citivas.", ring: 'border-primary text-primary', rotate: '-rotate-3' },
                   { icon: Utensils, title: `Where to eat in ${state.cityLabel}`, to: "/restaurants", body: "From street kitchens to fine dining rooms.", ring: 'border-accent text-accent', rotate: 'rotate-2' },
                   { icon: Calendar, title: `What\u2019s on in ${state.cityLabel}`, to: "/events", body: "Concerts, brunches, launches and members-only nights.", ring: 'border-success text-success', rotate: '-rotate-2' },
                 ].map(c => {
@@ -142,7 +142,7 @@ export default function StatePage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} CitiTour</p>
+          <p>© {new Date().getFullYear()} Citivas</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

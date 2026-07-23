@@ -1,4 +1,4 @@
-This build implements the CitiTour master brief in a prioritized sequence so the visual overhaul lands first, then new SEO pages, then admin dashboard.
+This build implements the Citivas master brief in a prioritized sequence so the visual overhaul lands first, then new SEO pages, then admin dashboard.
 
 ## 1. Design system redesign (global, one pass)
 

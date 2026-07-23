@@ -229,10 +229,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           
           <div className="max-w-lg text-center relative z-10">
             <div className="flex items-center justify-center gap-3 mb-8">
-              <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center">
-                <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-12 w-auto object-contain" />
-              </div>
-              <h2 className="text-5xl font-extrabold mt-4 mb-2">CitiTour</h2>
+              <img src="/citivas-logo.png" alt="Citivas Logo" className="w-20 h-20 rounded-2xl object-cover" />
+              <h2 className="text-5xl font-extrabold mt-4 mb-2">Citivas</h2>
             </div>
             
             <h3 className="text-3xl font-bold mb-6">
@@ -303,10 +301,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
             <div className="bg-card border border-border rounded-3xl shadow-card p-6 sm:p-8 md:p-10">
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-6 lg:hidden">
-                  <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                    <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-7 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
-                  </div>
-                  <h2 className="text-2xl font-extrabold text-foreground">CitiTour</h2>
+                  <img src="/citivas-logo.png" alt="Citivas Logo" className="w-12 h-12 rounded-xl object-cover" />
+                  <h2 className="text-2xl font-extrabold text-foreground">Citivas</h2>
                 </div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">
                   {isSignUp ? 'Create your account' : 'Welcome back'}

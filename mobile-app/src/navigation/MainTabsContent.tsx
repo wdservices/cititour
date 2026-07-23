@@ -35,7 +35,7 @@ function cityToBrand(city: string): string {
     case 'Kano': return 'TourKAN';
     case 'Owerri': return 'TourOWR';
     case 'Kaduna': return 'TourKAD';
-    default: return 'CitiTour';
+    default: return 'Citivas';
   }
 }
 
@@ -53,7 +53,7 @@ export default function MainTabsContent({
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState('explore');
   const [menuVisible, setMenuVisible] = useState(false);
-  const [brandName, setBrandName] = useState('CitiTour');
+  const [brandName, setBrandName] = useState('Citivas');
 
   useEffect(() => {
     (async () => {
@@ -95,7 +95,7 @@ export default function MainTabsContent({
       {
         title: 'Support',
         items: [
-          { label: 'Share CitiTour', onPress: () => setMenuVisible(false) },
+          { label: 'Share Citivas', onPress: () => setMenuVisible(false) },
           { label: 'Feedback', onPress: () => setMenuVisible(false) },
           { label: 'Settings', onPress: () => { setActiveTab('settings'); setMenuVisible(false); } },
           { label: 'Contact Support', onPress: () => setMenuVisible(false) },

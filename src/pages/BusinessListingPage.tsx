@@ -124,9 +124,9 @@ const BusinessListingPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="List Your Business | CititourNG"
-        description="Submit your business to CititourNG to reach travelers and locals across Nigeria."
-        keywords={["list business", "CititourNG", "Nigeria", "submit listing", "discover", "marketing"]}
+        title="List Your Business | CitivasNG"
+        description="Submit your business to CitivasNG to reach travelers and locals across Nigeria."
+        keywords={["list business", "CitivasNG", "Nigeria", "submit listing", "discover", "marketing"]}
         canonicalUrl={`${window.location.origin}/business-listing`}
       />
       {/* Header */}
@@ -145,7 +145,7 @@ const BusinessListingPage = () => {
             <div>
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Business</span>
               <h1 className="font-display text-3xl font-extrabold">Business Listing</h1>
-              <p className="text-muted-foreground">List your business on CitiTour</p>
+              <p className="text-muted-foreground">List your business on Citivas</p>
             </div>
           </div>
         </div>

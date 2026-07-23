@@ -161,7 +161,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title={`Search${searchTerm ? `: ${searchTerm}` : ""} | CititourNG`}
+        title={`Search${searchTerm ? `: ${searchTerm}` : ""} | CitivasNG`}
         description="Search businesses across categories like restaurants, hotels, events, attractions, lifestyle, shopping, and more."
         keywords={["Nigeria", "search", "restaurants", "hotels", "events", "attractions", "lifestyle", "shopping", "tourism"]}
         canonicalUrl={`${window.location.origin}/search${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ""}`}

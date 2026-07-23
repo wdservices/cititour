@@ -49,11 +49,11 @@ const faqData = [
     questions: [
       {
         question: "How do I create an account?",
-        answer: "Visit CitiTour and click 'Get Started' or 'Sign In'. You can sign up with your email and password, or use Google for one-click registration."
+        answer: "Visit Citivas and click 'Get Started' or 'Sign In'. You can sign up with your email and password, or use Google for one-click registration."
       },
       {
         question: "Why do I have to sign in again every time I reload the page?",
-        answer: "CitiTour uses session-based authentication for security. Your sign-in state is cleared when you close your browser tab or reload the page. This protects your account if you're using a shared or public device."
+        answer: "Citivas uses session-based authentication for security. Your sign-in state is cleared when you close your browser tab or reload the page. This protects your account if you're using a shared or public device."
       },
       {
         question: "How do I reset my password?",
@@ -69,8 +69,8 @@ const faqData = [
     category: "Discovering Places & Events",
     questions: [
       {
-        question: "How does CitiTour know my location?",
-        answer: "When you first visit, CitiTour asks for your location (with your permission) to show localised content. Your city determines your regional branding — e.g., TourLAG for Lagos, TourRIV for Rivers, TourABJ for Abuja. You can change this in Settings."
+        question: "How does Citivas know my location?",
+        answer: "When you first visit, Citivas asks for your location (with your permission) to show localised content. Your city determines your regional branding — e.g., TourLAG for Lagos, TourRIV for Rivers, TourABJ for Abuja. You can change this in Settings."
       },
       {
         question: "What can I find on the Explore page?",
@@ -95,7 +95,7 @@ const faqData = [
       },
       {
         question: "How do discounts work?",
-        answer: "Sellers can set a regular price and a promo price. When the promo price is lower, CitiTour displays the original price with a strikethrough and highlights the discounted price."
+        answer: "Sellers can set a regular price and a promo price. When the promo price is lower, Citivas displays the original price with a strikethrough and highlights the discounted price."
       },
       {
         question: "How do I list a product for sale?",
@@ -112,11 +112,11 @@ const faqData = [
     questions: [
       {
         question: "How do I buy an event ticket?",
-        answer: "Open any event, select a ticket tier and quantity, fill in your registration details, and pay via card, bank transfer, or your CitiTour wallet. You'll receive a confirmation after payment."
+        answer: "Open any event, select a ticket tier and quantity, fill in your registration details, and pay via card, bank transfer, or your Citivas wallet. You'll receive a confirmation after payment."
       },
       {
         question: "Can I pay for event tickets with my wallet?",
-        answer: "Yes! If you have sufficient balance in your CitiTour wallet, you can select 'Wallet' as your payment method when purchasing event tickets."
+        answer: "Yes! If you have sufficient balance in your Citivas wallet, you can select 'Wallet' as your payment method when purchasing event tickets."
       },
       {
         question: "Where can I see my event tickets?",
@@ -153,7 +153,7 @@ const faqData = [
       },
       {
         question: "What can I use my wallet balance for?",
-        answer: "You can use your wallet to purchase event tickets on CitiTour. Wallet funds cannot be transferred between users or withdrawn as cash outside the Platform."
+        answer: "You can use your wallet to purchase event tickets on Citivas. Wallet funds cannot be transferred between users or withdrawn as cash outside the Platform."
       },
       {
         question: "What are the withdrawal fees?",
@@ -165,7 +165,7 @@ const faqData = [
     category: "Listings & Dashboard",
     questions: [
       {
-        question: "How do I list my business on CitiTour?",
+        question: "How do I list my business on Citivas?",
         answer: "Click the profile icon to go to your Dashboard, then select 'Listings' tab. Click 'Create New' and choose 'Register Business'. Fill in your business name, category, state, city, address, phone, and upload a cover image."
       },
       {
@@ -187,7 +187,7 @@ const faqData = [
     questions: [
       {
         question: "What is Split It?",
-        answer: "Split It lets you split a bill or expense with friends. Enter the total amount, add the people splitting, and CitiTour calculates each person's share."
+        answer: "Split It lets you split a bill or expense with friends. Enter the total amount, add the people splitting, and Citivas calculates each person's share."
       },
       {
         question: "Does Split It handle payments?",
@@ -332,7 +332,7 @@ const ContactSupportPage = () => {
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
                       <h4 className="font-medium">Browse Help Center</h4>
-                      <p className="text-sm text-muted-foreground">Step-by-step guides for all CitiTour features</p>
+                      <p className="text-sm text-muted-foreground">Step-by-step guides for all Citivas features</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>

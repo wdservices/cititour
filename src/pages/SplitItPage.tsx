@@ -20,7 +20,7 @@ const useCases = [
 ];
 
 const faq = [
-  { q: "Do all my friends need the CitiTour app?", a: "No. You can send a payment link — they pay via card, transfer or USSD without an account." },
+  { q: "Do all my friends need the Citivas app?", a: "No. You can send a payment link — they pay via card, transfer or USSD without an account." },
   { q: "How are service charge and VAT handled?", a: "Split It applies the charge proportionally to each person's items, so light eaters aren't overcharged." },
   { q: "Is there a fee?", a: "Split It is free for personal use. Businesses using it for table-side splitting pay a small transaction fee." },
 ];
@@ -30,7 +30,7 @@ export default function SplitItPage() {
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      name: "CitiTour Split It",
+      name: "Citivas Split It",
       applicationCategory: "FinanceApplication",
       operatingSystem: "iOS, Android, Web",
       offers: { "@type": "Offer", price: "0", priceCurrency: "NGN" },
@@ -45,17 +45,17 @@ export default function SplitItPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="Split It — Split Restaurant Bills in Seconds | CitiTour"
-        description="Split restaurant, Airbnb and group bills fairly with CitiTour Split It. Snap the receipt, tag orders, share a payment link. Built for Nigeria."
+        title="Split It — Split Restaurant Bills in Seconds | Citivas"
+        description="Split restaurant, Airbnb and group bills fairly with Citivas Split It. Snap the receipt, tag orders, share a payment link. Built for Nigeria."
         canonicalUrl="/split-it"
-        keywords={["split bill nigeria", "split restaurant bill", "group payment app", "cititour split it"]}
+        keywords={["split bill nigeria", "split restaurant bill", "group payment app", "Citivas split it"]}
         structuredData={jsonLd}
       />
 
       {/* Nav */}
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/nigeria/lagos" className="hover:text-primary">Lagos</Link>
             <Link to="/nigeria/abuja" className="hover:text-primary">Abuja</Link>
@@ -73,14 +73,14 @@ export default function SplitItPage() {
         <div className="container mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-semibold uppercase tracking-wider mb-6">
-              <Sparkles className="w-3.5 h-3.5" /> New in CitiTour
+              <Sparkles className="w-3.5 h-3.5" /> New in Citivas
             </div>
             <h1 className="font-display text-5xl md:text-7xl font-extrabold leading-[1.02] mb-6">
               Split any bill.<br/>
               <span className="text-primary">Skip the drama.</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg mb-8">
-              Snap the receipt. Tag who ordered what. CitiTour handles the VAT, service charge and math — then sends everyone a payment link.
+              Snap the receipt. Tag who ordered what. Citivas handles the VAT, service charge and math — then sends everyone a payment link.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 text-base font-semibold">
@@ -189,7 +189,7 @@ export default function SplitItPage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm">
-          <p className="text-muted-foreground">© {new Date().getFullYear()} CitiTour. Made in Nigeria.</p>
+          <p className="text-muted-foreground">© {new Date().getFullYear()} Citivas. Made in Nigeria.</p>
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-primary">Privacy</Link>
             <Link to="/terms" className="hover:text-primary">Terms</Link>

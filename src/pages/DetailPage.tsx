@@ -264,7 +264,7 @@ const DetailPage = () => {
   return (
     <div className="min-h-screen bg-[#F5F5F0] text-foreground pb-0">
       <SEO
-        title={`${renderValue(data.title)} | CititourNG`}
+        title={`${renderValue(data.title)} | CitivasNG`}
         description={renderValue(data.description)}
       />
 
@@ -625,7 +625,7 @@ const DetailPage = () => {
             <div className="flex items-center gap-6 text-[11px]">
               <a href="/privacy" className="hover:text-white transition-colors uppercase tracking-wider font-medium">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors uppercase tracking-wider font-medium">Terms of Service</a>
-              <span className="text-white/30">© {new Date().getFullYear()} CititourNG</span>
+              <span className="text-white/30">© {new Date().getFullYear()} CitivasNG</span>
             </div>
           </div>
         </div>

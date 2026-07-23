@@ -14,7 +14,7 @@ const socialPlatforms = [
   { name: "Facebook", icon: Facebook, color: "bg-primary", shareUrl: "https://facebook.com/sharer/sharer.php?u=" },
   { name: "Twitter", icon: Twitter, color: "bg-accent", shareUrl: "https://twitter.com/intent/tweet?text=" },
   { name: "Instagram", icon: Instagram, color: "bg-pink-500", shareUrl: "" },
-  { name: "Email", icon: Mail, color: "bg-gray-600", shareUrl: "mailto:?subject=Check out CititourNG&body=" }
+  { name: "Email", icon: Mail, color: "bg-gray-600", shareUrl: "mailto:?subject=Check out CitivasNG&body=" }
 ];
 
 const rewards = [
@@ -30,7 +30,7 @@ const ShareAppPage = () => {
   const [referralCode] = useState("GC2024JOHN");
   const [referrals] = useState(3);
 
-  const referralLink = `https://cititourng.com/join?ref=${referralCode}`;
+  const referralLink = `https://citivasng.com/join?ref=${referralCode}`;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -41,7 +41,7 @@ const ShareAppPage = () => {
   };
 
   const shareToSocial = (platform: typeof socialPlatforms[0]) => {
-    const message = `🌟 Discover amazing places in Nigeria with CititourNG! Join me and get exclusive deals. Use my referral code: ${referralCode} ${referralLink}`;
+    const message = `🌟 Discover amazing places in Nigeria with CitivasNG! Join me and get exclusive deals. Use my referral code: ${referralCode} ${referralLink}`;
     
     if (platform.name === "WhatsApp") {
       window.open(`${platform.shareUrl}${encodeURIComponent(message)}`, '_blank');
@@ -77,7 +77,7 @@ const ShareAppPage = () => {
               <Share className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Share CititourNG</h1>
+              <h1 className="text-2xl font-bold">Share CitivasNG</h1>
               <p className="text-white/90">Invite friends and earn rewards</p>
             </div>
           </div>
@@ -200,7 +200,7 @@ const ShareAppPage = () => {
           <CardHeader>
             <CardTitle>Referral Rewards</CardTitle>
             <CardDescription>
-              Earn amazing rewards for every friend you bring to CititourNG
+              Earn amazing rewards for every friend you bring to CitivasNG
             </CardDescription>
           </CardHeader>
           <CardContent>

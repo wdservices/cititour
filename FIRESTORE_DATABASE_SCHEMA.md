@@ -1,4 +1,4 @@
-# Firestore Database Setup Guide for MyPHApp (CititourNG)
+# Firestore Database Setup Guide for Citivas
 
 ## Overview
 This is a step-by-step guide to manually create your Firestore database structure in the Firebase Console. The app is a tourism and business listing platform for Nigeria with user authentication, wallet system, business listings, ads, events, and more.
@@ -951,10 +951,10 @@ Firestore Database
 |-------|------|-----------------|
 | commissionRate | number | 5 |
 | currency | string | NGN |
-| supportEmail | string | support@cititourng.com |
+| supportEmail | string | support@citivasng.com |
 | supportPhone | string | +2348012345678 |
-| termsAndConditionsUrl | string | https://cititourng.com/terms |
-| privacyPolicyUrl | string | https://cititourng.com/privacy |
+| termsAndConditionsUrl | string | https://citivasng.com/terms |
+| privacyPolicyUrl | string | https://citivasng.com/privacy |
 | maintenanceMode | boolean | false |
 | appVersion | string | 1.0.0 |
 | updatedAt | timestamp | (Click "Set to current time") |
@@ -964,9 +964,9 @@ Firestore Database
 - Field: `socialMedia`
 - Type: **map**
 - Add nested fields:
-  - facebook: string → https://facebook.com/cititourng
-  - instagram: string → https://instagram.com/cititourng
-  - twitter: string → https://twitter.com/cititourng
+  - facebook: string → https://facebook.com/citivasng
+  - instagram: string → https://instagram.com/citivasng
+  - twitter: string → https://twitter.com/citivasng
 - Click **"Save"**
 
 ### Step 4: Add Payment Methods (Array)

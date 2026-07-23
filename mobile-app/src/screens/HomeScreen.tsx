@@ -38,7 +38,7 @@ function cityToBrand(city: string): string {
     case 'Kano': return 'TourKAN';
     case 'Owerri': return 'TourOWR';
     case 'Kaduna': return 'TourKAD';
-    default: return 'CitiTour';
+    default: return 'Citivas';
   }
 }
 

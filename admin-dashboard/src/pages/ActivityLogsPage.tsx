@@ -121,7 +121,7 @@ function exportToPDF(logs: ActivityLog[], searchEmail: string) {
       </style>
     </head>
     <body>
-      <h1>CitiTour — User Activity Log</h1>
+      <h1>Citivas — User Activity Log</h1>
       <p>${searchEmail ? `Filtered by: ${searchEmail}` : 'All users'} | Generated: ${new Date().toLocaleString('en-NG')} | Total: ${logs.length} activities</p>
       <table>
         <thead>
@@ -192,7 +192,7 @@ export default function ActivityLogsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Activity Logs</h1>
-          <p className="text-sm text-ink/60 mt-1">Track all user activities on CitiTour</p>
+          <p className="text-sm text-ink/60 mt-1">Track all user activities on Citivas</p>
         </div>
         {logs.length > 0 && (
           <button

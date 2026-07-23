@@ -1,5 +1,5 @@
 /**
- * CitiTour — matches web app design tokens (index.css)
+ * Citivas — matches web app design tokens (index.css)
  */
 
 export const colors = {

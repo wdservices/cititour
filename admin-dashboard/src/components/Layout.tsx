@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps) {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
-          <h1 className="font-display text-xl font-extrabold text-marigold">CitiTour<span className="text-ivory/60 font-normal ml-1 text-sm">Admin</span></h1>
+          <h1 className="font-display text-xl font-extrabold text-marigold">Citivas<span className="text-ivory/60 font-normal ml-1 text-sm">Admin</span></h1>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-ivory/60 hover:text-ivory">
             <X className="h-6 w-6" />
           </button>
@@ -80,7 +80,7 @@ export default function Layout({ children }: LayoutProps) {
               <LogOut className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-[10px] text-ivory/40 text-center mt-3">© {new Date().getFullYear()} CitiTour</p>
+          <p className="text-[10px] text-ivory/40 text-center mt-3">© {new Date().getFullYear()} Citivas</p>
         </div>
       </div>
 

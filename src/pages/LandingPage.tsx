@@ -244,7 +244,7 @@ const LandingPage = () => {
           >
             {/* Logo on the Left */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-              <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-16 w-auto object-contain" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
+              <img src="/citivas-logo.png" alt="Citivas Logo" className="h-14 w-14 rounded-xl object-cover" />
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-l pl-2 border-border h-5 flex items-center mt-0.5">Concierge</span>
             </div>
 
@@ -310,8 +310,8 @@ const LandingPage = () => {
                   className="flex justify-center md:justify-start mb-6"
                 >
                   <div className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full bg-primary/10 border border-dashed border-primary/40 backdrop-blur-md">
-                    <img src="/cititour-logo.png" alt="CitiTour Logo" className="h-7 w-7 rounded-full object-contain bg-background p-0.5" style={{ filter: 'invert(38%) sepia(70%) saturate(5894%) hue-rotate(200deg) brightness(94%) contrast(101%)' }} />
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">CitiTour Premium Concierge</span>
+                    <img src="/citivas-logo.png" alt="Citivas Logo" className="h-7 w-7 rounded-lg object-cover" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">Citivas Premium Concierge</span>
                   </div>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -586,8 +586,8 @@ const LandingPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
             <div className="col-span-2 md:col-span-2">
               <div className="flex items-center gap-2 mb-3">
-                <img src="/cititour-logo.png" alt="CitiTour" className="w-9 h-9 rounded-xl object-contain" style={{ filter: 'brightness(0) invert(33%) sepia(98%) saturate(3463%) hue-rotate(195deg) brightness(97%) contrast(96%)' }} />
-                <span className="font-display text-2xl font-extrabold">CitiTour</span>
+                <img src="/citivas-logo.png" alt="Citivas" className="w-9 h-9 rounded-lg object-cover" />
+                <span className="font-display text-2xl font-extrabold">Citivas</span>
               </div>
               <p className="text-sm text-muted-foreground max-w-xs">Nigeria\u2019s urban concierge. Discover, book and split bills across Lagos, Abuja and Port Harcourt.</p>
             </div>
@@ -620,7 +620,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="mt-10 pt-6 border-t border-border flex flex-col md:flex-row justify-between gap-2 text-xs text-muted-foreground">
-            <p>© {new Date().getFullYear()} CitiTour. Made in Nigeria.</p>
+            <p>© {new Date().getFullYear()} Citivas. Made in Nigeria.</p>
             <p>Discover. Book. Split. Repeat.</p>
           </div>
         </div>

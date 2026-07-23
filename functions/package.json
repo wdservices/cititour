@@ -1,6 +1,6 @@
 {
-  "name": "cititour-functions",
-  "description": "CitiTour Firebase Cloud Functions",
+  "name": "citivas-functions",
+  "description": "Citivas Firebase Cloud Functions",
   "engines": {
     "node": "18"
   },

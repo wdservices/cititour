@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CitiTour",
-    "slug": "cititour",
+    "name": "Citivas",
+    "slug": "citivas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
       "bundleIdentifier": "com.cititour.app",
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "CitiTour uses your location to show hotels, restaurants and events near you, and to switch to your current city automatically."
+        "NSLocationWhenInUseUsageDescription": "Citivas uses your location to show hotels, restaurants and events near you, and to switch to your current city automatically."
       }
     },
     "plugins": [

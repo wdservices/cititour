@@ -1,4 +1,4 @@
-# CitiTour Mobile App — Glassmorphic Design System
+# Citivas Mobile App — Glassmorphic Design System
 
 A premium React Native mobile application featuring a complete glassmorphic design system, built with Expo and Firebase.
 
@@ -94,7 +94,7 @@ Translucent header bar with location pill and icons.
 ```tsx
 <GlassHeader
   title="Tour Lagos"
-  subtitle="CITITOUR CONCIERGE"
+  subtitle="Citivas CONCIERGE"
   locationPill="Lagos"
   leftIcon="menu"
   rightIcon="bell"

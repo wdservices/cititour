@@ -88,7 +88,7 @@ export default function FeedbackScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scrollContent}>
           <Text style={[s.intro, { color: colors.mutedForeground }]}>
-            Help us improve CitiTour. Your feedback is sent directly to our admin team.
+            Help us improve Citivas. Your feedback is sent directly to our admin team.
           </Text>
 
           {/* Type selector */}

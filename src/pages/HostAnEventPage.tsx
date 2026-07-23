@@ -28,15 +28,15 @@ export default function HostAnEventPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="Host an Event & Sell Tickets in Nigeria — CitiTour"
-        description="Sell tickets to your Lagos, Abuja or Port Harcourt event on CitiTour. QR entry, weekly payouts, in-app promotion. 8% flat commission."
+        title="Host an Event & Sell Tickets in Nigeria — Citivas"
+        description="Sell tickets to your Lagos, Abuja or Port Harcourt event on Citivas. QR entry, weekly payouts, in-app promotion. 8% flat commission."
         canonicalUrl="/host-an-event"
         keywords={["sell event tickets nigeria", "lagos event platform", "qr ticketing nigeria"]}
       />
 
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <Button asChild className="rounded-full"><Link to="/auth">Sign in</Link></Button>
         </div>
       </header>
@@ -123,7 +123,7 @@ export default function HostAnEventPage() {
           <Users className="w-10 h-10 mx-auto text-primary mb-4" />
           <h2 className="font-display text-4xl md:text-5xl font-extrabold mb-4">Your audience is already here.</h2>
           <p className="text-lg opacity-80 mb-8 max-w-2xl mx-auto">
-            50,000+ active users across Lagos, Abuja and Port Harcourt open CitiTour every week looking for their next night out.
+            50,000+ active users across Lagos, Abuja and Port Harcourt open Citivas every week looking for their next night out.
           </p>
           <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8">
             <Link to="/event-tickets">Start selling tickets</Link>
@@ -133,7 +133,7 @@ export default function HostAnEventPage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} CitiTour</p>
+          <p>© {new Date().getFullYear()} Citivas</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

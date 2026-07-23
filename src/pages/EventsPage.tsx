@@ -113,7 +113,7 @@ const EventsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Events | CititourNG"
+        title="Events | CitivasNG"
         description="Discover the best events happening in Lagos & Port Harcourt."
         keywords={["events", "Nigeria", "parties", "concerts", "gatherings"]}
         canonicalUrl={`${window.location.origin}/events`}

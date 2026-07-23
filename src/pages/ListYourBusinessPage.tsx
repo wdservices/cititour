@@ -45,15 +45,15 @@ export default function ListYourBusinessPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEO
-        title="List Your Business in Nigeria — CitiTour"
-        description="Get your restaurant, hotel, short-let or event business discovered on CitiTour. Verified listings across Lagos, Abuja and Port Harcourt. Featured placement, direct booking and analytics."
+        title="List Your Business in Nigeria — Citivas"
+        description="Get your restaurant, hotel, short-let or event business discovered on Citivas. Verified listings across Lagos, Abuja and Port Harcourt. Featured placement, direct booking and analytics."
         canonicalUrl="/list-your-business"
         keywords={["list restaurant nigeria", "hotel listing lagos", "business directory nigeria"]}
       />
 
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-bold">CitiTour</Link>
+          <Link to="/" className="font-display text-2xl font-bold">Citivas</Link>
           <Button asChild className="rounded-full"><Link to="/auth">Sign in</Link></Button>
         </div>
       </header>
@@ -69,7 +69,7 @@ export default function ListYourBusinessPage() {
             <span className="text-primary">get discovered here.</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            List your restaurant, hotel, event or short-let on CitiTour. Get in front of urban Nigerians actively looking for what you sell.
+            List your restaurant, hotel, event or short-let on Citivas. Get in front of urban Nigerians actively looking for what you sell.
           </p>
           <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 text-base font-semibold">
             <Link to="/business-listing">Start listing <ArrowRight className="ml-2 h-4 w-4" /></Link>
@@ -140,7 +140,7 @@ export default function ListYourBusinessPage() {
 
       <footer className="border-t border-border py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} CitiTour</p>
+          <p>© {new Date().getFullYear()} Citivas</p>
           <div className="flex gap-6"><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link></div>
         </div>
       </footer>

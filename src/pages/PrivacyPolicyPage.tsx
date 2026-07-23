@@ -6,8 +6,8 @@ const PrivacyPolicyPage = () => {
       <header className="border-b bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/cititour-logo.png" alt="CitiTour" className="w-9 h-9 rounded-xl object-contain" style={{ filter: 'brightness(0) invert(33%) sepia(98%) saturate(3463%) hue-rotate(195deg) brightness(97%) contrast(96%)' }} />
-            <span className="text-xl font-bold text-foreground">CitiTour</span>
+            <img src="/citivas-logo.png" alt="Citivas" className="w-9 h-9 rounded-xl object-cover" />
+            <span className="text-xl font-bold text-foreground">Citivas</span>
           </Link>
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Back to home</Link>
         </div>
@@ -22,7 +22,7 @@ const PrivacyPolicyPage = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">1. Overview</h2>
               <p>
-                We value your privacy. This policy explains what information CitiTour collects, how we use it, and the choices you have. By using CitiTour, you agree to this policy. CitiTour is operated by WDServices (hello.bluewavestech@gmail.com).
+                We value your privacy. This policy explains what information Citivas collects, how we use it, and the choices you have. By using Citivas, you agree to this policy. Citivas is operated by WDServices (hello.bluewavestech@gmail.com).
               </p>
             </section>
 
@@ -103,21 +103,21 @@ const PrivacyPolicyPage = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">8. Cookies and Tracking</h2>
               <p>
-                CitiTour uses essential cookies for authentication and session management. We do not use third-party advertising cookies or cross-site tracking. Analytics data is collected anonymously to improve the Platform.
+                Citivas uses essential cookies for authentication and session management. We do not use third-party advertising cookies or cross-site tracking. Analytics data is collected anonymously to improve the Platform.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-2">9. Children's Privacy</h2>
               <p>
-                CitiTour is not intended for users under the age of 13. We do not knowingly collect information from children. If we learn that we have collected data from a child under 13, we will delete it promptly.
+                Citivas is not intended for users under the age of 13. We do not knowingly collect information from children. If we learn that we have collected data from a child under 13, we will delete it promptly.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-2">10. Changes to This Policy</h2>
               <p>
-                We may update this Privacy Policy from time to time. We will notify users of material changes through the Platform or by email. Continued use of CitiTour after changes are posted constitutes acceptance of the updated policy.
+                We may update this Privacy Policy from time to time. We will notify users of material changes through the Platform or by email. Continued use of Citivas after changes are posted constitutes acceptance of the updated policy.
               </p>
             </section>
 
