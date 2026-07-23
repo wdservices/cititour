@@ -9,6 +9,8 @@ export interface ChatMessage {
   chatId: string;
   senderId: string;
   senderRole: 'customer' | 'business';
+  senderName?: string;
+  senderPhoto?: string;
   text: string;
   read: boolean;
   createdAt: any;
@@ -100,11 +102,15 @@ export async function sendMessage(
   senderId: string,
   senderRole: 'customer' | 'business',
   text: string,
+  senderName?: string,
+  senderPhoto?: string,
 ): Promise<void> {
   await addDoc(collection(db, 'chats', chatId, 'messages'), {
     chatId,
     senderId,
     senderRole,
+    senderName: senderName || '',
+    senderPhoto: senderPhoto || '',
     text,
     read: false,
     createdAt: serverTimestamp(),

@@ -259,63 +259,61 @@ const MarketplacePage = () => {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5"
                   : "flex flex-col gap-4"
               }
             >
               {filteredProducts.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer ${
+                  className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer p-3 ${
                     viewMode === "list" ? "flex" : ""
                   }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                   onClick={() => navigate(`/marketplace/${item.id}`)}
                 >
-                  <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-[3/2]"}`}>
+                  <div className={`relative overflow-hidden rounded-xl ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-[4/3]"}`}>
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-100"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
-                      className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
+                      className="absolute top-2.5 right-2.5 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
                     >
                       <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
                     </button>
                     {isRecentlyListed(item.createdAt) && (
-                      <div className="absolute top-3 left-3">
+                      <div className="absolute top-2.5 left-2.5">
                         <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider bg-emerald-500 text-white">
                           Just Listed
                         </span>
                       </div>
                     )}
                     {item.badge && (
-                      <div className="absolute bottom-3 left-3">
+                      <div className="absolute bottom-2.5 left-2.5">
                         <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>
                           {item.badge}
                         </span>
                       </div>
                     )}
                   </div>
-                  <div className={`p-3.5 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
+                  <div className={`px-1 pt-3 pb-1 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
                     <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{item.title}</h3>
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
+                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1.5 mb-2.5">
                       <MapPin className="w-3 h-3 shrink-0" />
                       <span className="truncate">{item.location}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        {item.promoPrice && Number(item.promoPrice.replace(/[^0-9]/g, '')) < Number(item.price.replace(/[^0-9]/g, '')) ? (
-                          <>
-                            <span className="font-medium text-sm md:text-base text-muted-foreground line-through">{item.price}</span>
-                            <span className="font-bold text-base md:text-lg text-primary">{item.promoPrice}</span>
-                          </>
-                        ) : (
-                          <span className="font-bold text-base md:text-lg text-accent">{item.price}</span>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      {item.promoPrice && Number(item.promoPrice.replace(/[^0-9]/g, '')) < Number(item.price.replace(/[^0-9]/g, '')) ? (
+                        <>
+                          <span className="font-medium text-sm text-muted-foreground line-through">{item.price}</span>
+                          <span className="font-bold text-base text-primary">{item.promoPrice}</span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-base text-accent">{item.price}</span>
+                      )}
                     </div>
                   </div>
                 </div>

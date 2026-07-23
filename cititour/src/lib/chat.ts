@@ -8,6 +8,8 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   senderRole: 'customer' | 'business';
+  senderName?: string;
+  senderPhoto?: string;
   text: string;
   createdAt: any;
   read: boolean;
@@ -48,10 +50,15 @@ export async function sendMessage(
   chatId: string,
   senderId: string,
   senderRole: 'customer' | 'business',
-  text: string
+  text: string,
+  senderName?: string,
+  senderPhoto?: string,
 ) {
   const messagesRef = collection(db, 'chats', chatId, 'messages');
-  await addDoc(messagesRef, { senderId, senderRole, text, createdAt: serverTimestamp(), read: false });
+  await addDoc(messagesRef, {
+    senderId, senderRole, senderName: senderName || '', senderPhoto: senderPhoto || '',
+    text, createdAt: serverTimestamp(), read: false,
+  });
 
   const chatRef = doc(db, 'chats', chatId);
   const unreadField = senderRole === 'customer' ? 'unreadByBusiness' : 'unreadByCustomer';
