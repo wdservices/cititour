@@ -20,6 +20,7 @@ import { db } from "@/lib/firebase";
 import { getDoc, doc } from "firebase/firestore";
 import { useMyListings, useBusinessChildren, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
+import MultiImageUpload from "@/components/MultiImageUpload";
 import { AddressPicker } from "@/components/AddressPicker";
 import { CLOUDINARY_FOLDERS, deleteImagesFromCloudinary, collectPublicIdsForListing } from "@/lib/cloudinary";
 import { logActivity } from "@/lib/activityLog";
@@ -112,12 +113,16 @@ const ProfileDashboard = () => {
 
   // ── Business-specific ──
   const [bizCategory, setBizCategory] = useState("");
+  const [bizImages, setBizImages] = useState<string[]>([]);
+  const [bizImagePublicIds, setBizImagePublicIds] = useState<string[]>([]);
 
   // ── Product-specific ──
   const [listAsBizId, setListAsBizId] = useState("individual");
   const [productPrice, setProductPrice] = useState("");
   const [promoPrice, setPromoPrice] = useState("");
   const [productCategory, setProductCategory] = useState("");
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [productImagePublicIds, setProductImagePublicIds] = useState<string[]>([]);
 
   // ── Property-specific ──
   const [propListAsBizId, setPropListAsBizId] = useState("individual");
@@ -322,6 +327,7 @@ const ProfileDashboard = () => {
     setIsSubmitting(true);
     try {
       const fullLocation = [selectedCity, selectedState].filter(Boolean).join(", ");
+      const primaryBizImage = bizImages[0] || uploadedImageUrl || getMockImage(bizCategory);
       await createBusiness.mutateAsync({
         title,
         description,
@@ -331,7 +337,9 @@ const ProfileDashboard = () => {
         city: selectedCity,
         streetAddress,
         phone,
-        image: uploadedImageUrl || getMockImage(bizCategory),
+        image: primaryBizImage,
+        images: bizImages.length > 0 ? bizImages : [primaryBizImage],
+        imagePublicIds: bizImagePublicIds,
         ownerId: user.id,
         isOpen: true,
         rating: 0,
@@ -366,6 +374,7 @@ const ProfileDashboard = () => {
       const city = selectedBiz.location?.split(", ").shift() || "";
       const fullLocation = [city, state].filter(Boolean).join(", ");
 
+      const primaryImage = productImages[0] || uploadedImageUrl || getMockImage(productCategory);
       await createProduct.mutateAsync({
         title,
         description,
@@ -378,7 +387,9 @@ const ProfileDashboard = () => {
         city,
         businessId: listAsBizId,
         sellerType: "business",
-        image: uploadedImageUrl || getMockImage(productCategory),
+        image: primaryImage,
+        images: productImages.length > 0 ? productImages : [primaryImage],
+        imagePublicIds: productImagePublicIds,
         ownerId: user.id,
         condition: "new",
       });
@@ -789,12 +800,20 @@ const ProfileDashboard = () => {
         <Textarea className="mt-1.5" placeholder="Tell people about your business..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-        <ImageUpload
-          onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
+        <MultiImageUpload
+          onUploadSuccess={(r) => {
+            setBizImages((prev) => [...prev, r.secureUrl]);
+            setBizImagePublicIds((prev) => [...prev, r.publicId]);
+          }}
+          onRemove={(idx) => {
+            setBizImages((prev) => prev.filter((_, i) => i !== idx));
+            setBizImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
+          }}
           folder={CLOUDINARY_FOLDERS.BUSINESSES}
-          currentImage={uploadedImageUrl}
-          buttonText="Upload Cover"
+          currentImages={bizImages}
+          buttonText="Add Image"
+          maxImages={10}
         />
       </div>
     </div>
@@ -866,12 +885,20 @@ const ProfileDashboard = () => {
             <Textarea className="mt-1.5" placeholder="Describe your product..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-            <ImageUpload
-              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
+            <MultiImageUpload
+              onUploadSuccess={(r) => {
+                setProductImages((prev) => [...prev, r.secureUrl]);
+                setProductImagePublicIds((prev) => [...prev, r.publicId]);
+              }}
+              onRemove={(idx) => {
+                setProductImages((prev) => prev.filter((_, i) => i !== idx));
+                setProductImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
+              }}
               folder={CLOUDINARY_FOLDERS.MARKETPLACE}
-              currentImage={uploadedImageUrl}
-              buttonText="Upload Image"
+              currentImages={productImages}
+              buttonText="Add Image"
+              maxImages={10}
             />
           </div>
         </>
@@ -1308,12 +1335,20 @@ const ProfileDashboard = () => {
 
               {/* Cover Image + Gallery */}
               <div>
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-                <ImageUpload
-                  onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
+                <MultiImageUpload
+                  onUploadSuccess={(r) => {
+                    setUploadedImageUrls((prev) => [...prev, r.secureUrl]);
+                    setUploadedImagePublicIds((prev) => [...prev, r.publicId]);
+                  }}
+                  onRemove={(idx) => {
+                    setUploadedImageUrls((prev) => prev.filter((_, i) => i !== idx));
+                    setUploadedImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
+                  }}
                   folder={CLOUDINARY_FOLDERS.BUSINESSES}
-                  currentImage={uploadedImageUrl}
-                  buttonText="Upload Cover Image"
+                  currentImages={uploadedImageUrls}
+                  buttonText="Add Image"
+                  maxImages={10}
                 />
               </div>
             </>
