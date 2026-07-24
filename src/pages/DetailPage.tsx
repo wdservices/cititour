@@ -392,36 +392,62 @@ const DetailPage = () => {
             {childProperties.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Available Rooms</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                    {childProperties[0]?.propertySubType === 'hotel' ? 'Room Types' : 'Available Rooms'}
+                  </p>
                   <button className="text-xs font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1">
                     View All <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {childProperties.map((prop: any) => (
-                    <button
-                      key={prop.id}
-                      onClick={() => navigate(`/property/${prop.id}`)}
-                      className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
-                    >
-                      <div className="aspect-[4/3] overflow-hidden bg-muted">
-                        {prop.image ? (
-                          <img src={prop.image} alt={prop.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Home className="w-10 h-10 text-muted-foreground/30" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{prop.type || prop.propertyType || 'Room'}</p>
-                        <p className="font-bold text-sm text-foreground truncate">{prop.title}</p>
-                        {prop.price != null && (
-                          <p className="text-xs font-bold text-primary mt-1">₦{Number(prop.price || 0).toLocaleString()}/night</p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                  {childProperties.map((prop: any) => {
+                    const subType = prop.propertySubType;
+                    let priceDisplay = '';
+                    if (subType === 'hotel' && prop.roomTypes?.length > 0) {
+                      const lowest = Math.min(...prop.roomTypes.map((r: any) => r.pricePerNight || 0).filter(Boolean));
+                      priceDisplay = lowest ? `from ₦${lowest.toLocaleString()}/night` : '';
+                    } else if (subType === 'rent') {
+                      priceDisplay = prop.price || (prop.details?.price ? `₦${prop.details.price.toLocaleString()}${prop.details.billingLabel || ''}` : '');
+                    } else if (subType === 'land') {
+                      priceDisplay = prop.price || (prop.details?.price ? `₦${prop.details.price.toLocaleString()}` : '');
+                    } else if (subType === 'commercial') {
+                      priceDisplay = prop.price || (prop.details?.price ? `₦${prop.details.price.toLocaleString()}${prop.details.billingLabel || ''}` : '');
+                    } else {
+                      priceDisplay = prop.price || (prop.pricePerNight ? `₦${prop.pricePerNight.toLocaleString()}/night` : '');
+                    }
+                    return (
+                      <button
+                        key={prop.id}
+                        onClick={() => navigate(`/property/${prop.id}`)}
+                        className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
+                      >
+                        <div className="aspect-[4/3] overflow-hidden bg-muted">
+                          {prop.image ? (
+                            <img src={prop.image} alt={prop.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Home className="w-10 h-10 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                            {prop.propertySubType === 'rent' ? 'For Rent' : prop.propertySubType === 'shortlet' ? 'Short-let' : prop.propertySubType === 'hotel' ? 'Hotel' : prop.propertySubType === 'land' ? 'Land' : prop.propertySubType === 'commercial' ? 'Commercial' : prop.type || prop.propertyType || 'Property'}
+                          </p>
+                          <p className="font-bold text-sm text-foreground truncate">{prop.title}</p>
+                          {priceDisplay && (
+                            <p className="text-xs font-bold text-primary mt-1">{priceDisplay}</p>
+                          )}
+                          {subType === 'rent' && prop.bedrooms > 0 && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{prop.bedrooms} bed · {prop.bathrooms} bath</p>
+                          )}
+                          {subType === 'land' && prop.details?.plotSize && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{prop.details.plotSize} {prop.details.sizeUnit}</p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

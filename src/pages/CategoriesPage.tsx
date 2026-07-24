@@ -182,7 +182,7 @@ const CategoriesPage = () => {
         {renderRow("Marketplace", marketplace, handleMktClick, "/marketplace", "View All Products", <ShoppingBag className="w-6 h-6 text-primary" />,
           (item) => <span className="font-bold text-xs text-primary">{item.price || "Price on request"}</span>)}
         {renderRow("Properties & Stays", properties, handlePropClick, "/airbnb", "View All Properties", <Home className="w-6 h-6 text-primary" />,
-          (item) => <span className="font-bold text-xs text-primary">{item.price || "₦0/night"}</span>)}
+          (item) => <span className="font-bold text-xs text-primary">{item.price || "Price on request"}</span>)}
       </main>
     </div>
   );

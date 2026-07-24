@@ -13,6 +13,9 @@ import { db } from '../lib/firebase';
 import {
   NIGERIAN_STATES, STATE_CITIES, BUSINESS_CATEGORIES, EVENT_CATEGORIES,
   PRODUCT_CATEGORIES, type NigerianState,
+  PROPERTY_SUB_TYPES, PROPERTY_AMENITIES, RENT_BILLING_PERIODS,
+  FURNISHING_OPTIONS, LAND_TITLE_TYPES, LAND_SIZE_UNITS,
+  COMMERCIAL_USAGES, type PropertySubType,
 } from '../lib/nigerianStates';
 
 type ListingType = 'business' | 'product' | 'property' | 'event';
@@ -59,8 +62,30 @@ export default function CreateListingScreen() {
   // Property form
   const [propParentBusinessId, setPropParentBusinessId] = useState('');
   const [propertyTitle, setPropertyTitle] = useState('');
+  const [propertySubType, setPropertySubType] = useState<PropertySubType | ''>('');
   const [propertyType, setPropertyType] = useState('');
   const [propertyPrice, setPropertyPrice] = useState('');
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  // Rent fields
+  const [rentBillingPeriod, setRentBillingPeriod] = useState('');
+  const [rentBedrooms, setRentBedrooms] = useState(1);
+  const [rentBathrooms, setRentBathrooms] = useState(1);
+  const [rentFurnishing, setRentFurnishing] = useState('');
+  // Shortlet fields
+  const [shortletMaxGuests, setShortletMaxGuests] = useState(2);
+  const [shortletBedrooms, setShortletBedrooms] = useState(1);
+  const [shortletBathrooms, setShortletBathrooms] = useState(1);
+  // Hotel fields
+  const [hotelStarRating, setHotelStarRating] = useState('');
+  const [hotelRoomTypes, setHotelRoomTypes] = useState<{ name: string; pricePerNight: number; maxOccupancy: number }[]>([]);
+  // Land fields
+  const [landPlotSize, setLandPlotSize] = useState('');
+  const [landSizeUnit, setLandSizeUnit] = useState('plots');
+  const [landTitleType, setLandTitleType] = useState('');
+  // Commercial fields
+  const [commercialSpaceSize, setCommercialSpaceSize] = useState('');
+  const [commercialBillingPeriod, setCommercialBillingPeriod] = useState('');
+  const [commercialUsages, setCommercialUsages] = useState<string[]>([]);
 
   // Event form
   const [eventTitle, setEventTitle] = useState('');
@@ -81,6 +106,7 @@ export default function CreateListingScreen() {
   const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false);
   const [showProductCategoryDropdown, setShowProductCategoryDropdown] = useState(false);
   const [showPropertyTypeDropdown, setShowPropertyTypeDropdown] = useState(false);
+  const [showPropertySubTypeDropdown, setShowPropertySubTypeDropdown] = useState(false);
   const [showParentBizDropdown, setShowParentBizDropdown] = useState(false);
   const [showEventStateDropdown, setShowEventStateDropdown] = useState(false);
   const [showEventCityDropdown, setShowEventCityDropdown] = useState(false);
@@ -135,7 +161,12 @@ export default function CreateListingScreen() {
     setStreetAddress(''); setPhone(''); setDescription('');
     setParentBusinessId(''); setProductTitle(''); setProductCategory('');
     setProductPrice(''); setPromoPrice('');
-    setPropParentBusinessId(''); setPropertyTitle(''); setPropertyType(''); setPropertyPrice('');
+    setPropParentBusinessId(''); setPropertyTitle(''); setPropertySubType(''); setPropertyType(''); setPropertyPrice('');
+    setSelectedAmenities([]); setRentBillingPeriod(''); setRentBedrooms(1); setRentBathrooms(1); setRentFurnishing('');
+    setShortletMaxGuests(2); setShortletBedrooms(1); setShortletBathrooms(1);
+    setHotelStarRating(''); setHotelRoomTypes([]);
+    setLandPlotSize(''); setLandSizeUnit('plots'); setLandTitleType('');
+    setCommercialSpaceSize(''); setCommercialBillingPeriod(''); setCommercialUsages([]);
     setEventTitle(''); setEventCategory(''); setEventVenue('');
     setEventDescription(''); setEventStartDate(''); setEventEndDate('');
     setEventStartTime(''); setEventEndTime(''); setEventState(''); setEventCity('');
@@ -144,7 +175,7 @@ export default function CreateListingScreen() {
   const canSubmit = () => {
     if (listingType === 'business') return bizName.trim() && bizCategory && selectedState && phone.trim() && description.trim();
     if (listingType === 'product') return parentBusinessId && productTitle.trim() && productPrice.trim() && description.trim();
-    if (listingType === 'property') return propParentBusinessId && propertyTitle.trim() && propertyType && propertyPrice.trim() && description.trim();
+    if (listingType === 'property') return propParentBusinessId && propertyTitle.trim() && propertySubType && propertyPrice.trim() && description.trim();
     if (listingType === 'event') return eventTitle.trim() && eventDescription.trim() && eventStartDate && eventEndDate && eventState;
     return false;
   };
@@ -192,15 +223,49 @@ export default function CreateListingScreen() {
         }
       } else if (listingType === 'property') {
         const biz = myBusinesses.find((b) => b.id === propParentBusinessId);
+        const details: Record<string, any> = {};
+        if (propertySubType === 'rent') {
+          details.billingPeriod = rentBillingPeriod;
+          details.bedrooms = rentBedrooms;
+          details.bathrooms = rentBathrooms;
+          details.furnishing = rentFurnishing;
+        } else if (propertySubType === 'shortlet') {
+          details.pricePerNight = Number(propertyPrice.replace(/,/g, ''));
+          details.maxGuests = shortletMaxGuests;
+          details.bedrooms = shortletBedrooms;
+          details.bathrooms = shortletBathrooms;
+          details.amenities = selectedAmenities;
+        } else if (propertySubType === 'hotel') {
+          details.starRating = hotelStarRating ? Number(hotelStarRating) : 0;
+          details.roomTypes = hotelRoomTypes;
+          details.amenities = selectedAmenities;
+        } else if (propertySubType === 'land') {
+          details.plotSize = landPlotSize;
+          details.sizeUnit = landSizeUnit;
+          details.titleType = landTitleType;
+        } else if (propertySubType === 'commercial') {
+          details.spaceSize = commercialSpaceSize;
+          details.billingPeriod = commercialBillingPeriod;
+          details.usages = commercialUsages;
+        }
+        const priceNum = Number(propertyPrice.replace(/,/g, ''));
         const payload = {
+          title: propertyTitle.trim(),
           name: propertyTitle.trim(),
-          type: propertyType,
-          price: Number(propertyPrice.replace(/,/g, '')),
+          propertySubType,
+          type: propertySubType === 'rent' ? 'Apartment' : propertySubType === 'shortlet' ? 'Shortlet' : propertySubType === 'hotel' ? 'Hotel' : propertySubType === 'land' ? 'Land' : 'Commercial',
+          ...details,
+          price: priceNum,
+          priceNum,
           description: description.trim(),
           businessId: propParentBusinessId,
           businessName: biz?.name || '',
           ownerId: user.id,
           status: 'Active',
+          amenities: selectedAmenities,
+          bedrooms: details.bedrooms || 0,
+          bathrooms: details.bathrooms || 0,
+          guests: details.maxGuests || 0,
           updatedAt: serverTimestamp(),
         };
         if (isEdit && editData?.id) {
@@ -417,13 +482,257 @@ export default function CreateListingScreen() {
             const biz = myBusinesses.find((b) => b.name === v);
             setPropParentBusinessId(biz?.id || '');
           }, showParentBizDropdown, setShowParentBizDropdown)}
-          {renderLabel('Property Title', true)}
-          {renderInput(propertyTitle, setPropertyTitle, 'e.g. Modern 2-Bedroom in GRA')}
-          {renderDropdown('Property Type *', propertyType, ['Shortlet', 'Apartment', 'House', 'Land', 'Villa', 'Studio', 'Commercial', 'Other'], setPropertyType, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
-          {renderLabel('Price (₦)', true)}
-          {renderInput(propertyPrice, setPropertyPrice, 'e.g. 50000', { keyboardType: 'numeric' })}
-          {renderLabel('Description', true)}
-          {renderInput(description, setDescription, 'Describe your property...', { multiline: true, numberOfLines: 4 })}
+
+          {/* Sub-type selector */}
+          {!propertySubType ? (
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <Text style={[s.label, { color: colors.mutedForeground }]}>What type of property? *</Text>
+              {PROPERTY_SUB_TYPES.map((st) => (
+                <TouchableOpacity
+                  key={st.value}
+                  style={[s.typeCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => setPropertySubType(st.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 24 }}>{st.icon}</Text>
+                  <View style={s.typeText}>
+                    <Text style={[s.typeTitle, { color: colors.foreground }]}>{st.label}</Text>
+                    <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{st.desc}</Text>
+                  </View>
+                  <ChevronRight size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <>
+              {/* Current sub-type badge */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <View style={[s.badge, { backgroundColor: colors.primary + '15' }]}>
+                  <Text style={[s.badgeText, { color: colors.primary }]}>
+                    {PROPERTY_SUB_TYPES.find((s) => s.value === propertySubType)?.icon}{' '}
+                    {PROPERTY_SUB_TYPES.find((s) => s.value === propertySubType)?.label}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setPropertySubType('')}>
+                  <Text style={{ color: colors.primary, fontSize: 12 }}>Change</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Common fields */}
+              {renderLabel('Property Title', true)}
+              {renderInput(propertyTitle, setPropertyTitle, 'e.g. Modern 2-Bedroom in GRA')}
+              {renderLabel('Description', true)}
+              {renderInput(description, setDescription, 'Describe your property...', { multiline: true, numberOfLines: 4 })}
+
+              {/* RENT */}
+              {propertySubType === 'rent' && (
+                <View style={[s.typeFields, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+                  <Text style={[s.typeFieldsTitle, { color: colors.foreground }]}>Rental Details</Text>
+                  <View style={s.row}>
+                    <View style={s.halfField}>
+                      {renderLabel('Rent Amount (₦)', true)}
+                      {renderInput(propertyPrice, setPropertyPrice, 'e.g. 500000', { keyboardType: 'numeric' })}
+                    </View>
+                    <View style={s.halfField}>
+                      {renderDropdown('Billing Period *', rentBillingPeriod, [...RENT_BILLING_PERIODS], setRentBillingPeriod, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                    </View>
+                  </View>
+                  <View style={s.row}>
+                    <View style={s.halfField}>
+                      {renderLabel('Bedrooms')}
+                      <View style={s.stepperRow}>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setRentBedrooms(Math.max(0, rentBedrooms - 1))}>
+                          <Text style={{ fontWeight: '700' }}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={s.stepperValue}>{rentBedrooms}</Text>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setRentBedrooms(rentBedrooms + 1)}>
+                          <Text style={{ fontWeight: '700' }}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={s.halfField}>
+                      {renderLabel('Bathrooms')}
+                      <View style={s.stepperRow}>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setRentBathrooms(Math.max(0, rentBathrooms - 1))}>
+                          <Text style={{ fontWeight: '700' }}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={s.stepperValue}>{rentBathrooms}</Text>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setRentBathrooms(rentBathrooms + 1)}>
+                          <Text style={{ fontWeight: '700' }}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                  {renderDropdown('Furnishing', rentFurnishing, [...FURNISHING_OPTIONS], setRentFurnishing, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                </View>
+              )}
+
+              {/* SHORTLET */}
+              {propertySubType === 'shortlet' && (
+                <View style={[s.typeFields, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+                  <Text style={[s.typeFieldsTitle, { color: colors.foreground }]}>Short-let Details</Text>
+                  {renderLabel('Price per Night (₦)', true)}
+                  {renderInput(propertyPrice, setPropertyPrice, 'e.g. 25000', { keyboardType: 'numeric' })}
+                  <View style={s.row}>
+                    <View style={s.halfField}>
+                      {renderLabel('Max Guests')}
+                      {renderInput(String(shortletMaxGuests), (v) => setShortletMaxGuests(Number(v) || 1), '2', { keyboardType: 'numeric' })}
+                    </View>
+                    <View style={s.halfField}>
+                      {renderLabel('Bedrooms')}
+                      <View style={s.stepperRow}>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setShortletBedrooms(Math.max(0, shortletBedrooms - 1))}>
+                          <Text style={{ fontWeight: '700' }}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={s.stepperValue}>{shortletBedrooms}</Text>
+                        <TouchableOpacity style={[s.stepperBtn, { borderColor: colors.border }]} onPress={() => setShortletBedrooms(shortletBedrooms + 1)}>
+                          <Text style={{ fontWeight: '700' }}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                  {renderLabel('Amenities')}
+                  <View style={s.amenitiesGrid}>
+                    {PROPERTY_AMENITIES.map((a) => (
+                      <TouchableOpacity
+                        key={a.id}
+                        style={[s.amenityChip, {
+                          borderColor: selectedAmenities.includes(a.id) ? colors.primary : colors.border,
+                          backgroundColor: selectedAmenities.includes(a.id) ? colors.primary + '15' : 'transparent',
+                        }]}
+                        onPress={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
+                      >
+                        <Text style={{ fontSize: 12 }}>{a.icon}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '500', color: selectedAmenities.includes(a.id) ? colors.primary : colors.foreground }}>{a.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* HOTEL */}
+              {propertySubType === 'hotel' && (
+                <View style={[s.typeFields, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+                  <Text style={[s.typeFieldsTitle, { color: colors.foreground }]}>Hotel / Serviced Apartment</Text>
+                  {renderDropdown('Star Rating', hotelStarRating, ['1', '2', '3', '4', '5'].map((s) => `${s} Star${s !== '1' ? 's' : ''}`), (v) => setHotelStarRating(v.charAt(0)), showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                    {renderLabel('Room Types')}
+                    <TouchableOpacity onPress={() => setHotelRoomTypes([...hotelRoomTypes, { name: '', pricePerNight: 0, maxOccupancy: 2 }])}>
+                      <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>+ Add Room</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {hotelRoomTypes.map((rt, idx) => (
+                    <View key={idx} style={[s.roomTypeCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TextInput
+                          style={[s.input, { flex: 1, borderColor: colors.border, color: colors.foreground, backgroundColor: colors.muted }]}
+                          placeholder="Room name"
+                          placeholderTextColor={colors.mutedForeground}
+                          value={rt.name}
+                          onChangeText={(v) => { const u = [...hotelRoomTypes]; u[idx].name = v; setHotelRoomTypes(u); }}
+                        />
+                        <TouchableOpacity onPress={() => setHotelRoomTypes(hotelRoomTypes.filter((_, i) => i !== idx))}>
+                          <Text style={{ color: colors.destructive, fontSize: 12, padding: 8 }}>Remove</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={s.row}>
+                        <View style={s.halfField}>
+                          <Text style={[s.miniLabel, { color: colors.mutedForeground }]}>Price/Night (₦)</Text>
+                          <TextInput
+                            style={[s.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.muted }]}
+                            placeholder="35000"
+                            placeholderTextColor={colors.mutedForeground}
+                            keyboardType="numeric"
+                            value={rt.pricePerNight ? String(rt.pricePerNight) : ''}
+                            onChangeText={(v) => { const u = [...hotelRoomTypes]; u[idx].pricePerNight = Number(v) || 0; setHotelRoomTypes(u); }}
+                          />
+                        </View>
+                        <View style={s.halfField}>
+                          <Text style={[s.miniLabel, { color: colors.mutedForeground }]}>Max Occupancy</Text>
+                          <TextInput
+                            style={[s.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.muted }]}
+                            placeholder="2"
+                            placeholderTextColor={colors.mutedForeground}
+                            keyboardType="numeric"
+                            value={rt.maxOccupancy ? String(rt.maxOccupancy) : ''}
+                            onChangeText={(v) => { const u = [...hotelRoomTypes]; u[idx].maxOccupancy = Number(v) || 1; setHotelRoomTypes(u); }}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                  {renderLabel('Property Amenities')}
+                  <View style={s.amenitiesGrid}>
+                    {PROPERTY_AMENITIES.map((a) => (
+                      <TouchableOpacity
+                        key={a.id}
+                        style={[s.amenityChip, {
+                          borderColor: selectedAmenities.includes(a.id) ? colors.primary : colors.border,
+                          backgroundColor: selectedAmenities.includes(a.id) ? colors.primary + '15' : 'transparent',
+                        }]}
+                        onPress={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
+                      >
+                        <Text style={{ fontSize: 12 }}>{a.icon}</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '500', color: selectedAmenities.includes(a.id) ? colors.primary : colors.foreground }}>{a.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* LAND */}
+              {propertySubType === 'land' && (
+                <View style={[s.typeFields, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+                  <Text style={[s.typeFieldsTitle, { color: colors.foreground }]}>Land Details</Text>
+                  {renderLabel('Price (₦)', true)}
+                  {renderInput(propertyPrice, setPropertyPrice, 'e.g. 25000000', { keyboardType: 'numeric' })}
+                  <View style={s.row}>
+                    <View style={s.halfField}>
+                      {renderLabel('Plot Size', true)}
+                      {renderInput(landPlotSize, setLandPlotSize, 'e.g. 500', { keyboardType: 'numeric' })}
+                    </View>
+                    <View style={s.halfField}>
+                      {renderDropdown('Unit *', landSizeUnit, [...LAND_SIZE_UNITS], setLandSizeUnit, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                    </View>
+                  </View>
+                  {renderDropdown('Title Document Type', landTitleType, [...LAND_TITLE_TYPES], setLandTitleType, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                </View>
+              )}
+
+              {/* COMMERCIAL */}
+              {propertySubType === 'commercial' && (
+                <View style={[s.typeFields, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+                  <Text style={[s.typeFieldsTitle, { color: colors.foreground }]}>Commercial Details</Text>
+                  <View style={s.row}>
+                    <View style={s.halfField}>
+                      {renderLabel('Rent Amount (₦)', true)}
+                      {renderInput(propertyPrice, setPropertyPrice, 'e.g. 2000000', { keyboardType: 'numeric' })}
+                    </View>
+                    <View style={s.halfField}>
+                      {renderDropdown('Billing Period *', commercialBillingPeriod, [...RENT_BILLING_PERIODS], setCommercialBillingPeriod, showPropertyTypeDropdown, setShowPropertyTypeDropdown)}
+                    </View>
+                  </View>
+                  {renderLabel('Space Size (sqm)')}
+                  {renderInput(commercialSpaceSize, setCommercialSpaceSize, 'e.g. 200', { keyboardType: 'numeric' })}
+                  {renderLabel('Suitable For')}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {COMMERCIAL_USAGES.map((u) => (
+                      <TouchableOpacity
+                        key={u}
+                        style={[s.amenityChip, {
+                          borderColor: commercialUsages.includes(u) ? colors.primary : colors.border,
+                          backgroundColor: commercialUsages.includes(u) ? colors.primary + '15' : 'transparent',
+                        }]}
+                        onPress={() => setCommercialUsages((prev) => prev.includes(u) ? prev.filter((x) => x !== u) : [...prev, u])}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '500', color: commercialUsages.includes(u) ? colors.primary : colors.foreground }}>{u}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          )}
         </>
       )}
     </View>
@@ -535,9 +844,21 @@ const s = StyleSheet.create({
 
   formSection: { gap: 12 },
   label: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 },
+  miniLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
   input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, marginTop: 6 },
   row: { flexDirection: 'row', gap: 12 },
   halfField: { flex: 1 },
+
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  badgeText: { fontSize: 12, fontWeight: '600' },
+  typeFields: { borderWidth: 1, borderRadius: 16, padding: 14, gap: 10 },
+  typeFieldsTitle: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
+  stepperBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  stepperValue: { fontSize: 15, fontWeight: '700', minWidth: 24, textAlign: 'center' },
+  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  amenityChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  roomTypeCard: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 8 },
 
   discountPreview: { fontSize: 12, marginTop: -4 },
 

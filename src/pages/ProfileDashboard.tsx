@@ -27,6 +27,9 @@ import { getMockImage } from "@/lib/mockImages";
 import {
   NIGERIAN_STATES, STATE_CITIES, BUSINESS_CATEGORIES,
   PROPERTY_TYPES, EVENT_CATEGORIES, type NigerianState,
+  PROPERTY_SUB_TYPES, PROPERTY_AMENITIES, RENT_BILLING_PERIODS,
+  FURNISHING_OPTIONS, LAND_TITLE_TYPES, LAND_SIZE_UNITS,
+  COMMERCIAL_USAGES, type PropertySubType,
 } from "@/lib/nigerianStates";
 
 interface ListingItem {
@@ -118,8 +121,40 @@ const ProfileDashboard = () => {
 
   // ── Property-specific ──
   const [propListAsBizId, setPropListAsBizId] = useState("individual");
+  const [propertySubType, setPropertySubType] = useState<PropertySubType | "">("");
   const [propertyType, setPropertyType] = useState("");
   const [propertyPrice, setPropertyPrice] = useState("");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [uploadedImagePublicIds, setUploadedImagePublicIds] = useState<string[]>([]);
+  // Rent fields
+  const [rentBillingPeriod, setRentBillingPeriod] = useState("");
+  const [rentBedrooms, setRentBedrooms] = useState(1);
+  const [rentBathrooms, setRentBathrooms] = useState(1);
+  const [rentFurnishing, setRentFurnishing] = useState("");
+  const [rentServiceCharge, setRentServiceCharge] = useState("");
+  const [rentDeposit, setRentDeposit] = useState("");
+  const [rentAvailableFrom, setRentAvailableFrom] = useState("");
+  // Shortlet fields
+  const [shortletMinNights, setShortletMinNights] = useState(1);
+  const [shortletMaxGuests, setShortletMaxGuests] = useState(2);
+  const [shortletBedrooms, setShortletBedrooms] = useState(1);
+  const [shortletBathrooms, setShortletBathrooms] = useState(1);
+  const [shortletCheckin, setShortletCheckin] = useState("14:00");
+  const [shortletCheckout, setShortletCheckout] = useState("11:00");
+  // Hotel fields
+  const [hotelStarRating, setHotelStarRating] = useState("");
+  const [hotelRoomTypes, setHotelRoomTypes] = useState<{ name: string; pricePerNight: number; maxOccupancy: number; amenities: string[] }[]>([]);
+  const [hotelCheckin, setHotelCheckin] = useState("14:00");
+  const [hotelCheckout, setHotelCheckout] = useState("11:00");
+  // Land fields
+  const [landPlotSize, setLandPlotSize] = useState("");
+  const [landSizeUnit, setLandSizeUnit] = useState("plots");
+  const [landTitleType, setLandTitleType] = useState("");
+  // Commercial fields
+  const [commercialSpaceSize, setCommercialSpaceSize] = useState("");
+  const [commercialBillingPeriod, setCommercialBillingPeriod] = useState("");
+  const [commercialUsages, setCommercialUsages] = useState<string[]>([]);
 
   // ── Event-specific ──
   const [eventStartDate, setEventStartDate] = useState("");
@@ -360,8 +395,8 @@ const ProfileDashboard = () => {
 
   const handleCreateProperty = async () => {
     if (!user?.id) { navigate("/auth"); return; }
-    if (!title || !propertyType || !propListAsBizId || propListAsBizId === "individual") {
-      toast({ title: "Please select a parent business", variant: "destructive" });
+    if (!title || !propertySubType || !propListAsBizId || propListAsBizId === "individual") {
+      toast({ title: "Please select a parent business and property type", variant: "destructive" });
       return;
     }
     if (!selectedPropBiz) {
@@ -374,28 +409,87 @@ const ProfileDashboard = () => {
       const state = bizState;
       const city = selectedPropBiz.location?.split(", ").shift() || "";
       const fullLocation = [city, state].filter(Boolean).join(", ");
+      const primaryImage = uploadedImageUrls[0] || uploadedImageUrl || getMockImage("Airbnb");
+
+      const details: Record<string, any> = {};
+      if (propertySubType === "rent") {
+        details.billingPeriod = rentBillingPeriod;
+        details.bedrooms = rentBedrooms;
+        details.bathrooms = rentBathrooms;
+        details.furnishing = rentFurnishing;
+        details.serviceCharge = rentServiceCharge ? parseFloat(rentServiceCharge) : 0;
+        details.cautionDeposit = rentDeposit ? parseFloat(rentDeposit) : 0;
+        details.availableFrom = rentAvailableFrom;
+        details.price = parseFloat(propertyPrice) || 0;
+        details.billingLabel = rentBillingPeriod ? `/${rentBillingPeriod.toLowerCase()}` : "";
+      } else if (propertySubType === "shortlet") {
+        details.pricePerNight = parseFloat(propertyPrice) || 0;
+        details.minNights = shortletMinNights;
+        details.maxGuests = shortletMaxGuests;
+        details.bedrooms = shortletBedrooms;
+        details.bathrooms = shortletBathrooms;
+        details.checkinTime = shortletCheckin;
+        details.checkoutTime = shortletCheckout;
+        details.amenities = selectedAmenities;
+      } else if (propertySubType === "hotel") {
+        details.starRating = hotelStarRating ? parseInt(hotelStarRating) : 0;
+        details.roomTypes = hotelRoomTypes;
+        details.checkinTime = hotelCheckin;
+        details.checkoutTime = hotelCheckout;
+        details.amenities = selectedAmenities;
+        const prices = hotelRoomTypes.map((r) => r.pricePerNight).filter(Boolean);
+        details.lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      } else if (propertySubType === "land") {
+        details.plotSize = landPlotSize;
+        details.sizeUnit = landSizeUnit;
+        details.titleType = landTitleType;
+        details.price = parseFloat(propertyPrice) || 0;
+      } else if (propertySubType === "commercial") {
+        details.spaceSize = commercialSpaceSize;
+        details.billingPeriod = commercialBillingPeriod;
+        details.usages = commercialUsages;
+        details.price = parseFloat(propertyPrice) || 0;
+        details.billingLabel = commercialBillingPeriod ? `/${commercialBillingPeriod.toLowerCase()}` : "";
+      }
+
+      const priceNum = parseFloat(propertyPrice) || 0;
+      const priceLabel = propertySubType === "hotel"
+        ? (details.lowestPrice ? `from ₦${details.lowestPrice.toLocaleString()}/night` : "")
+        : propertySubType === "rent"
+          ? (priceNum ? `₦${priceNum.toLocaleString()}${details.billingLabel || ""}` : "")
+          : propertySubType === "land"
+            ? (priceNum ? `₦${priceNum.toLocaleString()}` : "")
+            : propertySubType === "commercial"
+              ? (priceNum ? `₦${priceNum.toLocaleString()}${details.billingLabel || ""}` : "")
+              : (priceNum ? `₦${priceNum.toLocaleString()}/night` : "");
 
       await createProperty.mutateAsync({
         title,
         description,
-        type: propertyType,
-        pricePerNight: parseFloat(propertyPrice) || 0,
-        price: propertyPrice ? `₦${propertyPrice}/night` : "",
+        propertySubType,
+        type: propertySubType === "rent" ? "Apartment" : propertySubType === "shortlet" ? "Shortlet" : propertySubType === "hotel" ? "Hotel" : propertySubType === "land" ? "Land" : "Commercial",
+        ...details,
+        price: priceLabel,
+        priceNum,
         location: fullLocation,
         state,
         city,
         businessId: propListAsBizId,
         sellerType: "business",
-        image: uploadedImageUrl || getMockImage("Airbnb"),
+        image: primaryImage,
+        images: uploadedImageUrls.length > 0 ? uploadedImageUrls : [primaryImage],
+        imagePublicIds: uploadedImagePublicIds.length > 0 ? uploadedImagePublicIds : (uploadedImagePublicId ? [uploadedImagePublicId] : []),
         ownerId: user.id,
-        guests: 1,
-        bedrooms: 1,
-        bathrooms: 1,
+        bedrooms: details.bedrooms || 0,
+        bathrooms: details.bathrooms || 0,
+        guests: details.maxGuests || 0,
+        amenities: selectedAmenities,
         status: "Pending",
         rating: 0,
         reviews: 0,
+        createdAt: new Date(),
       });
-      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "property", targetName: title, details: `Created property: ${title}` });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "property", targetName: title, details: `Created ${propertySubType} property: ${title}` });
       toast({ title: "Property listed!" });
       resetWizard();
     } catch (err) {
@@ -791,13 +885,14 @@ const ProfileDashboard = () => {
         <div className="text-center py-10 bg-muted/30 rounded-xl border border-dashed border-border">
           <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
           <p className="text-sm font-semibold text-foreground mb-1">No business registered</p>
-          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before adding rooms or properties.</p>
+          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before adding properties.</p>
           <Button size="sm" variant="outline" onClick={() => { setWizardStep(1); setListingType("business"); }}>
             <Plus className="w-4 h-4 mr-1" /> Register Business First
           </Button>
         </div>
       ) : (
         <>
+          {/* Parent Business */}
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
             <Select value={propListAsBizId} onValueChange={setPropListAsBizId}>
@@ -816,36 +911,413 @@ const ProfileDashboard = () => {
             </div>
           )}
 
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Title *</Label>
-            <Input className="mt-1.5" placeholder="e.g. Modern 2-Bedroom in GRA" value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Type *</Label>
-            <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select type" /></SelectTrigger>
-              <SelectContent>
-                {PROPERTY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price (₦) *</Label>
-            <Input className="mt-1.5" placeholder="e.g. 50000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
-            <Textarea className="mt-1.5" placeholder="Describe your property..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
-            <ImageUpload
-              onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-              folder={CLOUDINARY_FOLDERS.BUSINESSES}
-              currentImage={uploadedImageUrl}
-              buttonText="Upload Image"
-            />
-          </div>
+          {/* Property Sub-Type Selector */}
+          {!propertySubType ? (
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">What type of property? *</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {PROPERTY_SUB_TYPES.map((st) => (
+                  <button
+                    key={st.value}
+                    type="button"
+                    onClick={() => setPropertySubType(st.value)}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
+                  >
+                    <span className="text-2xl">{st.icon}</span>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{st.label}</p>
+                      <p className="text-xs text-muted-foreground">{st.desc}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Sub-type badge + change button */}
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="gap-1">
+                  {PROPERTY_SUB_TYPES.find((s) => s.value === propertySubType)?.icon}{' '}
+                  {PROPERTY_SUB_TYPES.find((s) => s.value === propertySubType)?.label}
+                </Badge>
+                <button type="button" onClick={() => setPropertySubType("")} className="text-xs text-primary hover:underline">Change</button>
+              </div>
+
+              {/* Common fields */}
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Property Title *</Label>
+                <Input className="mt-1.5" placeholder="e.g. Modern 2-Bedroom in GRA" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
+                <Textarea className="mt-1.5" placeholder="Describe your property..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+
+              {/* ── RENT FIELDS ── */}
+              {propertySubType === "rent" && (
+                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rental Details</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Rent Amount (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 500000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Billing Period *</Label>
+                      <Select value={rentBillingPeriod} onValueChange={setRentBillingPeriod}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {RENT_BILLING_PERIODS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Bedrooms *</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button type="button" onClick={() => setRentBedrooms(Math.max(0, rentBedrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
+                        <span className="w-8 text-center text-sm font-bold">{rentBedrooms}</span>
+                        <button type="button" onClick={() => setRentBedrooms(rentBedrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Bathrooms *</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button type="button" onClick={() => setRentBathrooms(Math.max(0, rentBathrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
+                        <span className="w-8 text-center text-sm font-bold">{rentBathrooms}</span>
+                        <button type="button" onClick={() => setRentBathrooms(rentBathrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Furnishing</Label>
+                    <Select value={rentFurnishing} onValueChange={setRentFurnishing}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {FURNISHING_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Service Charge (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 100000" value={rentServiceCharge} onChange={(e) => setRentServiceCharge(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Caution Deposit (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 200000" value={rentDeposit} onChange={(e) => setRentDeposit(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Available From</Label>
+                    <Input className="mt-1" type="date" value={rentAvailableFrom} onChange={(e) => setRentAvailableFrom(e.target.value)} />
+                  </div>
+                </div>
+              )}
+
+              {/* ── SHORTLET FIELDS ── */}
+              {propertySubType === "shortlet" && (
+                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Short-let Details</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Price per Night (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 25000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Minimum Nights</Label>
+                      <Input className="mt-1" type="number" placeholder="1" value={shortletMinNights} onChange={(e) => setShortletMinNights(parseInt(e.target.value) || 1)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Max Guests *</Label>
+                      <Input className="mt-1" type="number" placeholder="2" value={shortletMaxGuests} onChange={(e) => setShortletMaxGuests(parseInt(e.target.value) || 1)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Bedrooms *</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button type="button" onClick={() => setShortletBedrooms(Math.max(0, shortletBedrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
+                        <span className="w-8 text-center text-sm font-bold">{shortletBedrooms}</span>
+                        <button type="button" onClick={() => setShortletBedrooms(shortletBedrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Bathrooms *</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button type="button" onClick={() => setShortletBathrooms(Math.max(0, shortletBathrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
+                        <span className="w-8 text-center text-sm font-bold">{shortletBathrooms}</span>
+                        <button type="button" onClick={() => setShortletBathrooms(shortletBathrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Check-in Time</Label>
+                      <Input className="mt-1" type="time" value={shortletCheckin} onChange={(e) => setShortletCheckin(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Check-out Time</Label>
+                      <Input className="mt-1" type="time" value={shortletCheckout} onChange={(e) => setShortletCheckout(e.target.value)} />
+                    </div>
+                  </div>
+                  {/* Amenities */}
+                  <div>
+                    <Label className="text-xs font-semibold mb-2 block">Amenities</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PROPERTY_AMENITIES.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
+                          className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-all ${
+                            selectedAmenities.includes(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          <span>{a.icon}</span> {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── HOTEL FIELDS ── */}
+              {propertySubType === "hotel" && (
+                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hotel / Serviced Apartment</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Star Rating</Label>
+                      <Select value={hotelStarRating} onValueChange={setHotelStarRating}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Optional" /></SelectTrigger>
+                        <SelectContent>
+                          {["1", "2", "3", "4", "5"].map((s) => <SelectItem key={s} value={s}>{s} Star{s !== "1" ? "s" : ""}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs font-semibold">Check-in</Label>
+                        <Input className="mt-1" type="time" value={hotelCheckin} onChange={(e) => setHotelCheckin(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold">Check-out</Label>
+                        <Input className="mt-1" type="time" value={hotelCheckout} onChange={(e) => setHotelCheckout(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Room Types */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-xs font-semibold">Room Types</Label>
+                      <button
+                        type="button"
+                        onClick={() => setHotelRoomTypes([...hotelRoomTypes, { name: "", pricePerNight: 0, maxOccupancy: 2, amenities: [] }])}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> Add Room Type
+                      </button>
+                    </div>
+                    {hotelRoomTypes.length === 0 && (
+                      <p className="text-xs text-muted-foreground italic">Add at least one room type (e.g. Standard, Deluxe, Executive Suite)</p>
+                    )}
+                    <div className="space-y-2">
+                      {hotelRoomTypes.map((rt, idx) => (
+                        <div key={idx} className="p-3 rounded-lg border border-border bg-white space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Input
+                              placeholder="Room name (e.g. Standard)"
+                              value={rt.name}
+                              onChange={(e) => {
+                                const updated = [...hotelRoomTypes];
+                                updated[idx].name = e.target.value;
+                                setHotelRoomTypes(updated);
+                              }}
+                              className="flex-1 mr-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setHotelRoomTypes(hotelRoomTypes.filter((_, i) => i !== idx))}
+                              className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[10px] font-semibold text-muted-foreground">Price/Night (₦)</Label>
+                              <Input
+                                type="number"
+                                placeholder="e.g. 35000"
+                                value={rt.pricePerNight || ""}
+                                onChange={(e) => {
+                                  const updated = [...hotelRoomTypes];
+                                  updated[idx].pricePerNight = parseFloat(e.target.value) || 0;
+                                  setHotelRoomTypes(updated);
+                                }}
+                                className="mt-0.5"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] font-semibold text-muted-foreground">Max Occupancy</Label>
+                              <Input
+                                type="number"
+                                placeholder="2"
+                                value={rt.maxOccupancy || ""}
+                                onChange={(e) => {
+                                  const updated = [...hotelRoomTypes];
+                                  updated[idx].maxOccupancy = parseInt(e.target.value) || 1;
+                                  setHotelRoomTypes(updated);
+                                }}
+                                className="mt-0.5"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-[10px] font-semibold text-muted-foreground mb-1 block">Room Amenities</Label>
+                            <div className="flex flex-wrap gap-1">
+                              {["AC", "Wi-Fi", "TV", "Mini Bar", "Balcony", "Breakfast", "Room Service", "Safe"].map((ra) => (
+                                <button
+                                  key={ra}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...hotelRoomTypes];
+                                    if (updated[idx].amenities.includes(ra)) {
+                                      updated[idx].amenities = updated[idx].amenities.filter((x) => x !== ra);
+                                    } else {
+                                      updated[idx].amenities = [...updated[idx].amenities, ra];
+                                    }
+                                    setHotelRoomTypes(updated);
+                                  }}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
+                                    rt.amenities.includes(ra) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                                  }`}
+                                >
+                                  {ra}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Property-level amenities */}
+                  <div>
+                    <Label className="text-xs font-semibold mb-2 block">Property Amenities</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PROPERTY_AMENITIES.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
+                          className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-all ${
+                            selectedAmenities.includes(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          <span>{a.icon}</span> {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── LAND FIELDS ── */}
+              {propertySubType === "land" && (
+                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Land Details</p>
+                  <div>
+                    <Label className="text-xs font-semibold">Price (₦) *</Label>
+                    <Input className="mt-1" type="number" placeholder="e.g. 25000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Plot Size *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 500" value={landPlotSize} onChange={(e) => setLandPlotSize(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Unit *</Label>
+                      <Select value={landSizeUnit} onValueChange={setLandSizeUnit}>
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {LAND_SIZE_UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Title Document Type</Label>
+                    <Select value={landTitleType} onValueChange={setLandTitleType}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select title type" /></SelectTrigger>
+                      <SelectContent>
+                        {LAND_TITLE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* ── COMMERCIAL FIELDS ── */}
+              {propertySubType === "commercial" && (
+                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Commercial Details</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Rent Amount (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 2000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Billing Period *</Label>
+                      <Select value={commercialBillingPeriod} onValueChange={setCommercialBillingPeriod}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {RENT_BILLING_PERIODS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Space Size (sqm)</Label>
+                    <Input className="mt-1" type="number" placeholder="e.g. 200" value={commercialSpaceSize} onChange={(e) => setCommercialSpaceSize(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold mb-2 block">Suitable For</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {COMMERCIAL_USAGES.map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setCommercialUsages((prev) => prev.includes(u) ? prev.filter((x) => x !== u) : [...prev, u])}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                            commercialUsages.includes(u) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cover Image + Gallery */}
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
+                <ImageUpload
+                  onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
+                  folder={CLOUDINARY_FOLDERS.BUSINESSES}
+                  currentImage={uploadedImageUrl}
+                  buttonText="Upload Cover Image"
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

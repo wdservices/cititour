@@ -75,12 +75,12 @@ const SearchPage = () => {
           const data = doc.data();
           return {
             id: doc.id,
-            title: data.propertyTitle || data.title || 'Untitled Property',
+            title: data.title || data.name || 'Untitled Property',
             description: data.description || '',
             image: (data.images && data.images[0]) || data.image || '',
-            category: 'House',
-            location: data.address || '',
-            price: data.pricePerNight ? `$${data.pricePerNight}/night` : data.price,
+            category: data.propertySubType === 'hotel' ? 'Hotel' : data.propertySubType === 'rent' ? 'For Rent' : data.propertySubType === 'land' ? 'Land' : data.propertySubType === 'commercial' ? 'Commercial' : data.type || 'Property',
+            location: data.address || data.location || '',
+            price: data.price || (data.pricePerNight ? `₦${data.pricePerNight.toLocaleString()}/night` : ''),
             type: 'house',
             ...data
           };

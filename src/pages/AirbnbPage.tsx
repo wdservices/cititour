@@ -60,12 +60,12 @@ const AirbnbPage = () => {
           const data = doc.data();
           return {
             id: doc.id,
-            title: data.title || "Untitled Property",
+            title: data.title || data.name || "Untitled Property",
             description: data.description || "",
-            image: data.image || data.imageUrl || "",
-            category: data.category || data.type || "Rental",
+            image: data.image || (data.images && data.images[0]) || "",
+            category: data.propertySubType === 'hotel' ? 'Hotel' : data.propertySubType === 'rent' ? 'For Rent' : data.propertySubType === 'land' ? 'Land' : data.category || data.type || "Rental",
             rating: Number(data.rating || 0),
-            price: data.price || (data.pricePerNight ? `$${data.pricePerNight}/night` : ""),
+            price: data.price || (data.pricePerNight ? `₦${data.pricePerNight.toLocaleString()}/night` : ""),
             location: data.location || data.address || "",
             phone: data.phone || "",
             website: data.website || "",
