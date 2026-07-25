@@ -67,7 +67,7 @@ export default function ProductDetailScreen({ route }: any) {
     <View style={[s.container, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
         {/* Hero */}
-        <View style={[s.heroContainer, { height: 320 + insets.top }]}>
+        <View style={[s.heroContainer, { height: 300 + insets.top }]}>
           <Image source={{ uri: heroImage }} style={s.heroImage} resizeMode="cover" />
           <View style={s.heroOverlay} />
 

@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 const { width: W } = Dimensions.get('window');
-const HERO_H = Math.round(W * 0.62);
+const HERO_H = Math.min(Math.round(W * 0.48), 280);
 
 const SLIDES = [
   {
