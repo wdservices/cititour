@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
-  ActivityIndicator, Modal, KeyboardAvoidingView, Platform, Alert,
+  ActivityIndicator, Modal, KeyboardAvoidingView, Platform, Alert, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Store, ShoppingBag, Home, Calendar, ChevronRight, X, Loader2 } from 'lucide-react-native';
+import { ArrowLeft, Store, ShoppingBag, Home, Calendar, ChevronRight, X, Loader2, Plus, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from '../lib/cloudinary';
 import {
   NIGERIAN_STATES, STATE_CITIES, BUSINESS_CATEGORIES, EVENT_CATEGORIES,
   PRODUCT_CATEGORIES, type NigerianState,

@@ -2,6 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
@@ -56,13 +58,18 @@ import WebNotificationListener from "./components/WebNotificationListener";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 3 * 60 * 1000,     // 3 minutes before data is considered stale
-      gcTime: 15 * 60 * 1000,       // 15 minutes before unused cache is garbage collected
-      refetchOnWindowFocus: false,   // Don't refetch on tab switch
-      refetchOnReconnect: false,     // Don't refetch on network reconnect
-      retry: 1,                      // Retry failed queries once
+      staleTime: 5 * 60 * 1000,     // 5 minutes fresh
+      gcTime: 30 * 60 * 1000,       // 30 minutes garbage collection
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
     },
   },
+});
+
+const persister = createSyncStoragePersister({
+  storage: typeof window !== "undefined" ? window.localStorage : undefined,
+  key: "citivas-query-cache",
 });
 
 /** Mounts the background chat notification listener (web). */
@@ -136,6 +143,7 @@ const ProtectedRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persister={persister} persistOptions={{ maxAge: 30 * 60 * 1000 }}>
     <AuthProvider>
       <ActiveChatProvider>
       <WalletProvider>
@@ -172,6 +180,7 @@ const App = () => (
       </WalletProvider>
       </ActiveChatProvider>
     </AuthProvider>
+    </PersistQueryClientProvider>
   </QueryClientProvider>
 );
 

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Settings, Shield, Bell, User, CreditCard, Download, Trash2, Eye, EyeOff, Smartphone } from "lucide-react";
+import { ArrowLeft, Settings, Shield, Bell, User, CreditCard, Download, Trash2, Eye, EyeOff, Smartphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,20 +12,113 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRegion } from "@/contexts/RegionContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const { region, brandName, setRegion } = useRegion();
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  const [bizCount, setBizCount] = useState(0);
+  const [productCount, setProductCount] = useState(0);
+  const [propertyCount, setPropertyCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [memberSince, setMemberSince] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.id));
+        if (cancelled) return;
+        if (userSnap.exists()) {
+          const d = userSnap.data();
+          const names = (d.name || user.name || "").split(" ");
+          setFirstName(names[0] || "");
+          setLastName(names.slice(1).join(" ") || "");
+          setEmail(d.email || user.email || "");
+          setPhone(d.phone || "");
+          if (d.createdAt?.toDate) {
+            setMemberSince(d.createdAt.toDate().toLocaleDateString("en-US", { month: "short", year: "numeric" }));
+          }
+        } else {
+          const names = (user.name || "").split(" ");
+          setFirstName(names[0] || "");
+          setLastName(names.slice(1).join(" ") || "");
+          setEmail(user.email || "");
+        }
+
+        const [bizSnap, prodSnap, propSnap, favSnap, walletSnap] = await Promise.all([
+          getDocs(query(collection(db, "businesses"), where("ownerId", "==", user.id))),
+          getDocs(query(collection(db, "marketplace"), where("ownerId", "==", user.id))),
+          getDocs(query(collection(db, "house_listings"), where("ownerId", "==", user.id))),
+          getDoc(doc(db, "users", user.id, "private", "favourites")),
+          getDoc(doc(db, "wallets", user.id)),
+        ]);
+
+        if (cancelled) return;
+        setBizCount(bizSnap.size);
+        setProductCount(prodSnap.size);
+        setPropertyCount(propSnap.size);
+        if (favSnap.exists()) {
+          const f = favSnap.data();
+          setSavedCount((f.businesses?.length || 0) + (f.events?.length || 0) + (f.marketplace?.length || 0));
+        }
+        if (walletSnap.exists()) {
+          setWalletBalance(walletSnap.data().balance || 0);
+        }
+
+        const reviewSnap = await getDocs(query(collection(db, "reviews"), where("userId", "==", user.id)));
+        if (!cancelled) setReviewCount(reviewSnap.size);
+      } catch (e) {
+        console.error("Settings load error:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const handleSaveAccount = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      await updateDoc(doc(db, "users", user.id), {
+        name: [firstName, lastName].filter(Boolean).join(" "),
+        phone,
+      });
+      setSaveMsg("Account info saved.");
+      setTimeout(() => setSaveMsg(""), 3000);
+    } catch (e) {
+      setSaveMsg("Failed to save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const accountStats = [
-    { label: "Account Created", value: "Jan 2023" },
-    { label: "Total Bookings", value: "47" },
-    { label: "Reviews Written", value: "23" },
-    { label: "Current Status", value: "Gold Member" }
+    { label: "Account Created", value: loading ? "..." : memberSince || "N/A" },
+    { label: "Total Listings", value: loading ? "..." : String(bizCount + productCount + propertyCount) },
+    { label: "Reviews Written", value: loading ? "..." : String(reviewCount) },
+    { label: "Wallet Balance", value: loading ? "..." : `₦${walletBalance.toLocaleString()}` },
   ];
 
   return (
@@ -89,22 +182,22 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue="John" />
+                    <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue="Doe" />
+                    <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                 </div>
                 
                 <div>
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" defaultValue="john.doe@example.com" />
+                  <Input id="email" type="email" value={email} disabled className="opacity-70" />
                 </div>
 
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" defaultValue="+1 (555) 123-4567" />
+                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Enter phone number" />
                 </div>
 
                 <Separator />
@@ -181,9 +274,13 @@ const SettingsPage = () => {
                   </div>
                 </div>
 
-                <Button className="bg-primary hover:opacity-90">
-                  Save Changes
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button className="bg-primary hover:opacity-90" onClick={handleSaveAccount} disabled={saving}>
+                    {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  {saveMsg && <span className="text-sm text-muted-foreground">{saveMsg}</span>}
+                </div>
               </CardContent>
             </Card>
 
@@ -262,17 +359,10 @@ const SettingsPage = () => {
                   <div className="space-y-2 mt-2">
                     <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
                       <div>
-                        <p className="text-sm font-medium">iPhone 13 Pro</p>
-                        <p className="text-xs text-muted-foreground">Current session • New York, NY</p>
+                        <p className="text-sm font-medium">Current Session</p>
+                        <p className="text-xs text-muted-foreground">Signed in now</p>
                       </div>
                       <Badge className="bg-green-500">Active</Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                      <div>
-                        <p className="text-sm font-medium">Chrome on Windows</p>
-                        <p className="text-xs text-muted-foreground">2 days ago • New York, NY</p>
-                      </div>
-                      <Button variant="ghost" size="sm">End Session</Button>
                     </div>
                   </div>
                 </div>
@@ -355,7 +445,7 @@ const SettingsPage = () => {
                   <Download className="h-4 w-4 mr-2" />
                   Request Data Export
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" onClick={() => navigate("/privacy")}>
                   <Eye className="h-4 w-4 mr-2" />
                   View Privacy Policy
                 </Button>
@@ -398,24 +488,14 @@ const SettingsPage = () => {
 
                 <Separator />
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive important updates via SMS</p>
-                  </div>
-                  <Switch />
-                </div>
-
-                <Separator />
-
                 <div>
                   <Label className="text-base font-medium">Notification Types</Label>
                   <div className="space-y-3 mt-3">
                     {[
-                      { name: "Booking Confirmations", desc: "Confirmations for your bookings", enabled: true },
+                      { name: "Event Updates", desc: "Updates for events you registered for", enabled: true },
                       { name: "Special Offers", desc: "Deals and promotions", enabled: false },
                       { name: "New Events", desc: "Upcoming events near you", enabled: true },
-                      { name: "Review Reminders", desc: "Remind to review places you visit", enabled: true },
+                      { name: "Chat Messages", desc: "New messages from businesses", enabled: true },
                       { name: "App Updates", desc: "New features and updates", enabled: false }
                     ].map((notification) => (
                       <div key={notification.name} className="flex items-center justify-between p-3 border rounded-lg">
@@ -443,19 +523,19 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">47</p>
+                      <p className="text-2xl font-bold text-primary">{loading ? "..." : bizCount + productCount + propertyCount}</p>
+                      <p className="text-sm text-muted-foreground">Your Listings</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <p className="text-2xl font-bold text-primary">{loading ? "..." : savedCount}</p>
                       <p className="text-sm text-muted-foreground">Saved Places</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">156</p>
-                      <p className="text-sm text-muted-foreground">Photos Uploaded</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-primary">23</p>
+                      <p className="text-2xl font-bold text-primary">{loading ? "..." : reviewCount}</p>
                       <p className="text-sm text-muted-foreground">Reviews Written</p>
                     </CardContent>
                   </Card>
@@ -467,14 +547,6 @@ const SettingsPage = () => {
                   <Button variant="outline" className="w-full justify-start">
                     <Download className="h-4 w-4 mr-2" />
                     Download My Data
-                  </Button>
-                  
-                  <Button variant="outline" className="w-full justify-start">
-                    Clear Cache (127 MB)
-                  </Button>
-
-                  <Button variant="outline" className="w-full justify-start">
-                    Clear Search History
                   </Button>
                 </div>
 
@@ -489,29 +561,6 @@ const SettingsPage = () => {
                   <div className="space-y-2">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Clear All Data
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Clear All Data</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete all your saved places, reviews, photos, and preferences. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction className="bg-red-600 hover:bg-red-700">
-                            Clear All Data
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
                         <Button variant="destructive" className="w-full">
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete Account
@@ -521,7 +570,7 @@ const SettingsPage = () => {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Account</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete your account and all associated data. You will lose access to all your bookings, reviews, and saved places. This action cannot be undone.
+                            This will permanently delete your account and all associated data. You will lose access to all your listings, reviews, and saved places. This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
