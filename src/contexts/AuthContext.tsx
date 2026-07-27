@@ -43,6 +43,18 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const logoutTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+  const resetInactivityTimer = React.useCallback(() => {
+    if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    logoutTimerRef.current = setTimeout(() => {
+      logActivity({ userId: user?.id || "", userEmail: user?.email || "", userName: user?.name || "", action: "sign_out", targetType: "auth", details: "Auto-logout: 5 min inactivity" });
+      logOut().catch(() => {});
+      setUser(null);
+    }, INACTIVITY_TIMEOUT);
+  }, []);
 
   // Mirrors a Firebase Auth session into a `users/{uid}` Firestore document.
   // Firebase Auth itself cannot be listed/counted by a client-side SDK — the
@@ -101,13 +113,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (firebaseUser) {
         setUser(convertFirebaseUser(firebaseUser));
         mirrorUserToFirestore(firebaseUser);
+        resetInactivityTimer();
       } else {
         setUser(null);
+        if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       }
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    const handleActivity = () => { if (user) resetInactivityTimer(); };
+    activityEvents.forEach((e) => document.addEventListener(e, handleActivity));
+
+    return () => {
+      unsubscribe();
+      activityEvents.forEach((e) => document.removeEventListener(e, handleActivity));
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    };
   }, []);
 
   const loginWithEmail = async (email: string, password: string): Promise<void> => {

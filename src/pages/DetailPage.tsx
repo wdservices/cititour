@@ -100,7 +100,7 @@ const DetailPage = () => {
             navigate(`/property/${slug}`, { replace: true });
             return;
           }
-          const raw = snap.data() as any;
+
           const resolvedOwnerId = raw.ownerId || raw.userId || raw.uid || '';
           setOwnerUid(resolvedOwnerId || null);
           setData({

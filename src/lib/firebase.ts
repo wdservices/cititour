@@ -14,7 +14,7 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
-  inMemoryPersistence,
+  browserLocalPersistence,
   User
 } from 'firebase/auth';
 
@@ -35,8 +35,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 
-// Use in-memory persistence — user must re-login on page reload
-setPersistence(auth, inMemoryPersistence);
+// Use local persistence — auth survives page reload, but times out after 5 min inactivity
+setPersistence(auth, browserLocalPersistence);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
