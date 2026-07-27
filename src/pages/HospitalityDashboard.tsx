@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useHouseListings, useUpdateDoc } from "@/lib/useFirestore";
+import { useHouseListings, useUpdateDoc, usePropertyBookings } from "@/lib/useFirestore";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, TrendingUp, Hotel, Users, FileText, HelpCircle, LogOut,
@@ -100,6 +100,9 @@ export default function HospitalityDashboard() {
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [bookingSuccess, setBookingSuccess] = useState(false);
+
+  // Real bookings from Firestore
+  const { data: realBookings = [] } = usePropertyBookings(user?.id || null);
 
   const [activeNav, setActiveNav] = useState("Overview");
   const [resTab, setResTab] = useState<"Upcoming" | "Current" | "Checked-out">("Upcoming");
@@ -891,34 +894,47 @@ const handleCopy = () => {
                           </tr>
                         </thead>
                         <tbody className="text-sm">
-                          {RESERVATIONS.map((res) => (
-                            <tr key={res.ref} className="border-b border-border hover:bg-muted/50 transition-colors">
-                              <td className="p-4 flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${res.bg}`}>
-                                  {res.initials}
-                                </div>
-                                <div>
-                                  <div className="font-semibold">{res.name}</div>
-                                  <div className="text-muted-foreground text-xs">{res.ref}</div>
-                                </div>
-                              </td>
-                              <td className="p-4">{res.property}</td>
-                              <td className="p-4">
-                                <div>{res.dates}</div>
-                                <div className="text-muted-foreground text-xs">{res.nights} nights</div>
-                              </td>
-                              <td className="p-4">
-                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                  res.status === "Confirmed" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                                }`}>
-                                  {res.status}
-                                </span>
-                              </td>
-                              <td className="p-4 text-right">
-                                <button className="text-primary hover:underline font-semibold text-sm">View</button>
+                          {realBookings.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="p-8 text-center text-muted-foreground text-sm">
+                                No bookings yet. They will appear here when guests book through your mini-site.
                               </td>
                             </tr>
-                          ))}
+                          ) : (
+                            realBookings.slice(0, 10).map((booking: any) => {
+                              const initials = (booking.guestFirstName?.[0] || "") + (booking.guestLastName?.[0] || "");
+                              return (
+                                <tr key={booking.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                                  <td className="p-4 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-primary text-primary-foreground">
+                                      {initials || "G"}
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold">{booking.guestFirstName} {booking.guestLastName}</div>
+                                      <div className="text-muted-foreground text-xs">{booking.bookingRef}</div>
+                                    </div>
+                                  </td>
+                                  <td className="p-4">{booking.propertyTitle}</td>
+                                  <td className="p-4">
+                                    <div>{booking.checkIn} - {booking.checkOut}</div>
+                                    <div className="text-muted-foreground text-xs">{booking.nights} night{booking.nights !== 1 ? "s" : ""}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                      booking.status === "Confirmed" ? "bg-primary text-primary-foreground"
+                                        : booking.status === "Completed" ? "bg-emerald-100 text-emerald-700"
+                                          : "bg-muted text-foreground"
+                                    }`}>
+                                      {booking.status}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    <span className="font-semibold text-primary text-sm">₦{(booking.totalPaid || 0).toLocaleString()}</span>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
                         </tbody>
                       </table>
                     </div>

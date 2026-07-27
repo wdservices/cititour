@@ -92,6 +92,19 @@ export function useHouseListings() {
   return useCollection("house_listings");
 }
 
+export function usePropertyBookings(ownerId: string | null) {
+  return useQuery({
+    queryKey: ["property_bookings", ownerId],
+    queryFn: async () => {
+      if (!ownerId) return [];
+      const q = query(collection(db, "property_bookings"), where("ownerId", "==", ownerId));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+    enabled: !!ownerId,
+  });
+}
+
 /** Fetch products and properties belonging to a specific business */
 export function useBusinessChildren(businessId: string | null) {
   return useQuery({

@@ -178,6 +178,18 @@ service cloud.firestore {
       );
     }
 
+    // ── Property Bookings ──
+    match /property_bookings/{bookingId} {
+      allow read: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.payerId == request.auth.uid ||
+        resource.data.guestEmail == request.auth.token.email
+      );
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+
     // ── Activity Logs ──
     match /activity_logs/{logId} {
       allow read: if request.auth != null;

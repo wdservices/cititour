@@ -62,7 +62,7 @@ function CalendarMonth({ month, selectedStart, selectedEnd, onDateClick }: {
     <div>
       <h3 className="text-[15px] font-bold text-gray-800 text-center mb-4">{format(month, "MMMM yyyy")}</h3>
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-gray-400 mb-2">
-        {["S", "M", "T", "W", "T", "F", "S"].map((d) => <div key={d}>{d}</div>)}
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => <div key={i}>{d.charAt(0)}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[13px]">
         {blanks.map((b) => <div key={`b-${b}`} />)}
@@ -321,6 +321,8 @@ export default function BookingEngine() {
                   deposit: selectedRoomData.deposit || 0,
                   propertyTitle: property.title,
                   propertyLocation: property.location || [property.city, property.state].filter(Boolean).join(", "),
+                  ownerId: property.ownerId || property.userId || "",
+                  propertyId: property.id || "",
                 }
               })}
               className="bg-[#005ea4] text-white px-8 py-3 rounded-lg text-[16px] font-bold shadow-md hover:bg-[#004881] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
