@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Building2, ShoppingBag, Home, Calendar, Megaphone,
   Plus, LayoutDashboard, MapPin, Trash2, Edit3, Ticket, Store,
-  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon
+  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon, Hotel
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -179,6 +179,9 @@ const ProfileDashboard = () => {
   const myProducts = (listingsData?.products || []) as ListingItem[];
   const myProperties = (listingsData?.properties || []) as ListingItem[];
   const myEvents = (listingsData?.events || []) as ListingItem[];
+
+  // ── Hospitality mini-site check ──
+  const hasMiniSite = myBusinesses.some((b: any) => b.miniSiteActive === true);
 
   // ── Children of selected business ──
   const { data: bizChildren, isLoading: loadingBizChildren } = useBusinessChildren(selectedBusinessId);
@@ -433,23 +436,10 @@ const ProfileDashboard = () => {
         details.availableFrom = rentAvailableFrom;
         details.price = parseFloat(propertyPrice) || 0;
         details.billingLabel = rentBillingPeriod ? `/${rentBillingPeriod.toLowerCase()}` : "";
-      } else if (propertySubType === "shortlet") {
+      } else if (propertySubType === "shortlet_hotel") {
+        // Redirected to wizard — this path is a fallback
         details.pricePerNight = parseFloat(propertyPrice) || 0;
-        details.minNights = shortletMinNights;
-        details.maxGuests = shortletMaxGuests;
-        details.bedrooms = shortletBedrooms;
-        details.bathrooms = shortletBathrooms;
-        details.checkinTime = shortletCheckin;
-        details.checkoutTime = shortletCheckout;
         details.amenities = selectedAmenities;
-      } else if (propertySubType === "hotel") {
-        details.starRating = hotelStarRating ? parseInt(hotelStarRating) : 0;
-        details.roomTypes = hotelRoomTypes;
-        details.checkinTime = hotelCheckin;
-        details.checkoutTime = hotelCheckout;
-        details.amenities = selectedAmenities;
-        const prices = hotelRoomTypes.map((r) => r.pricePerNight).filter(Boolean);
-        details.lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
       } else if (propertySubType === "land") {
         details.plotSize = landPlotSize;
         details.sizeUnit = landSizeUnit;
@@ -464,8 +454,8 @@ const ProfileDashboard = () => {
       }
 
       const priceNum = parseFloat(propertyPrice) || 0;
-      const priceLabel = propertySubType === "hotel"
-        ? (details.lowestPrice ? `from ₦${details.lowestPrice.toLocaleString()}/night` : "")
+      const priceLabel = propertySubType === "shortlet_hotel"
+        ? (propertyPrice ? `from ₦${parseFloat(propertyPrice).toLocaleString()}/night` : "")
         : propertySubType === "rent"
           ? (priceNum ? `₦${priceNum.toLocaleString()}${details.billingLabel || ""}` : "")
           : propertySubType === "land"
@@ -478,7 +468,7 @@ const ProfileDashboard = () => {
         title,
         description,
         propertySubType,
-        type: propertySubType === "rent" ? "Apartment" : propertySubType === "shortlet" ? "Shortlet" : propertySubType === "hotel" ? "Hotel" : propertySubType === "land" ? "Land" : "Commercial",
+        type: propertySubType === "rent" ? "Apartment" : propertySubType === "shortlet_hotel" ? "Shortlet & Hotel" : propertySubType === "land" ? "Land" : "Commercial",
         ...details,
         price: priceLabel,
         priceNum,
@@ -947,7 +937,13 @@ const ProfileDashboard = () => {
                   <button
                     key={st.value}
                     type="button"
-                    onClick={() => setPropertySubType(st.value)}
+                    onClick={() => {
+                      if (st.value === "shortlet_hotel") {
+                        navigate("/mini-site-wizard");
+                        return;
+                      }
+                      setPropertySubType(st.value);
+                    }}
                     className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
                   >
                     <span className="text-2xl">{st.icon}</span>
@@ -1045,213 +1041,15 @@ const ProfileDashboard = () => {
               )}
 
               {/* ── SHORTLET FIELDS ── */}
-              {propertySubType === "shortlet" && (
-                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Short-let Details</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs font-semibold">Price per Night (₦) *</Label>
-                      <Input className="mt-1" type="number" placeholder="e.g. 25000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold">Minimum Nights</Label>
-                      <Input className="mt-1" type="number" placeholder="1" value={shortletMinNights} onChange={(e) => setShortletMinNights(parseInt(e.target.value) || 1)} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs font-semibold">Max Guests *</Label>
-                      <Input className="mt-1" type="number" placeholder="2" value={shortletMaxGuests} onChange={(e) => setShortletMaxGuests(parseInt(e.target.value) || 1)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold">Bedrooms *</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <button type="button" onClick={() => setShortletBedrooms(Math.max(0, shortletBedrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
-                        <span className="w-8 text-center text-sm font-bold">{shortletBedrooms}</span>
-                        <button type="button" onClick={() => setShortletBedrooms(shortletBedrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold">Bathrooms *</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <button type="button" onClick={() => setShortletBathrooms(Math.max(0, shortletBathrooms - 1))} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">-</button>
-                        <span className="w-8 text-center text-sm font-bold">{shortletBathrooms}</span>
-                        <button type="button" onClick={() => setShortletBathrooms(shortletBathrooms + 1)} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted">+</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs font-semibold">Check-in Time</Label>
-                      <Input className="mt-1" type="time" value={shortletCheckin} onChange={(e) => setShortletCheckin(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold">Check-out Time</Label>
-                      <Input className="mt-1" type="time" value={shortletCheckout} onChange={(e) => setShortletCheckout(e.target.value)} />
-                    </div>
-                  </div>
-                  {/* Amenities */}
-                  <div>
-                    <Label className="text-xs font-semibold mb-2 block">Amenities</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {PROPERTY_AMENITIES.map((a) => (
-                        <button
-                          key={a.id}
-                          type="button"
-                          onClick={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
-                          className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-all ${
-                            selectedAmenities.includes(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
-                          }`}
-                        >
-                          <span>{a.icon}</span> {a.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── HOTEL FIELDS ── */}
-              {propertySubType === "hotel" && (
-                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hotel / Serviced Apartment</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs font-semibold">Star Rating</Label>
-                      <Select value={hotelStarRating} onValueChange={setHotelStarRating}>
-                        <SelectTrigger className="mt-1"><SelectValue placeholder="Optional" /></SelectTrigger>
-                        <SelectContent>
-                          {["1", "2", "3", "4", "5"].map((s) => <SelectItem key={s} value={s}>{s} Star{s !== "1" ? "s" : ""}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs font-semibold">Check-in</Label>
-                        <Input className="mt-1" type="time" value={hotelCheckin} onChange={(e) => setHotelCheckin(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-semibold">Check-out</Label>
-                        <Input className="mt-1" type="time" value={hotelCheckout} onChange={(e) => setHotelCheckout(e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Room Types */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-xs font-semibold">Room Types</Label>
-                      <button
-                        type="button"
-                        onClick={() => setHotelRoomTypes([...hotelRoomTypes, { name: "", pricePerNight: 0, maxOccupancy: 2, amenities: [] }])}
-                        className="text-xs text-primary hover:underline flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3" /> Add Room Type
-                      </button>
-                    </div>
-                    {hotelRoomTypes.length === 0 && (
-                      <p className="text-xs text-muted-foreground italic">Add at least one room type (e.g. Standard, Deluxe, Executive Suite)</p>
-                    )}
-                    <div className="space-y-2">
-                      {hotelRoomTypes.map((rt, idx) => (
-                        <div key={idx} className="p-3 rounded-lg border border-border bg-white space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Input
-                              placeholder="Room name (e.g. Standard)"
-                              value={rt.name}
-                              onChange={(e) => {
-                                const updated = [...hotelRoomTypes];
-                                updated[idx].name = e.target.value;
-                                setHotelRoomTypes(updated);
-                              }}
-                              className="flex-1 mr-2"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setHotelRoomTypes(hotelRoomTypes.filter((_, i) => i !== idx))}
-                              className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-[10px] font-semibold text-muted-foreground">Price/Night (₦)</Label>
-                              <Input
-                                type="number"
-                                placeholder="e.g. 35000"
-                                value={rt.pricePerNight || ""}
-                                onChange={(e) => {
-                                  const updated = [...hotelRoomTypes];
-                                  updated[idx].pricePerNight = parseFloat(e.target.value) || 0;
-                                  setHotelRoomTypes(updated);
-                                }}
-                                className="mt-0.5"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-[10px] font-semibold text-muted-foreground">Max Occupancy</Label>
-                              <Input
-                                type="number"
-                                placeholder="2"
-                                value={rt.maxOccupancy || ""}
-                                onChange={(e) => {
-                                  const updated = [...hotelRoomTypes];
-                                  updated[idx].maxOccupancy = parseInt(e.target.value) || 1;
-                                  setHotelRoomTypes(updated);
-                                }}
-                                className="mt-0.5"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-[10px] font-semibold text-muted-foreground mb-1 block">Room Amenities</Label>
-                            <div className="flex flex-wrap gap-1">
-                              {["AC", "Wi-Fi", "TV", "Mini Bar", "Balcony", "Breakfast", "Room Service", "Safe"].map((ra) => (
-                                <button
-                                  key={ra}
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...hotelRoomTypes];
-                                    if (updated[idx].amenities.includes(ra)) {
-                                      updated[idx].amenities = updated[idx].amenities.filter((x) => x !== ra);
-                                    } else {
-                                      updated[idx].amenities = [...updated[idx].amenities, ra];
-                                    }
-                                    setHotelRoomTypes(updated);
-                                  }}
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all ${
-                                    rt.amenities.includes(ra) ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
-                                  }`}
-                                >
-                                  {ra}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Property-level amenities */}
-                  <div>
-                    <Label className="text-xs font-semibold mb-2 block">Property Amenities</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {PROPERTY_AMENITIES.map((a) => (
-                        <button
-                          key={a.id}
-                          type="button"
-                          onClick={() => setSelectedAmenities((prev) => prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id])}
-                          className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-medium transition-all ${
-                            selectedAmenities.includes(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
-                          }`}
-                        >
-                          <span>{a.icon}</span> {a.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* ── SHORTLET & HOTEL → Redirect to wizard ── */}
+              {propertySubType === "shortlet_hotel" && (
+                <div className="space-y-3 p-4 rounded-xl border border-primary/30 bg-primary/5 text-center">
+                  <Hotel className="w-8 h-8 text-primary mx-auto" />
+                  <p className="text-sm font-bold text-foreground">Shortlet & Hotel Setup</p>
+                  <p className="text-xs text-muted-foreground">This property type uses the mini-site wizard for a guided setup experience.</p>
+                  <button type="button" onClick={() => navigate("/mini-site-wizard")} className="text-sm font-bold text-primary hover:underline">
+                    Open Wizard &rarr;
+                  </button>
                 </div>
               )}
 
@@ -1631,6 +1429,21 @@ const ProfileDashboard = () => {
                 </Card>
               ))}
             </div>
+
+            {/* Hospitality Entry Card */}
+            <button
+              onClick={() => navigate("/hospitality-dashboard")}
+              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+            >
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Hotel className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm">Property Dashboard</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Manage reservations, revenue, rooms & bookings</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </button>
 
             <Card className="border-border/50">
               <CardContent className="p-5">

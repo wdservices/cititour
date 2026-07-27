@@ -33,6 +33,8 @@ type ListingItem = {
   location?: string;
   price?: string;
   createdAt?: any;
+  miniSiteActive?: boolean;
+  slug?: string;
 };
 
 const PLACEHOLDER_IMG = "/placeholder.svg";
@@ -71,7 +73,19 @@ const CategoriesPage = () => {
 
   const properties = useMemo(() => {
     if (!propData) return [];
-    return propData.slice(0, 4).map((p: any) => ({ id: p.id, title: fmt(p.title), description: fmt(p.description), image: p.image || "", category: fmt(p.category), rating: p.rating || 0, location: fmt(p.location), price: fmt(p.price), createdAt: p.createdAt }));
+    return propData.slice(0, 4).map((p: any) => ({
+      id: p.id,
+      title: fmt(p.title),
+      description: fmt(p.description),
+      image: p.image || "",
+      category: fmt(p.category),
+      rating: p.rating || 0,
+      location: fmt(p.location),
+      price: fmt(p.price),
+      createdAt: p.createdAt,
+      miniSiteActive: p.miniSiteActive || false,
+      slug: (p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, ""),
+    }));
   }, [propData]);
 
   const toggleLike = (id: string) => {
@@ -91,7 +105,13 @@ const CategoriesPage = () => {
   const handleBizClick = (item: ListingItem) => navigate(`/${bizPathMap[item.category] || "others"}/${item.id}`);
   const handleEventClick = (item: ListingItem) => navigate(`/events/${item.id}`);
   const handleMktClick = (item: ListingItem) => navigate(`/marketplace/${item.id}`);
-  const handlePropClick = (item: ListingItem) => navigate(`/airbnb/${item.id}`);
+  const handlePropClick = (item: ListingItem) => {
+    if (item.miniSiteActive && item.slug) {
+      navigate(`/property/${item.slug}`);
+    } else {
+      navigate(`/airbnb/${item.id}`);
+    }
+  };
 
   const r = (val: any): string => fmt(val);
 

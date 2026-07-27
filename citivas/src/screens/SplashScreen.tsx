@@ -47,7 +47,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       <View style={styles.logoOverlay}>
         <Animated.View style={{ alignItems: 'center', opacity: logoOpacity, transform: [{ scale: logoScale }] }}>
           <Image
-            source={require('../../assets/logo.png')}
+            source={require('../../assets/citivas-logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />

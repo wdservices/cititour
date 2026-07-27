@@ -17,6 +17,8 @@ interface Hotel {
   phone: string;
   website: string;
   isOpen: boolean;
+  _source?: "business" | "house_listing";
+  slug?: string;
 }
 
 const HotelsPage = () => {
@@ -29,15 +31,35 @@ const HotelsPage = () => {
   useEffect(() => {
     const fetchHotels = async () => {
       try {
-        const q = query(collection(db, "businesses"));
-        const querySnapshot = await getDocs(q);
-        const hotelsData = querySnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
+        const [bizSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "businesses"))),
+          getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true))),
+        ]);
+
+        const bizHotels: Hotel[] = bizSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data(), _source: "business" as const }))
           .filter((doc: any) => doc.category === "Hotel") as Hotel[];
-        setHotels(hotelsData);
+
+        const propHotels: Hotel[] = propSnap.docs.map(doc => {
+          const data = doc.data() as any;
+          const slug = (data.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+          return {
+            id: doc.id,
+            title: data.title || "",
+            description: data.description || "",
+            image: data.image || (data.images && data.images[0]) || "",
+            category: "Shortlet & Hotel",
+            rating: data.rating || 0,
+            price: data.price || "",
+            location: data.location || "",
+            phone: data.phone || "",
+            isOpen: true,
+            _source: "house_listing",
+            slug,
+          };
+        });
+
+        setHotels([...bizHotels, ...propHotels]);
       } catch (err) {
         setError("Failed to fetch hotels.");
         console.error(err);
@@ -58,8 +80,12 @@ const HotelsPage = () => {
     );
   });
 
-  const handleHotelClick = (hotelId: string) => {
-    navigate(`/hotels/${hotelId}`);
+  const handleHotelClick = (hotel: Hotel) => {
+    if (hotel._source === "house_listing" && hotel.slug) {
+      navigate(`/property/${hotel.slug}`);
+      return;
+    }
+    navigate(`/hotels/${hotel.id}`);
   };
 
   return (
@@ -81,7 +107,7 @@ const HotelsPage = () => {
                 <ListingCard
                   key={hotel.id}
                   {...hotel}
-                  onClick={() => handleHotelClick(hotel.id)}
+                  onClick={() => handleHotelClick(hotel)}
                 />
               ))}
             </div>

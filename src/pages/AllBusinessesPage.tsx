@@ -23,6 +23,8 @@ type BusinessItem = {
   whatsapp?: string;
   isOpen?: boolean;
   tags?: string[];
+  _source?: "business" | "house_listing";
+  slug?: string;
 };
 
 const pathMap: Record<string, string> = {
@@ -46,6 +48,7 @@ const categories = [
   "All",
   "Restaurant",
   "Hotel",
+  "Shortlet & Hotel",
   "Shopping",
   "Attraction",
   "Fun Places",
@@ -58,6 +61,7 @@ const categoryEmojis: Record<string, string> = {
   All: "✨",
   Restaurant: "🍽️",
   Hotel: "🏨",
+  "Shortlet & Hotel": "🏡",
   Shopping: "🛍️",
   Attraction: "🎡",
   "Fun Places": "🎉",
@@ -78,16 +82,38 @@ const AllBusinessesPage = () => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const q = query(collection(db, "businesses"), where("state", "==", state));
-        const snap = await getDocs(q);
-        const data = snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any) })) as BusinessItem[];
-        const filteredData = data.filter(item => {
-          if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") {
-            return false; // Exclude events from business listing
-          }
+        const [bizSnap, propSnap] = await Promise.all([
+          getDocs(query(collection(db, "businesses"), where("state", "==", state))),
+          getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true), where("state", "==", state))),
+        ]);
+
+        const bizItems: BusinessItem[] = bizSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any), _source: "business" })).filter((item) => {
+          if (item.category === "Event" || item.category === "Events" || item.category === "Event Venue") return false;
           return true;
         });
-        setItems(filteredData);
+
+        const propItems: BusinessItem[] = propSnap.docs.map((doc) => {
+          const data = doc.data() as any;
+          const slug = (data.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+          return {
+            id: doc.id,
+            title: data.title || "",
+            description: data.description || "",
+            image: data.image || (data.images && data.images[0]) || "",
+            images: data.images || [],
+            category: "Shortlet & Hotel",
+            rating: data.rating || 0,
+            price: data.price || "",
+            location: data.location || "",
+            phone: data.phone || "",
+            whatsapp: data.whatsapp || "",
+            tags: ["shortlet", "hotel", "property"],
+            _source: "house_listing",
+            slug,
+          };
+        });
+
+        setItems([...bizItems, ...propItems]);
       } catch (err) {
         console.error(err);
         setError("Failed to fetch businesses.");
@@ -122,9 +148,13 @@ const AllBusinessesPage = () => {
     return result;
   }, [items, searchTerm, activeCategory]);
 
-  const handleClick = (itemId: string, category: string) => {
-    const base = pathMap[category] || "others";
-    navigate(`/${base}/${itemId}`);
+  const handleClick = (item: BusinessItem) => {
+    if (item._source === "house_listing" && item.slug) {
+      navigate(`/property/${item.slug}`);
+      return;
+    }
+    const base = pathMap[item.category] || "others";
+    navigate(`/${base}/${item.id}`);
   };
 
   const renderValue = (val: any): string => {
@@ -237,7 +267,7 @@ const AllBusinessesPage = () => {
             {filtered.map((biz) => (
               <div
                 key={biz.id}
-                onClick={() => handleClick(biz.id, biz.category)}
+                onClick={() => handleClick(biz)}
                 className="group bg-card/40 backdrop-blur-sm border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
               >
                 {/* Image */}
@@ -274,6 +304,10 @@ const AllBusinessesPage = () => {
                     {(biz as any).verified || (biz as any).featured ? (
                       <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-dashed border-success/50 text-success">
                         {(biz as any).featured ? "Featured" : "Verified"}
+                      </span>
+                    ) : biz._source === "house_listing" ? (
+                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        Mini Site
                       </span>
                     ) : null}
                   </div>

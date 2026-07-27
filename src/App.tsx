@@ -53,6 +53,11 @@ import StatePage from "./pages/StatePage";
 import BlogIndexPage from "./pages/BlogIndexPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import DocsPage from "./pages/DocsPage";
+import HospitalityDashboard from "./pages/HospitalityDashboard";
+import MiniSiteWizard from "./pages/MiniSiteWizard";
+import MiniSitePage from "./pages/MiniSitePage";
+import BookingEngine from "./pages/BookingEngine";
+import BookingPayment from "./pages/BookingPayment";
 import WebNotificationListener from "./components/WebNotificationListener";
 
 const queryClient = new QueryClient({
@@ -67,10 +72,25 @@ const queryClient = new QueryClient({
   },
 });
 
-const persister = createSyncStoragePersister({
-  storage: typeof window !== "undefined" ? window.localStorage : undefined,
-  key: "citivas-query-cache",
-});
+// Safe localStorage check — Edge Tracking Prevention blocks it
+function getSafeStorage(): Storage | undefined {
+  try {
+    const s = window.localStorage;
+    // Test write/read to confirm it's actually usable
+    const k = "__citivas_test__";
+    s.setItem(k, "1");
+    s.removeItem(k);
+    return s;
+  } catch {
+    return undefined;
+  }
+}
+
+const safeStorage = getSafeStorage();
+
+const persister = safeStorage
+  ? createSyncStoragePersister({ storage: safeStorage, key: "citivas-query-cache" })
+  : undefined;
 
 /** Mounts the background chat notification listener (web). */
 function ChatNotificationListeners() {
@@ -122,6 +142,7 @@ const ProtectedRoutes = () => {
         <Route path="/share-app" element={<ShareAppPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/mini-site-wizard" element={<MiniSiteWizard />} />
         <Route path="/contact-support" element={<ContactSupportPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/verify" element={<WalletVerifyPage />} />
@@ -141,9 +162,16 @@ const ProtectedRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <PersistQueryClientProvider client={queryClient} persister={persister} persistOptions={{ maxAge: 30 * 60 * 1000 }}>
+// Lightweight auth guard that renders children directly (no AppShell wrapper)
+const ProtectedRoutesInline = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
+
+const App = () => {
+  const inner = (
     <AuthProvider>
       <ActiveChatProvider>
       <WalletProvider>
@@ -155,6 +183,11 @@ const App = () => (
               <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/hospitality-dashboard" element={
+                    <ProtectedRoutesInline>
+                      <HospitalityDashboard />
+                    </ProtectedRoutesInline>
+                  } />
                   <Route path="/split-it" element={<SplitItPage />} />
                   <Route path="/list-your-business" element={<Navigate to="/profile/dashboard?tab=listings&action=create" replace />} />
                   <Route path="/host-an-event" element={<Navigate to="/profile/dashboard?tab=events&action=create" replace />} />
@@ -167,6 +200,9 @@ const App = () => (
                   <Route path="/blog" element={<BlogIndexPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="/events/:eventId" element={<DynamicEventPage />} />
+                  <Route path="/property/:slug" element={<MiniSitePage />} />
+                  <Route path="/book/:slug" element={<BookingEngine />} />
+                  <Route path="/book/:slug/payment" element={<BookingPayment />} />
                   <Route path="/auth" element={<AuthPage onAuthenticated={() => {}} />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfUsePage />} />
@@ -180,8 +216,19 @@ const App = () => (
       </WalletProvider>
       </ActiveChatProvider>
     </AuthProvider>
-    </PersistQueryClientProvider>
-  </QueryClientProvider>
-);
+  );
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {persister ? (
+        <PersistQueryClientProvider client={queryClient} persister={persister} persistOptions={{ maxAge: 30 * 60 * 1000 }}>
+          {inner}
+        </PersistQueryClientProvider>
+      ) : (
+        inner
+      )}
+    </QueryClientProvider>
+  );
+};
 
 export default App;

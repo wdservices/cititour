@@ -108,12 +108,11 @@ export const PROPERTY_TYPES = [
   "Other",
 ] as const;
 
-export type PropertySubType = "rent" | "shortlet" | "hotel" | "land" | "commercial";
+export type PropertySubType = "rent" | "shortlet_hotel" | "land" | "commercial";
 
 export const PROPERTY_SUB_TYPES: { value: PropertySubType; label: string; icon: string; desc: string }[] = [
   { value: "rent", label: "For Rent", icon: "🏠", desc: "Long-term lease — apartment, house, duplex" },
-  { value: "shortlet", label: "Short-let / Airbnb", icon: "🌙", desc: "Nightly or weekly stays" },
-  { value: "hotel", label: "Hotel / Serviced Apt", icon: "🏨", desc: "Room-based with multiple room types" },
+  { value: "shortlet_hotel", label: "Shortlet & Hotel", icon: "🏨", desc: "Nightly stays, hotels & serviced apartments" },
   { value: "land", label: "Land", icon: "📐", desc: "Plots for sale or lease" },
   { value: "commercial", label: "Commercial", icon: "🏪", desc: "Offices, shops, warehouses" },
 ];
