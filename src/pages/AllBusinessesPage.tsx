@@ -84,7 +84,7 @@ const AllBusinessesPage = () => {
       try {
         const [bizSnap, propSnap] = await Promise.all([
           getDocs(query(collection(db, "businesses"), where("state", "==", state))),
-          getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true), where("state", "==", state))),
+          getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true))),
         ]);
 
         const bizItems: BusinessItem[] = bizSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as any), _source: "business" })).filter((item) => {
@@ -92,7 +92,9 @@ const AllBusinessesPage = () => {
           return true;
         });
 
-        const propItems: BusinessItem[] = propSnap.docs.map((doc) => {
+        const propItems: BusinessItem[] = propSnap.docs
+          .filter((doc) => (doc.data() as any).state === state)
+          .map((doc) => {
           const data = doc.data() as any;
           const slug = (data.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
           return {

@@ -94,6 +94,13 @@ const DetailPage = () => {
 
         if (snap.exists()) {
           const raw = snap.data() as any;
+
+          if (source === "house_listings" && raw.miniSiteActive && raw.title) {
+            const slug = raw.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+            navigate(`/property/${slug}`, { replace: true });
+            return;
+          }
+          const raw = snap.data() as any;
           const resolvedOwnerId = raw.ownerId || raw.userId || raw.uid || '';
           setOwnerUid(resolvedOwnerId || null);
           setData({
