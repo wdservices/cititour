@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { PROPERTY_AMENITIES } from "@/lib/nigerianStates";
-import { Phone, MessageCircle, Mail, MapPin, Star, ChevronLeft, Share2, X, ChevronRight, Camera, ZoomIn } from "lucide-react";
+import { Phone, Mail, MapPin, Star, ChevronLeft, Share2, X, ChevronRight, Camera, ZoomIn } from "lucide-react";
 
 interface RoomCategory {
   name: string;
@@ -359,56 +359,51 @@ export default function MiniSitePage() {
 
         {/* Contact Us */}
         <ScrollReveal delay={400}>
-        <section className="py-12 sm:py-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Contact Us</h2>
-          <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-            {property.phone && (
-              <a href={`tel:${property.phone}`} className="flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
-                <div className="w-12 h-12 rounded-lg bg-[#1a56db]/10 flex items-center justify-center transition-all group-hover:bg-[#1a56db]/20 group-hover:scale-105">
-                  <Phone className="w-6 h-6 text-[#1a56db]" />
-                </div>
-                <div>
-                  <p className="text-[14px] font-bold text-gray-800">Phone</p>
-                  <p className="text-[13px] text-gray-500">{property.phone}</p>
-                </div>
-              </a>
-            )}
-            {property.whatsapp && (
-              <a href={`https://wa.me/${property.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
-                <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center transition-all group-hover:bg-green-500/20 group-hover:scale-105">
-                  <MessageCircle className="w-6 h-6 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-[14px] font-bold text-gray-800">WhatsApp</p>
-                  <p className="text-[13px] text-gray-500">Message us 24/7</p>
-                </div>
-              </a>
-            )}
-            {property.contactEmail && (
-              <a href={`mailto:${property.contactEmail}`} className="flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
-                <div className="w-12 h-12 rounded-lg bg-[#1a56db]/10 flex items-center justify-center transition-all group-hover:bg-[#1a56db]/20 group-hover:scale-105">
-                  <Mail className="w-6 h-6 text-[#1a56db]" />
-                </div>
-                <div>
-                  <p className="text-[14px] font-bold text-gray-800">Email</p>
-                  <p className="text-[13px] text-gray-500">{property.contactEmail}</p>
-                </div>
-              </a>
-            )}
+        <section className="py-12 sm:py-16 border-t border-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-6">
+            {/* Address */}
             {property.address && (
-              <div className="flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors group">
-                <div className="w-12 h-12 rounded-lg bg-[#1a56db]/10 flex items-center justify-center transition-all group-hover:bg-[#1a56db]/20 group-hover:scale-105">
-                  <MapPin className="w-6 h-6 text-[#1a56db]" />
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="w-4 h-4 text-[#1a56db]" />
+                  <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Address</span>
                 </div>
-                <div>
-                  <p className="text-[14px] font-bold text-gray-800">Address</p>
-                  <p className="text-[13px] text-gray-500">{property.address}</p>
-                </div>
+                <p className="text-[14px] text-gray-600 leading-relaxed">{property.address}</p>
               </div>
             )}
-            {!property.phone && !property.whatsapp && !property.contactEmail && !property.address && (
-              <div className="p-6 text-center text-[13px] text-gray-400">No contact information available.</div>
-            )}
+            {/* Phone + WhatsApp */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Phone className="w-4 h-4 text-[#1a56db]" />
+                <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Phone</span>
+              </div>
+              <div className="space-y-1.5">
+                {property.phone && (
+                  <a href={`tel:${property.phone}`} className="block text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors">{property.phone}</a>
+                )}
+                {property.whatsapp && (
+                  <a href={`https://wa.me/${property.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="block text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors">{property.whatsapp}</a>
+                )}
+                {!property.phone && !property.whatsapp && <span className="text-[14px] text-gray-400">Not available</span>}
+              </div>
+            </div>
+            {/* Email */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Mail className="w-4 h-4 text-[#1a56db]" />
+                <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Email</span>
+              </div>
+              {property.contactEmail ? (
+                <a href={`mailto:${property.contactEmail}`} className="text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors break-all">{property.contactEmail}</a>
+              ) : (
+                <span className="text-[14px] text-gray-400">Not available</span>
+              )}
+            </div>
+            {/* Reservations box */}
+            <div className="border border-gray-200 rounded-xl p-5 flex flex-col justify-center">
+              <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-1">Reservations</span>
+              <p className="text-[20px] font-bold text-[#1a56db]">Open 24 / 7</p>
+            </div>
           </div>
         </section>
         </ScrollReveal>
