@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHouseListings, useUpdateDoc, usePropertyBookings } from "@/lib/useFirestore";
 import { useQueryClient } from "@tanstack/react-query";
+import { db } from "@/lib/firebase";
+import { doc, deleteDoc } from "firebase/firestore";
 import {
   LayoutDashboard, TrendingUp, Hotel, Users, FileText, HelpCircle, LogOut,
   Calendar, DollarSign, Key, Plus, Copy, Info, AlertTriangle, ArrowUp,
@@ -10,15 +12,15 @@ import {
   Settings, Clock, CheckCircle2, Upload, Filter, ChevronRight, MoreHorizontal,
   ExternalLink, Eye, FileSpreadsheet, X, ChevronLeft, ChevronDown,
   DoorOpen, Wrench, Sparkles, User, Phone, Mail, MapPin, Star, Globe, MessageCircle,
-  Send, CalendarDays, AlertCircle, TrendingDown, RotateCcw, Edit3, Trash2, Save,
+  Send, CalendarDays, AlertCircle, TrendingDown, RotateCcw, Edit3, Trash2, Save, Lock,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Overview" },
   { icon: TrendingUp, label: "Performance" },
   { icon: Hotel, label: "Inventory" },
-  { icon: Users, label: "Staffing" },
   { icon: FileText, label: "Reports" },
+  { icon: Settings, label: "Settings" },
 ];
 
 const STATS = [
@@ -80,6 +82,36 @@ export default function HospitalityDashboard() {
     [allHouseListings, user?.id]
   );
   const primaryProperty = myProperties[0] as any;
+
+  // Property gate — no listing = no dashboard
+  if (!primaryProperty) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background p-6">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Hotel className="w-10 h-10 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">No Property Listed</h1>
+          <p className="text-muted-foreground mb-6 text-sm">
+            You need to create and publish a property listing before you can access the Hospitality Dashboard.
+          </p>
+          <button
+            onClick={() => navigate("/mini-site-wizard")}
+            className="bg-primary text-primary-foreground px-8 py-3 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Create Property
+          </button>
+          <button
+            onClick={() => navigate("/profile/dashboard")}
+            className="block mx-auto mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const propertyName = primaryProperty?.title || "Your Property";
   const propertySlug = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
 
@@ -110,6 +142,19 @@ export default function HospitalityDashboard() {
   const [perfPeriod, setPerfPeriod] = useState<"Daily" | "Weekly" | "Monthly" | "Yearly">("Daily");
   const [compareToggle, setCompareToggle] = useState(true);
   const [invFilter, setInvFilter] = useState("All Rooms");
+
+  // Settings state
+  const [vatEnabled, setVatEnabled] = useState(primaryProperty?.vatEnabled || false);
+  const [vatRate, setVatRate] = useState(String(primaryProperty?.vatRate || "7.5"));
+  const [settingsPhone, setSettingsPhone] = useState(primaryProperty?.phone || "");
+  const [settingsWhatsapp, setSettingsWhatsapp] = useState(primaryProperty?.whatsapp || "");
+  const [settingsEmail, setSettingsEmail] = useState(primaryProperty?.contactEmail || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   // Derive stats from real property data
   const totalUnits = rooms.reduce((sum: number, r: any) => sum + (r.quantity || 1), 0) || 1;
@@ -903,7 +948,211 @@ const handleCopy = () => {
                           ) : (
                             realBookings.slice(0, 10).map((booking: any) => {
                               const initials = (booking.guestFirstName?.[0] || "") + (booking.guestLastName?.[0] || "");
-                              return (
+  const handleSaveSettings = async () => {
+    if (!primaryProperty?.id) return;
+    await updateProperty.mutateAsync({
+      id: primaryProperty.id,
+      data: {
+        vatEnabled,
+        vatRate: parseFloat(vatRate) || 0,
+        phone: settingsPhone,
+        whatsapp: settingsWhatsapp,
+        contactEmail: settingsEmail,
+      },
+    });
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 3000);
+  };
+
+  const handleDeleteProperty = async () => {
+    if (!primaryProperty?.id) return;
+    try {
+      await deleteDoc(doc(db, "house_listings", primaryProperty.id));
+      qc.invalidateQueries({ queryKey: ["house_listings"] });
+      navigate("/profile/dashboard");
+    } catch (e) {
+      console.error("Delete failed:", e);
+    }
+  };
+
+  const renderSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold">Settings</h2>
+        <p className="text-muted-foreground mt-1">Manage your property settings, billing, and account.</p>
+      </div>
+
+      {/* VAT Settings */}
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Percent className="w-5 h-5 text-primary" />
+          VAT Configuration
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">Toggle Value Added Tax on guest bookings. When enabled, VAT is added to the total at checkout.</p>
+        <div className="flex items-center justify-between mb-4 p-4 bg-muted rounded-lg">
+          <div>
+            <span className="text-sm font-semibold">Enable VAT</span>
+            <p className="text-xs text-muted-foreground mt-0.5">Currently {vatEnabled ? "ON" : "OFF"}</p>
+          </div>
+          <button
+            onClick={() => setVatEnabled(!vatEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${vatEnabled ? "bg-primary" : "bg-muted-foreground/30"}`}
+          >
+            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${vatEnabled ? "translate-x-5" : "translate-x-0"}`} />
+          </button>
+        </div>
+        {vatEnabled && (
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-semibold">VAT Rate (%)</label>
+            <input
+              type="number"
+              value={vatRate}
+              onChange={(e) => setVatRate(e.target.value)}
+              min="0"
+              max="100"
+              step="0.5"
+              className="w-24 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+            <span className="text-xs text-muted-foreground">% of room rate</span>
+          </div>
+        )}
+      </div>
+
+      {/* Contact Information */}
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Phone className="w-5 h-5 text-primary" />
+          Contact Information
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">Update the contact details shown on your property page.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Phone Number</label>
+            <input
+              type="tel"
+              value={settingsPhone}
+              onChange={(e) => setSettingsPhone(e.target.value)}
+              placeholder="+234 800 000 0000"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">WhatsApp</label>
+            <input
+              type="tel"
+              value={settingsWhatsapp}
+              onChange={(e) => setSettingsWhatsapp(e.target.value)}
+              placeholder="+234 800 000 0000"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Email</label>
+            <input
+              type="email"
+              value={settingsEmail}
+              onChange={(e) => setSettingsEmail(e.target.value)}
+              placeholder="reservations@example.com"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Password Change */}
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-primary" />
+          Change Password
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Current Password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-card rounded-xl border border-destructive/30 p-6">
+        <h3 className="text-lg font-bold mb-2 text-destructive flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          Danger Zone
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Deleting your property listing will permanently remove it and deactivate your Hospitality Dashboard.
+        </p>
+        {deleteStep === 0 ? (
+          <button
+            onClick={() => setDeleteStep(1)}
+            className="px-6 py-2.5 rounded-lg border border-destructive text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors"
+          >
+            Delete Property
+          </button>
+        ) : (
+          <div className="flex items-center gap-3 p-4 bg-destructive/5 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Are you sure? This action cannot be undone.</p>
+              <p className="text-xs text-muted-foreground">All bookings, rooms, and settings will be permanently deleted.</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setDeleteStep(0)} className="px-4 py-2 rounded-lg border border-border text-sm font-semibold hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleDeleteProperty} className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-colors">
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end gap-3">
+        {settingsSaved && (
+          <span className="text-sm text-emerald-600 font-semibold flex items-center gap-1">
+            <CheckCircle2 className="w-4 h-4" /> Saved successfully
+          </span>
+        )}
+        <button
+          onClick={handleSaveSettings}
+          className="px-8 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2 active:scale-95"
+        >
+          <Save className="w-4 h-4" />
+          Save Settings
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
                                 <tr key={booking.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                                   <td className="p-4 flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-primary text-primary-foreground">
@@ -996,6 +1245,7 @@ const handleCopy = () => {
 
             {activeNav === "Performance" && renderPerformance()}
             {activeNav === "Inventory" && renderInventory()}
+            {activeNav === "Settings" && renderSettings()}
           </div>
         </div>
       </main>

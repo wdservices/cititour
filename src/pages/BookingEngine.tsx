@@ -26,6 +26,10 @@ interface PropertyData {
   location: string;
   city: string;
   state: string;
+  ownerId?: string;
+  userId?: string;
+  vatEnabled?: boolean;
+  vatRate?: number;
 }
 
 const BOOKING_STEPS = ["DATES & ROOM", "GUESTS", "ADD-ONS", "PAYMENT"];
@@ -130,7 +134,11 @@ export default function BookingEngine() {
 
   const nights = checkIn && checkOut ? Math.ceil((checkOut.getTime() - checkIn.getTime()) / 86400000) : 0;
   const selectedRoomData = selectedRoom !== null && property?.rooms?.[selectedRoom] ? property.rooms[selectedRoom] : null;
-  const total = selectedRoomData && nights > 0 ? selectedRoomData.pricePerNight * nights : 0;
+  const roomTotal = selectedRoomData && nights > 0 ? selectedRoomData.pricePerNight * nights : 0;
+  const vatEnabled = property?.vatEnabled || false;
+  const vatRate = property?.vatRate || 0;
+  const vatAmount = vatEnabled && roomTotal > 0 ? Math.round(roomTotal * (vatRate / 100)) : 0;
+  const total = roomTotal + vatAmount;
 
   if (loading) {
     return <div className="min-h-screen bg-[#f8f9ff] flex items-center justify-center"><p className="text-gray-400">Loading...</p></div>;
@@ -306,6 +314,9 @@ export default function BookingEngine() {
                 <span className="text-[11px] font-semibold text-gray-400 tracking-wider">TOTAL:</span>
                 <span className="text-[28px] font-bold text-[#005ea4]">₦{total.toLocaleString()}</span>
               </div>
+              {vatEnabled && vatAmount > 0 && (
+                <span className="text-[11px] text-gray-400">includes ₦{vatAmount.toLocaleString()} VAT ({vatRate}%)</span>
+              )}
             </div>
             <button disabled={nights === 0}
               onClick={() => navigate(`/book/${slug}/payment`, {
@@ -323,6 +334,8 @@ export default function BookingEngine() {
                   propertyLocation: property.location || [property.city, property.state].filter(Boolean).join(", "),
                   ownerId: property.ownerId || property.userId || "",
                   propertyId: property.id || "",
+                  vatEnabled,
+                  vatRate,
                 }
               })}
               className="bg-[#005ea4] text-white px-8 py-3 rounded-lg text-[16px] font-bold shadow-md hover:bg-[#004881] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">

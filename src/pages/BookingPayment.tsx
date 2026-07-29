@@ -25,6 +25,8 @@ interface BookingState {
   propertyLocation: string;
   ownerId: string;
   propertyId: string;
+  vatEnabled?: boolean;
+  vatRate?: number;
 }
 
 export default function BookingPayment() {
@@ -52,7 +54,9 @@ export default function BookingPayment() {
   }
 
   const roomRate = state.pricePerNight * state.nights;
-  const taxes = Math.round(roomRate * 0.15);
+  const vatEnabled = state.vatEnabled || false;
+  const vatRate = state.vatRate || 0;
+  const taxes = vatEnabled ? Math.round(roomRate * (vatRate / 100)) : 0;
   const totalWithTax = roomRate + taxes;
 
   const generateRef = () => {
@@ -105,6 +109,8 @@ export default function BookingPayment() {
           checkOut: state.checkOut,
           guests: state.guests,
           roomRate,
+          vatEnabled,
+          vatRate,
           taxes,
           totalPaid: totalWithTax,
           guestFirstName: firstName,
@@ -305,7 +311,7 @@ export default function BookingPayment() {
                     <span className="text-[14px] font-medium text-gray-800">&#8358;{roomRate.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[14px] text-gray-500">Taxes &amp; Fees</span>
+                    <span className="text-[14px] text-gray-500">{vatEnabled ? `VAT (${vatRate}%)` : "Taxes &amp; Fees"}</span>
                     <span className="text-[14px] font-medium text-gray-800">&#8358;{taxes.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
