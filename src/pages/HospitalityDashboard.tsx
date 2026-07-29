@@ -982,6 +982,22 @@ const handleCopy = () => {
         <p className="text-muted-foreground mt-1">Manage your property settings, billing, and account.</p>
       </div>
 
+      {/* Edit Mini-Site */}
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <ExternalLink className="w-5 h-5 text-primary" />
+          Edit Mini-Site
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">Update your property's public listing page — rooms, images, amenities, pricing, and description.</p>
+        <button
+          onClick={() => navigate(`/mini-site-wizard?propertyId=${primaryProperty.id}`)}
+          className="px-6 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2 active:scale-95"
+        >
+          <ExternalLink className="w-4 h-4" />
+          Open Mini-Site Editor
+        </button>
+      </div>
+
       {/* VAT Settings */}
       <div className="bg-card rounded-xl border border-border p-6">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
