@@ -1500,37 +1500,55 @@ const ProfileDashboard = () => {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {myBusinesses.map((item) => (
-                      <button
+                      <div
                         key={item.id}
-                        onClick={() => { setSelectedBusinessId(item.id); setSelectedBusinessTitle(item.title); }}
-                        className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md group text-left"
+                        className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
-                        <div className="relative aspect-[3/2] overflow-hidden">
-                          <img
-                            src={item.image || getMockImage(item.category)}
-                            alt={item.title}
-                            className="w-full h-full object-contain bg-muted transition-transform duration-500 group-hover:scale-100"
-                          />
-                          {item.category && (
-                            <Badge className="absolute top-3 left-3 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">
-                              {item.category}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <h3 className="font-bold text-sm text-foreground truncate mb-1">{item.title}</h3>
-                          {item.location && (
-                            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-2">
-                              <MapPin className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{item.location}</span>
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => { setSelectedBusinessId(item.id); setSelectedBusinessTitle(item.title); }}
+                        >
+                          <div className="relative aspect-[3/2] overflow-hidden">
+                            <img
+                              src={item.image || getMockImage(item.category)}
+                              alt={item.title}
+                              className="w-full h-full object-contain bg-muted transition-transform duration-500 group-hover:scale-100"
+                            />
+                            {item.category && (
+                              <Badge className="absolute top-3 left-3 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground">
+                                {item.category}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <h3 className="font-bold text-sm text-foreground truncate mb-1">{item.title}</h3>
+                            {item.location && (
+                              <div className="flex items-center gap-1 text-muted-foreground text-xs mb-2">
+                                <MapPin className="w-3 h-3 shrink-0" />
+                                <span className="truncate">{item.location}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1 text-xs text-primary font-semibold">
+                              <span>Manage workspace</span>
+                              <ChevronRight className="w-3 h-3" />
                             </div>
-                          )}
-                          <div className="flex items-center gap-1 text-xs text-primary font-semibold">
-                            <span>Manage workspace</span>
-                            <ChevronRight className="w-3 h-3" />
                           </div>
                         </div>
-                      </button>
+                        <div className="px-3 pb-3 flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEditClick(item, "business")}
+                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(item.id, "business", item.title)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
