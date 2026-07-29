@@ -976,12 +976,6 @@ const handleCopy = () => {
           </ul>
         </nav>
         <div className="px-4 mt-auto mb-4 space-y-2">
-          {primaryProperty?.id && (
-            <button onClick={() => navigate(`/mini-site-wizard?propertyId=${primaryProperty.id}`)} className="w-full bg-card border border-border text-foreground rounded-lg py-3 text-sm font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2">
-              <ExternalLink className="w-4 h-4" />
-              Edit Mini-Site
-            </button>
-          )}
           <button onClick={() => setActiveNav("Reports")} className="w-full bg-primary text-primary-foreground rounded-lg py-3 text-sm font-semibold hover:bg-primary/90 transition-colors">
             Generate Report
           </button>
