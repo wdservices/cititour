@@ -8,6 +8,10 @@ const PAYSTACK_PUBLIC_KEY = process.env.VITE_PAYSTACK_PUBLIC_KEY || process.env.
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 const WITHDRAWAL_FEE_PERCENT = Number(process.env.WITHDRAWAL_FEE_PERCENT ?? 0.015);
 
+// Idempotency: track processed webhook references to prevent double-crediting.
+// In production, use Firestore or Redis for persistence across server restarts.
+const processedReferences = new Set();
+
 function computeWithdrawalFee(grossAmount) {
   const fee = Math.round(grossAmount * WITHDRAWAL_FEE_PERCENT * 100) / 100;
   const netAmount = Math.round((grossAmount - fee) * 100) / 100;
@@ -265,12 +269,18 @@ router.post('/webhook', async (req, res) => {
       const userId = metadata?.userId;
       const nairaAmount = (amount || 0) / 100;
 
+      // Idempotency: skip if this reference was already processed
+      if (processedReferences.has(reference)) {
+        console.log(`Webhook: duplicate reference ${reference}, skipping`);
+        return res.sendStatus(200);
+      }
+      processedReferences.add(reference);
+
       console.log(`Webhook: charge.success for user ${userId}, amount ₦${nairaAmount}, ref ${reference}`);
 
-      // TODO: In production, check if this reference was already processed
-      // (idempotency) and credit the wallet in your database.
-      // For now, log it — the client-side verify also credits the wallet
-      // as a fallback, but the webhook is the authoritative source.
+      // TODO: In production, credit the wallet in your database here.
+      // The client-side /verify/:reference also credits as a fallback,
+      // but the webhook is the authoritative source.
     }
 
     // Always acknowledge quickly — Paystack retries if you don't respond fast

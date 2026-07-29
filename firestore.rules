@@ -28,20 +28,20 @@ service cloud.firestore {
       }
 
       // ── Event ticket tiers ──
-      // Read must be public (pricing needs to be visible pre-purchase, same
-      // as the parent business doc). Create/update is restricted to the
-      // event's own organizer OR a signed-in user completing a purchase —
-      // this is intentionally broad on update (any authenticated user can
-      // increment `sold`) because the client currently updates `sold` from
-      // the buyer's own session, not a privileged backend. Tighten this to
-      // a Cloud Function-only write once ticket purchases move server-side.
+      // Read must be public (pricing needs to be visible pre-purchase).
+      // Write restricted to the event's owner/organizer only.
+      // Sold-count increments should move to a Cloud Function once
+      // ticket purchases move server-side.
       match /tickets/{ticketId} {
         allow read: if true;
         allow create: if request.auth != null && (
           get(/databases/$(database)/documents/businesses/$(businessId)).data.organizerId == request.auth.uid ||
           get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
         );
-        allow update: if request.auth != null;
+        allow update: if request.auth != null && (
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.organizerId == request.auth.uid ||
+          get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
+        );
         allow delete: if request.auth != null && (
           get(/databases/$(database)/documents/businesses/$(businessId)).data.organizerId == request.auth.uid ||
           get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid
@@ -120,13 +120,11 @@ service cloud.firestore {
       allow delete: if false;
 
       // ── Wallet transaction history ──
-      // Owner can always read their own history. Broader authenticated read
-      // is also allowed so the admin dashboard can aggregate revenue across
-      // all users via a collectionGroup query — there's no custom-claims
-      // admin-role system yet, so this is intentionally permissive for now.
-      // Tighten to an admin-only custom claim once that exists.
+      // Only the wallet owner can read their own transaction history.
+      // Admin aggregation should use a Cloud Function with Admin SDK
+      // (bypasses rules server-side) rather than a permissive client read.
       match /transactions/{transactionId} {
-        allow read: if request.auth != null;
+        allow read: if request.auth != null && request.auth.uid == walletId;
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
         allow update, delete: if false;
       }
@@ -150,10 +148,9 @@ service cloud.firestore {
 
     // ── Feedback ──
     match /feedback/{feedbackId} {
-      allow read: if false;
-      allow create: if true;
-      allow update: if false;
-      allow delete: if false;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
     }
 
     // ── Reviews ──
