@@ -20,6 +20,9 @@ import FeedbackScreen from '../screens/FeedbackScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import BusinessesScreen from '../screens/BusinessesScreen';
+import PropertyDetailScreen from '../screens/PropertyDetailScreen';
+import BookingScreen from '../screens/BookingScreen';
+import PaymentScreen from '../screens/PaymentScreen';
 
 import MainTabsContent from './MainTabsContent';
 
@@ -35,8 +38,11 @@ function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen name="BusinessesList" component={BusinessesScreen} options={{ animationEnabled: true }} />
-      <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
+      <HomeStack.Screen name="BusinessesList" component={BusinessesScreen} />
+      <HomeStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
+      <HomeStack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+      <HomeStack.Screen name="Booking" component={BookingScreen} />
+      <HomeStack.Screen name="Payment" component={PaymentScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -53,7 +59,7 @@ function ConversationsStackScreen() {
   return (
     <ConversationsStack.Navigator screenOptions={{ headerShown: false }}>
       <ConversationsStack.Screen name="ConversationsMain" component={ConversationsScreen} />
-      <ConversationsStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ animationEnabled: true }} />
+      <ConversationsStack.Screen name="ChatDetail" component={ChatDetailScreen} />
     </ConversationsStack.Navigator>
   );
 }
@@ -62,7 +68,7 @@ function EventsStackScreen() {
   return (
     <EventsStack.Navigator screenOptions={{ headerShown: false }}>
       <EventsStack.Screen name="EventsMain" component={EventsScreen} />
-      <EventsStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
+      <EventsStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
     </EventsStack.Navigator>
   );
 }
@@ -71,7 +77,7 @@ function MarketplaceStackScreen() {
   return (
     <MarketplaceStack.Navigator screenOptions={{ headerShown: false }}>
       <MarketplaceStack.Screen name="MarketplaceMain" component={MarketplaceScreen} />
-      <MarketplaceStack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ animationEnabled: true }} />
+      <MarketplaceStack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </MarketplaceStack.Navigator>
   );
 }
@@ -116,13 +122,16 @@ export default function RootNavigator() {
         {isAuthenticated ? (
           <>
             <RootStack.Screen name="MainTabs" component={MainTabs} />
-            <RootStack.Screen name="BusinessesList" component={BusinessesScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="CreateListing" component={CreateListingScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="Feedback" component={FeedbackScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="BusinessDetail" component={BusinessDetailScreen} options={{ animationEnabled: true }} />
-            <RootStack.Screen name="Favourites" component={FavouritesScreen} options={{ animationEnabled: true }} />
+            <RootStack.Screen name="BusinessesList" component={BusinessesScreen} />
+            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} />
+            <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} />
+            <RootStack.Screen name="CreateListing" component={CreateListingScreen} />
+            <RootStack.Screen name="Feedback" component={FeedbackScreen} />
+            <RootStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
+            <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+            <RootStack.Screen name="Booking" component={BookingScreen} />
+            <RootStack.Screen name="Payment" component={PaymentScreen} />
+            <RootStack.Screen name="Favourites" component={FavouritesScreen} />
           </>
         ) : (
           <RootStack.Screen name="Login" component={LoginScreen} />

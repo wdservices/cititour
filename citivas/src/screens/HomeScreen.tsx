@@ -117,7 +117,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
       return;
     }
     if (item.kind === 'property') {
-      setActiveTab('marketplace');
+      navigation.navigate('PropertyDetail', {
+        propertyId: item.id,
+      });
       return;
     }
     if (item.kind === 'event') {

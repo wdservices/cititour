@@ -104,7 +104,6 @@ export default function BookingEngine() {
   const [calendarStep, setCalendarStep] = useState(0);
 
   const currentMonth = useMemo(() => addMonths(new Date(), calendarStep), [calendarStep]);
-  const nextMonth = useMemo(() => addMonths(currentMonth, 1), [currentMonth]);
 
   useEffect(() => {
     if (!slug) return;
@@ -213,9 +212,6 @@ export default function BookingEngine() {
 
               <div className="grid grid-cols-2 gap-8">
                 <CalendarMonth month={currentMonth} selectedStart={checkIn} selectedEnd={checkOut} onDateClick={handleDateClick} />
-                <div className="hidden sm:block">
-                  <CalendarMonth month={nextMonth} selectedStart={checkIn} selectedEnd={checkOut} onDateClick={handleDateClick} />
-                </div>
               </div>
 
               {/* Check-in / Check-out display */}

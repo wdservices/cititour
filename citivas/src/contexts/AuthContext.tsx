@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -7,11 +8,24 @@ import {
   sendPasswordResetEmail,
   User as FirebaseUser,
   GoogleAuthProvider,
+  signInWithCredential,
   signInWithPopup,
   browserPopupRedirectResolver,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_WEB_CLIENT_ID = '748964654953-k0sofgba1q6fop33epabb0a7loo10nd2.apps.googleusercontent.com';
+
+const discovery = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+};
 
 interface User {
   id: string;
@@ -61,6 +75,39 @@ async function mirrorUserToFirestore(firebaseUser: FirebaseUser) {
   }
 }
 
+async function nativeGoogleSignIn(): Promise<string | null> {
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'citivas' });
+
+  const request = new AuthSession.AuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+    redirectUri,
+    responseType: AuthSession.ResponseType.Code,
+    extraParams: {
+      prompt: 'select_account',
+    },
+  });
+
+      const result = await request.promptAsync(discovery);
+
+  if (result.type === 'success' && result.params.code) {
+    const tokenResult = await AuthSession.exchangeCodeAsync(
+      {
+        clientId: GOOGLE_WEB_CLIENT_ID,
+        code: result.params.code,
+        redirectUri,
+        extraParams: {
+          code_verifier: request.codeVerifier || '',
+        },
+      },
+      discovery
+    );
+    return tokenResult.idToken;
+  }
+
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,10 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+    if (Platform.OS === 'web') {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+    } else {
+      const idToken = await nativeGoogleSignIn();
+      if (!idToken) throw new Error('Google sign-in was cancelled');
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+    }
   };
 
   const logout = async () => {

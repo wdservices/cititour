@@ -2,6 +2,7 @@
   "expo": {
     "name": "Citivas",
     "slug": "citivas",
+    "scheme": "citivas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,7 +13,7 @@
       "backgroundColor": "#F5F7FA"
     },
     "android": {
-      "package": "com.cititour.app",
+      "package": "com.bwtng.citivas",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E88E5"
@@ -25,7 +26,7 @@
       ]
     },
     "ios": {
-      "bundleIdentifier": "com.cititour.app",
+      "bundleIdentifier": "com.bwtng.citivas",
       "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Citivas uses your location to show hotels, restaurants and events near you, and to switch to your current city automatically."
@@ -37,7 +38,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "017bffc2-8175-4c32-afbf-7f16a54139d1"
+        "projectId": "bb31c674-f685-4af0-a223-20246cfefb9e"
       }
     },
     "owner": "spellz49"

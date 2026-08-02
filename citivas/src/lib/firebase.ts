@@ -1,11 +1,12 @@
-import { initializeApp } from 'firebase/app';
-import { initializeAuth, getAuth, inMemoryPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfHE4dRgE5SILVzTls_5UPPpncA1NBQaI",
-  authDomain: "tourph-4d6b8.web.app",
+  authDomain: "tourph-4d6b8.firebaseapp.com",
   projectId: "tourph-4d6b8",
   storageBucket: "tourph-4d6b8.appspot.com",
   messagingSenderId: "748964654953",
@@ -15,17 +16,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 let auth;
-try {
-  if (Platform.OS === 'web') {
-    auth = initializeAuth(app, { persistence: inMemoryPersistence });
-  } else {
+
+if (Platform.OS === 'web') {
+  try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getReactNativePersistence } = require('firebase/auth');
-    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-    auth = initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
+    const { initializeAuth, browserLocalPersistence } = require('firebase/auth');
+    auth = initializeAuth(app, { persistence: browserLocalPersistence });
+  } catch {
+    auth = getAuth(app);
   }
-} catch {
-  auth = getAuth(app);
+} else {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { initializeAuth, getReactNativePersistence } = require('firebase/auth');
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch {
+    auth = getAuth(app);
+  }
 }
 
 export { auth };
