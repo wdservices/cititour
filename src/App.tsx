@@ -58,6 +58,7 @@ import MiniSiteWizard from "./pages/MiniSiteWizard";
 import MiniSitePage from "./pages/MiniSitePage";
 import BookingEngine from "./pages/BookingEngine";
 import BookingPayment from "./pages/BookingPayment";
+import ChildSafetyPage from "./pages/ChildSafetyPage";
 import WebNotificationListener from "./components/WebNotificationListener";
 
 const queryClient = new QueryClient({
@@ -207,6 +208,7 @@ const App = () => {
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfUsePage />} />
                   <Route path="/docs" element={<DocsPage />} />
+                  <Route path="/child-safety" element={<ChildSafetyPage />} />
                   <Route path="/*" element={<ProtectedRoutes />} />
                 </Routes>
               </BrowserRouter>

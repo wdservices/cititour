@@ -186,6 +186,13 @@ export default function DocsPage() {
             ))}
 
             <div className="!mt-6 pt-6 border-t border-border">
+              <Link
+                to="/child-safety"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                🛡️
+                <span>Child Safety Policy</span>
+              </Link>
               <a
                 href="#"
                 onClick={(e) => {
@@ -231,6 +238,14 @@ export default function DocsPage() {
                     <span className="font-medium">{section.title}</span>
                   </a>
                 ))}
+                <Link
+                  to="/child-safety"
+                  onClick={() => setMobileNav(false)}
+                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm hover:bg-muted transition-colors"
+                >
+                  <span className="text-lg">🛡️</span>
+                  <span className="font-medium">Child Safety Policy</span>
+                </Link>
               </nav>
             </div>
           </div>
@@ -287,6 +302,9 @@ export default function DocsPage() {
               </Button>
               <Button asChild variant="outline" className="rounded-full">
                 <Link to="/feedback">Send Feedback</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full">
+                <Link to="/child-safety">Child Safety Policy</Link>
               </Button>
             </div>
           </div>
