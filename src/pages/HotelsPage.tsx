@@ -77,7 +77,7 @@ const HotelsPage = () => {
         {error && <p className="text-center text-destructive">{error}</p>}
         {!loading && !error && (
           <>
-            <MiniSiteStrip types={["hotel", "shortlet"]} title="Hotels &amp; shortlets with their own storefront" subtitle="Browse rooms, rates and photos, then reserve in one tap." />
+            <MiniSiteStrip types={["hotel", "shortlet"]} title="Hotels & shortlets with their own storefront" subtitle="Browse rooms, rates and photos, then reserve in one tap." />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredHotels.map((hotel) => (
                 <ListingCard

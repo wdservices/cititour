@@ -13,7 +13,8 @@ import {
   Ticket,
   Wallet,
   LayoutDashboard,
-  ShoppingBag
+  ShoppingBag,
+  UtensilsCrossed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +31,7 @@ const menuItems = [
       { icon: Home, title: "Explore", description: "Find new places" },
       { icon: Calendar, title: "Events", description: "Local happenings" },
       { icon: ShoppingBag, title: "Marketplace", description: "Buy & sell" },
+      { icon: UtensilsCrossed, title: "Stays & Food", description: "Hotels, shortlets & restaurants" },
     ]
   },
   {
@@ -64,9 +66,11 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
       "Explore": "/explore",
       "Events": "/events",
       "Marketplace": "/marketplace",
+      "Stays & Food": "/mini-sites",
       "My Dashboard": "/profile/dashboard",
       "Favourites": "/favourites",
       "Wallet": "/wallet",
+      "Share CitiTour": "/share-app",
       "Share App": "/share-app",
       "Feedback": "/feedback",
       "Settings & Privacy": "/settings",
