@@ -19,6 +19,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import BusinessListingPage from './pages/BusinessListingPage'
 import QRValidatePage from './pages/QRValidatePage'
 import ActivityLogsPage from './pages/ActivityLogsPage'
+import MiniSitesPage from './pages/MiniSitesPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function AppRoutes() {
@@ -41,6 +42,7 @@ function AppRoutes() {
                 <Route path="/wallet" element={<WalletPage />} />
                 <Route path="/events" element={<EventsPage />} />
                 <Route path="/properties" element={<PropertiesPage />} />
+                <Route path="/mini-sites" element={<MiniSitesPage />} />
                 <Route path="/bookings" element={<BookingsPage />} />
                 <Route path="/reviews" element={<ReviewsPage />} />
                 <Route path="/feedback" element={<FeedbackPage />} />

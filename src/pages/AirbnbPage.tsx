@@ -4,6 +4,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import MiniSiteStrip from "@/components/MiniSiteStrip";
 import airbnbApartment from "@/assets/airbnb-apartment.jpg";
 import airbnbHouse from "@/assets/airbnb-house.jpg";
 
@@ -115,7 +116,8 @@ const AirbnbPage = () => {
       <div className="px-4 py-6">
         {loading && <p className="text-center py-4">Loading rentals...</p>}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MiniSiteStrip types={["shortlet", "hotel"]} title="Serviced shortlets with their own storefront" subtitle="Self check-in, live rates and verified photos." />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPlaces.map((place) => (
             <ListingCard
               key={place.id}

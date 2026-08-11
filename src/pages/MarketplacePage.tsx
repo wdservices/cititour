@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   Search, Heart, MapPin, ShoppingBag, Car,
   Plus, Grid3X3, List, Monitor, Shirt, Home, Building2, SlidersHorizontal,
-  Loader2, Star,
+  Loader2, Star, UtensilsCrossed, ArrowRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import SEO from "@/components/SEO";
 import { useMarketplaceItems, fmt } from "@/lib/useFirestore";
 import { getMockImage } from "@/lib/mockImages";
+import MiniSiteCard from "@/components/MiniSiteCard";
+import { useMiniSites } from "@/hooks/useMiniSites";
 
 function isRecentlyListed(createdAt?: any): boolean {
   if (!createdAt) return false;
@@ -34,6 +36,7 @@ const categories = [
   { id: "home", label: "Home", icon: Home },
   { id: "vehicles", label: "Vehicles", icon: Car },
   { id: "property", label: "Property", icon: Building2 },
+  { id: "minisites", label: "Stays & Food", icon: UtensilsCrossed },
 ];
 
 const MarketplacePage = () => {
@@ -47,6 +50,7 @@ const MarketplacePage = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const { data: rawItems, isLoading } = useMarketplaceItems();
+  const { sites: miniSites } = useMiniSites();
 
   const marketplaceItems = useMemo(() => {
     if (!rawItems) return [];
@@ -70,6 +74,11 @@ const MarketplacePage = () => {
       return next;
     });
   };
+
+  const filteredMiniSites = miniSites.filter((s) => {
+    const q = search.trim().toLowerCase();
+    return !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q));
+  });
 
   const filteredProducts = useMemo(() => {
     return marketplaceItems.filter((l) => {
@@ -237,7 +246,30 @@ const MarketplacePage = () => {
             </div>
           )}
 
-          {isLoading ? (
+          {/* ── Mini websites: hotels, shortlets & restaurants ── */}
+          {(activeCategory === "all" || activeCategory === "minisites") && filteredMiniSites.length > 0 && (
+            <section className="mb-8">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Mini websites</p>
+                  <h2 className="text-xl font-bold text-foreground">Stays &amp; restaurants you can order from</h2>
+                </div>
+                <button
+                  onClick={() => navigate("/mini-sites")}
+                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  See all <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {(activeCategory === "minisites" ? filteredMiniSites : filteredMiniSites.slice(0, 3)).map((site) => (
+                  <MiniSiteCard key={site.slug} site={site} compact />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {activeCategory === "minisites" ? null : isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>

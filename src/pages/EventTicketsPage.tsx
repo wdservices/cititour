@@ -64,7 +64,7 @@ const EventTicketsPage = () => {
   const [venue, setVenue] = useState("");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
-  const [mapLat, setMapLat] = useState<number | undefined>();
+const [mapLat, setMapLat] = useState<number | undefined>();
   const [mapLon, setMapLon] = useState<number | undefined>();
   const [selectedState, setSelectedState] = useState<NigerianState | "">("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -298,7 +298,7 @@ const EventTicketsPage = () => {
         venue,
         address,
         location,
-        lat: mapLat || null,
+lat: mapLat || null,
         lon: mapLon || null,
         state: selectedState,
         city: selectedCity,

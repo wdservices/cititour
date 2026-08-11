@@ -102,8 +102,8 @@ const WalletPage = () => {
     { id: "add", title: "Add Money", icon: Plus, tone: "primary" as const, rotate: "-rotate-6" as const, onClick: () => setShowFundDialog(true) },
     { id: "send", title: "Withdraw", icon: Minus, tone: "accent" as const, rotate: "rotate-3" as const, onClick: () => setShowWithdrawDialog(true) },
     { id: "history", title: "History", icon: History, tone: "success" as const, rotate: "-rotate-3" as const, onClick: () => document.getElementById("wallet-history")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "run-ads", title: "Run Ads", icon: Megaphone, tone: "primary-dark" as const, rotate: "rotate-6" as const, onClick: () => handleQuickAction({ id: "run-ads", title: "Run Ads", description: "Promote your business", icon: Megaphone, route: "/run-ads", minAmount: 50 }) },
-    { id: "event-tickets", title: "Tickets", icon: Ticket, tone: "primary" as const, rotate: "-rotate-3" as const, onClick: () => handleQuickAction({ id: "event-tickets", title: "Event Tickets", description: "Promote events", icon: Ticket, route: "/event-tickets", minAmount: 25 }) },
+    { id: "run-ads", title: "Run Ads", icon: Megaphone, tone: "primary-dark" as const, rotate: "rotate-6" as const, onClick: () => handleQuickAction({ title: "Run Ads", route: "/run-ads", minAmount: 50 }) },
+    { id: "event-tickets", title: "Tickets", icon: Ticket, tone: "primary" as const, rotate: "-rotate-3" as const, onClick: () => handleQuickAction({ title: "Event Tickets", route: "/event-tickets", minAmount: 25 }) },
   ];
 
   const handleFundWallet = async () => {

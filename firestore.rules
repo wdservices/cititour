@@ -161,7 +161,7 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // ── Ticket Orders ──
+// ── Ticket Orders ──
     match /ticket_orders/{orderId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.buyerId == request.auth.uid;
@@ -192,6 +192,13 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update, delete: if false;
+    }
+
+    // ── Mini-site removals (admin hides a seeded mini website) ──
+    match /mini_site_removals/{slug} {
+      allow read: if true;
+      allow create, delete: if request.auth != null;
+      allow update: if false;
     }
 
     // ── Catch-all: deny everything else ──

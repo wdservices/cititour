@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Megaphone, FileText, MessageSquare, Wallet, Building,
-  Menu, X, LogOut, Calendar, Home, ClipboardList, Star, Settings, UserCog, BarChart2, QrCode, History
+Menu, X, LogOut, Calendar, Home, ClipboardList, Star, Settings, UserCog, BarChart2, QrCode, History, UtensilsCrossed
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -17,6 +17,7 @@ const menuItems = [
   { icon: Building, label: 'Business Listings', path: '/business-listings' },
   { icon: Calendar, label: 'Events', path: '/events' },
   { icon: Home, label: 'Properties', path: '/properties' },
+  { icon: UtensilsCrossed, label: 'Mini Websites', path: '/mini-sites' },
   { icon: ClipboardList, label: 'Bookings', path: '/bookings' },
   { icon: Star, label: 'Reviews', path: '/reviews' },
   { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
