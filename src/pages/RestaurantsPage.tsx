@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import MiniSiteStrip from "@/components/MiniSiteStrip";
 
 interface Restaurant {
   id: string;
@@ -70,9 +71,10 @@ const RestaurantsPage = () => {
       
       <div className="px-4 py-6">
         {loading && <p className="text-center">Loading restaurants...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {error && <p className="text-center text-destructive">{error}</p>}
         {!loading && !error && (
           <>
+            <MiniSiteStrip types={["restaurant"]} title="Restaurants you can order from" subtitle="Full food menus with online ordering, straight from the kitchen." />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRestaurants.map((restaurant) => (
                 <ListingCard
