@@ -165,6 +165,13 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
+    // ── Mini-site removals (admin hides a seeded mini website) ──
+    match /mini_site_removals/{slug} {
+      allow read: if true;
+      allow create, delete: if request.auth != null;
+      allow update: if false;
+    }
+
     // ── Catch-all: deny everything else ──
     match /{document=**} {
       allow read, write: if false;
