@@ -515,7 +515,7 @@ const ProfileDashboard = () => {
         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
         <ImageUpload
           onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-          folder={CLOUDINARY_FOLDERS.BUSINESSES}
+          folder={CLOUDINARY_FOLDERS.BUSINESS}
           currentImage={uploadedImageUrl}
           buttonText="Upload Cover"
         />
@@ -607,7 +607,7 @@ const ProfileDashboard = () => {
         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
         <ImageUpload
           onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-          folder={CLOUDINARY_FOLDERS.MARKETPLACE}
+          folder={CLOUDINARY_FOLDERS.LISTINGS}
           currentImage={uploadedImageUrl}
           buttonText="Upload Image"
         />
@@ -686,7 +686,7 @@ const ProfileDashboard = () => {
         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
         <ImageUpload
           onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-          folder={CLOUDINARY_FOLDERS.BUSINESSES}
+          folder={CLOUDINARY_FOLDERS.BUSINESS}
           currentImage={uploadedImageUrl}
           buttonText="Upload Image"
         />
@@ -839,7 +839,7 @@ const ProfileDashboard = () => {
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Event Banner</Label>
             <ImageUpload
               onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-              folder={CLOUDINARY_FOLDERS.BUSINESSES}
+              folder={CLOUDINARY_FOLDERS.BUSINESS}
               currentImage={uploadedImageUrl}
               buttonText="Upload Event Cover"
             />
@@ -1265,7 +1265,7 @@ const ProfileDashboard = () => {
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cover Image</Label>
               <ImageUpload
                 onUploadSuccess={(r) => { setEditImageUrl(r.secureUrl); setEditImagePublicId(r.publicId); }}
-                folder={CLOUDINARY_FOLDERS.BUSINESSES}
+                folder={CLOUDINARY_FOLDERS.BUSINESS}
                 currentImage={editImageUrl}
                 buttonText="Change Cover"
               />
