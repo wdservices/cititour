@@ -42,6 +42,8 @@ import SearchPage from "./pages/SearchPage";
 import OthersPage from "./pages/OthersPage";
 import AllBusinessesPage from "./pages/AllBusinessesPage";
 import MarketplacePage from "./pages/MarketplacePage";
+import MiniSitesPage from "./pages/MiniSitesPage";
+import MiniSitePage from "./pages/MiniSitePage";
 import MarketplaceDetailPage from "./pages/MarketplaceDetailPage";
 import SplitItPage from "./pages/SplitItPage";
 import ListYourBusinessPage from "./pages/ListYourBusinessPage";
@@ -74,6 +76,8 @@ const ProtectedRoutes = () => {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/marketplace/:id" element={<MarketplaceDetailPage />} />
         <Route path="/businesses" element={<AllBusinessesPage />} />
+        <Route path="/mini-sites" element={<MiniSitesPage />} />
+        <Route path="/m/:slug" element={<MiniSitePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/hotels" element={<HotelsPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
