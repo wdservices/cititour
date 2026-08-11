@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import SearchHeader from "@/components/SearchHeader";
 import ListingCard from "@/components/ListingCard";
+import MiniSiteStrip from "@/components/MiniSiteStrip";
 
 interface Hotel {
   id: string;
@@ -73,9 +74,10 @@ const HotelsPage = () => {
       
       <div className="px-4 py-6">
         {loading && <p className="text-center">Loading hotels...</p>}
-        {error && <p className="text-center text-red-500">{error}</p>}
+        {error && <p className="text-center text-destructive">{error}</p>}
         {!loading && !error && (
           <>
+            <MiniSiteStrip types={["hotel", "shortlet"]} title="Hotels &amp; shortlets with their own storefront" subtitle="Browse rooms, rates and photos, then reserve in one tap." />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredHotels.map((hotel) => (
                 <ListingCard
