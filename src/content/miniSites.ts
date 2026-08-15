@@ -52,9 +52,26 @@ export interface MiniSite {
   amenities: string[];
   menu?: MenuItem[];
   rooms?: RoomType[];
-  listedBy: "admin";
+  /** Unified stay/property fields — shared by seeded mini sites and
+   *  properties users list from the dashboard, so both render identically. */
+  propertyType?: string;
+  guests?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  checkIn?: string;
+  checkOut?: string;
+  state?: string;
+  priceUnit?: string;
+  sellerType?: "individual" | "business";
+  status?: string;
+  hostName?: string;
+  listedBy: "admin" | "user";
   listedOn: string;
+  /** Firestore id when the mini site comes from a user listing. */
+  sourceId?: string;
+  sourceCollection?: "house_listings" | "marketplace";
 }
+
 
 const u = (id: string, w = 1200) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
