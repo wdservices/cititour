@@ -8,6 +8,8 @@ import AnimatedRegionTitle from '@/components/AnimatedRegionTitle';
 import { useRegion } from '@/contexts/RegionContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import EventsSection from '@/components/EventsSection';
+import MiniSiteCard from '@/components/MiniSiteCard';
+import { useMiniSites } from '@/hooks/useMiniSites';
 import heroCity from '@/assets/hero-cityscape.jpg';
 import heroNightlife from '@/assets/hero-nightlife.jpg';
 import heroRestaurant from '@/assets/hero-restaurant.jpg';
@@ -18,6 +20,8 @@ const LandingPage = () => {
   const { brandName } = useRegion();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [searchQuery, setSearchQuery] = useState('');
+  const { sites: miniSites } = useMiniSites();
+  const staySites = miniSites.filter((s) => s.type !== 'restaurant').slice(0, 6);
 
   // Lightweight live stats and social feed for fun interactions
   const [activeUsers, setActiveUsers] = useState(52340);
@@ -459,6 +463,43 @@ const LandingPage = () => {
               </button>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* Property & Stays — every shortlet, apartment and hotel listed on
+          CitiTour, including properties users list themselves. */}
+      <section className="py-20 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Property &amp; stays</p>
+              <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mt-2">
+                Shortlets, apartments &amp; hotels
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-xl text-sm md:text-base">
+                Verified places to stay across Nigeria — each with its own mini website, photos, rates and direct booking.
+              </p>
+            </div>
+            <Link to="/airbnb" className="hidden sm:inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline">
+              See all <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {staySites.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {staySites.map((site) => (
+                <MiniSiteCard key={site.slug} site={site} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Loading stays…</p>
+          )}
+
+          <div className="mt-6 sm:hidden">
+            <Link to="/airbnb" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+              See all property &amp; stays <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
