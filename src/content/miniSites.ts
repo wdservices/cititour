@@ -52,9 +52,26 @@ export interface MiniSite {
   amenities: string[];
   menu?: MenuItem[];
   rooms?: RoomType[];
-  listedBy: "admin";
+  /** Unified stay/property fields — shared by seeded mini sites and
+   *  properties users list from the dashboard, so both render identically. */
+  propertyType?: string;
+  guests?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  checkIn?: string;
+  checkOut?: string;
+  state?: string;
+  priceUnit?: string;
+  sellerType?: "individual" | "business";
+  status?: string;
+  hostName?: string;
+  listedBy: "admin" | "user";
   listedOn: string;
+  /** Firestore id when the mini site comes from a user listing. */
+  sourceId?: string;
+  sourceCollection?: "house_listings" | "marketplace";
 }
+
 
 const u = (id: string, w = 1200) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
@@ -207,6 +224,17 @@ export const MINI_SITES: MiniSite[] = [
     priceFrom: 145000,
     tags: ["5 star", "Spa", "Pool"],
     amenities: ["Rooftop pool", "Spa & gym", "Airport shuttle", "Business centre", "24h room service", "Free wifi"],
+    propertyType: "Hotel room",
+    guests: 2,
+    bedrooms: 1,
+    bathrooms: 1,
+    checkIn: "14:00",
+    checkOut: "12:00",
+    state: "Rivers",
+    priceUnit: "night",
+    sellerType: "business",
+    status: "Published",
+    hostName: "The Obelisk Hospitality Group",
     listedBy: "admin",
     listedOn: "2026-01-08",
     rooms: [
@@ -235,6 +263,17 @@ export const MINI_SITES: MiniSite[] = [
     priceFrom: 68000,
     tags: ["Shortlet", "24h power", "Self check-in"],
     amenities: ["24h power", "Self check-in", "Washer & dryer", "Netflix", "Secure parking", "Housekeeping"],
+    propertyType: "Serviced apartment",
+    guests: 4,
+    bedrooms: 2,
+    bathrooms: 2,
+    checkIn: "14:00",
+    checkOut: "12:00",
+    state: "Rivers",
+    priceUnit: "night",
+    sellerType: "business",
+    status: "Published",
+    hostName: "Harbour Point Facilities Ltd",
     listedBy: "admin",
     listedOn: "2026-02-01",
     rooms: [
@@ -262,6 +301,17 @@ export const MINI_SITES: MiniSite[] = [
     priceFrom: 132000,
     tags: ["Business", "Boutique", "Bistro"],
     amenities: ["Meeting pods", "Bistro", "Gym", "Laundry", "Free wifi", "Airport pickup"],
+    propertyType: "Hotel room",
+    guests: 2,
+    bedrooms: 1,
+    bathrooms: 1,
+    checkIn: "15:00",
+    checkOut: "11:00",
+    state: "Lagos",
+    priceUnit: "night",
+    sellerType: "business",
+    status: "Published",
+    hostName: "Aurora Hospitality",
     listedBy: "admin",
     listedOn: "2026-01-29",
     rooms: [
@@ -289,6 +339,17 @@ export const MINI_SITES: MiniSite[] = [
     priceFrom: 95000,
     tags: ["Designer", "Lake view", "Concierge"],
     amenities: ["Lake view", "Rooftop terrace", "Private chef", "24h power", "Concierge", "Gated estate"],
+    propertyType: "Shortlet apartment",
+    guests: 4,
+    bedrooms: 2,
+    bathrooms: 2,
+    checkIn: "15:00",
+    checkOut: "11:00",
+    state: "FCT",
+    priceUnit: "night",
+    sellerType: "business",
+    status: "Published",
+    hostName: "The Nest Concierge",
     listedBy: "admin",
     listedOn: "2026-02-16",
     rooms: [
@@ -309,3 +370,99 @@ export const MINI_SITE_TYPE_LABEL: Record<MiniSiteType, string> = {
   hotel: "Hotel",
   shortlet: "Shortlet",
 };
+
+export const slugifyName = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "listing";
+
+/** Slug used for user-listed properties: readable name + short doc id. */
+export const propertySlug = (title: string, id: string) =>
+  `${slugifyName(title)}-${id.slice(0, 6)}`;
+
+const num = (v: unknown, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+
+const str = (v: unknown, fallback = "") =>
+  typeof v === "string" && v.trim() ? v.trim() : fallback;
+
+/**
+ * Maps a Firestore `house_listings` document onto the exact same MiniSite
+ * shape the seeded catalogue uses, so a user-created shortlet (e.g. Asemi)
+ * and a seeded mini site render with identical fields on `/m/:slug`.
+ */
+export function propertyDocToMiniSite(id: string, raw: Record<string, any>): MiniSite {
+  const name = str(raw.title, "Untitled property");
+  const propertyType = str(raw.type ?? raw.propertyType, "Shortlet apartment");
+  const city = str(raw.city) || str(raw.location, "Nigeria");
+  const state = str(raw.state);
+  const cover = str(raw.image ?? raw.imageUrl, "/placeholder.svg");
+  const gallery: string[] = Array.isArray(raw.gallery) && raw.gallery.length
+    ? raw.gallery.filter((g: unknown) => typeof g === "string")
+    : [cover];
+  const price = num(raw.pricePerNight ?? raw.priceFrom ?? raw.price);
+  const amenities: string[] = Array.isArray(raw.amenities) && raw.amenities.length
+    ? raw.amenities
+    : ["24h power", "Self check-in", "Free wifi", "Secure parking"];
+  const bedrooms = num(raw.bedrooms, 1);
+  const bathrooms = num(raw.bathrooms, 1);
+  const guests = num(raw.guests, bedrooms * 2);
+
+  return {
+    slug: str(raw.slug) || propertySlug(name, id),
+    name,
+    type: /hotel/i.test(propertyType) ? "hotel" : "shortlet",
+    tagline: str(raw.tagline, `${propertyType} • ${[city, state].filter(Boolean).join(", ")}`),
+    description: str(
+      raw.description,
+      `${name} is a ${propertyType.toLowerCase()} in ${city}. Contact the host for availability, rates and check-in details.`
+    ),
+    cover,
+    gallery,
+    city: [city, state].filter(Boolean).join(", "),
+    address: str(raw.address) || [city, state].filter(Boolean).join(", "),
+    phone: str(raw.phone, "+234 000 000 0000"),
+    whatsapp: str(raw.whatsapp) || str(raw.phone).replace(/\D/g, ""),
+    email: str(raw.email, "hello@cititour.ng"),
+    website: str(raw.website) || undefined,
+    hours: `Check-in ${str(raw.checkIn, "14:00")} · Check-out ${str(raw.checkOut, "12:00")}`,
+    rating: num(raw.rating, 0),
+    reviews: num(raw.reviews, 0),
+    priceFrom: price,
+    tags: Array.isArray(raw.tags) && raw.tags.length ? raw.tags : [propertyType, city].filter(Boolean),
+    amenities,
+    rooms: [
+      {
+        id: `${id}-unit`,
+        name: `${bedrooms} bedroom ${propertyType.toLowerCase()}`,
+        description: `${bedrooms} bedroom · ${bathrooms} bathroom · sleeps ${guests}.`,
+        price,
+        capacity: guests,
+        beds: bedrooms,
+        image: cover,
+      },
+    ],
+    propertyType,
+    guests,
+    bedrooms,
+    bathrooms,
+    checkIn: str(raw.checkIn, "14:00"),
+    checkOut: str(raw.checkOut, "12:00"),
+    state,
+    priceUnit: str(raw.priceUnit, "night"),
+    sellerType: raw.sellerType === "business" ? "business" : "individual",
+    status: str(raw.status, "Published"),
+    hostName: str(raw.hostName ?? raw.ownerName, "CitiTour host"),
+    listedBy: "user",
+    listedOn:
+      typeof raw.createdAt?.toDate === "function"
+        ? raw.createdAt.toDate().toISOString()
+        : str(raw.listedOn, new Date().toISOString()),
+    sourceId: id,
+    sourceCollection: "house_listings",
+  };
+}

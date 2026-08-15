@@ -10,12 +10,14 @@ import SEO from "@/components/SEO";
 import StampIcon from "@/components/StampIcon";
 import { useToast } from "@/hooks/use-toast";
 import { getMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
+import { useMiniSites } from "@/hooks/useMiniSites";
 
 const MiniSitePage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const site = getMiniSite(slug);
+  const { sites, loading } = useMiniSites();
+  const site = sites.find((s) => s.slug === slug) ?? getMiniSite(slug);
 
   const [cart, setCart] = useState<Record<string, number>>({});
   const [activeSection, setActiveSection] = useState<string>("All");
@@ -38,6 +40,13 @@ const MiniSitePage = () => {
   const cartTotal = cartLines.reduce((n, l) => n + l.qty * l.price, 0);
 
   if (!site) {
+    if (loading) {
+      return (
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
+          <p className="text-sm text-muted-foreground">Loading mini site…</p>
+        </div>
+      );
+    }
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
         <h1 className="text-2xl font-bold text-foreground">Mini site not found</h1>
@@ -129,6 +138,32 @@ const MiniSitePage = () => {
             </div>
           ))}
         </section>
+
+        {/* ── Stay details (uniform for seeded + user-listed properties) ── */}
+        {!isFood && (site.bedrooms || site.propertyType) && (
+          <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+            <h2 className="text-xl font-bold text-foreground">Stay details</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { label: "Property type", value: site.propertyType },
+                { label: "Bedrooms", value: site.bedrooms ? String(site.bedrooms) : undefined },
+                { label: "Bathrooms", value: site.bathrooms ? String(site.bathrooms) : undefined },
+                { label: "Sleeps", value: site.guests ? `${site.guests} guests` : undefined },
+                { label: "Check-in", value: site.checkIn },
+                { label: "Check-out", value: site.checkOut },
+                { label: "Rate", value: site.priceFrom ? `${formatNaira(site.priceFrom)} / ${site.priceUnit ?? "night"}` : undefined },
+                { label: "Host", value: site.hostName },
+              ]
+                .filter((f) => f.value)
+                .map((f) => (
+                  <div key={f.label}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-foreground">{f.value}</p>
+                  </div>
+                ))}
+            </div>
+          </section>
+        )}
 
         {/* ── About ── */}
         <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
@@ -310,7 +345,8 @@ const MiniSitePage = () => {
         </section>
 
         <p className="text-center text-xs text-muted-foreground">
-          Listed by CitiTour admin on {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
+          {site.listedBy === "admin" ? "Listed by CitiTour admin" : `Listed by ${site.hostName ?? "a CitiTour host"}`} on{" "}
+          {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
           <Link to="/mini-sites" className="font-semibold text-primary hover:underline">
             Browse more mini sites
           </Link>

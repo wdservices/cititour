@@ -19,7 +19,6 @@ const categories = [
   { id: "fashion", label: "Fashion", icon: Shirt },
   { id: "home", label: "Home", icon: Home },
   { id: "vehicles", label: "Vehicles", icon: Car },
-  { id: "property", label: "Property", icon: Building2 },
   { id: "minisites", label: "Stays & Food", icon: UtensilsCrossed },
 ];
 
@@ -102,7 +101,12 @@ const MarketplacePage = () => {
     return !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q));
   });
 
+  // Property / apartment listings live on the Property & Stays page, not here.
+  const isPropertyItem = (cat: string) =>
+    ["property", "properties", "apartment", "shortlet", "house", "real estate"].includes(cat.trim().toLowerCase());
+
   const filteredProducts = marketplaceItems.filter((l) => {
+    if (isPropertyItem(l.category)) return false;
     const q = search.trim().toLowerCase();
     const matchSearch = !q || l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q);
     const matchCat = activeCategory === "all" || l.category.toLowerCase() === activeCategory;
@@ -265,6 +269,21 @@ const MarketplacePage = () => {
               </div>
             </div>
           )}
+
+          {/* ── Property moved to its own page ── */}
+          <button
+            onClick={() => navigate("/airbnb")}
+            className="mb-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-colors hover:border-primary/40"
+          >
+            <span className="flex items-center gap-3">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span>
+                <span className="block text-sm font-bold text-foreground">Looking for apartments, shortlets or houses?</span>
+                <span className="block text-xs text-muted-foreground">All property listings now live on Property &amp; Stays.</span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+          </button>
 
           {/* ── Mini websites: hotels, shortlets & restaurants ── */}
           {(activeCategory === "all" || activeCategory === "minisites") && filteredMiniSites.length > 0 && (
