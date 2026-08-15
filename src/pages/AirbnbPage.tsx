@@ -1,138 +1,157 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
+import { Building2, MapPin } from "lucide-react";
 import { db } from "@/lib/firebase";
+import SEO from "@/components/SEO";
 import SearchHeader from "@/components/SearchHeader";
-import ListingCard from "@/components/ListingCard";
-import MiniSiteStrip from "@/components/MiniSiteStrip";
-import airbnbApartment from "@/assets/airbnb-apartment.jpg";
-import airbnbHouse from "@/assets/airbnb-house.jpg";
+import MiniSiteCard from "@/components/MiniSiteCard";
+import { useMiniSites } from "@/hooks/useMiniSites";
+import { getMockImage } from "@/lib/mockImages";
 
-interface AirbnbPlace {
+type PropertyProduct = {
   id: string;
   title: string;
-  description: string;
   image: string;
-  category: string;
-  rating: number;
-  price: string;
   location: string;
-  phone?: string;
-  website?: string;
-  isOpen?: boolean;
-}
+  price: string;
+  category: string;
+};
 
-const mockData: AirbnbPlace[] = [
-  {
-    id: "1",
-    title: "Cozy Downtown Loft",
-    description: "Modern loft apartment in the heart of Garden City. Fully furnished with city views, high-speed WiFi, and premium amenities.",
-    image: airbnbApartment,
-    category: "Apartment",
-    rating: 4.9,
-    price: "$80-120/night",
-    location: "Downtown Garden City",
-    isOpen: true
-  },
-  {
-    id: "2",
-    title: "Garden Villa Retreat",
-    description: "Spacious villa with private garden and pool. Perfect for families and groups looking for a peaceful getaway.",
-    image: airbnbHouse,
-    category: "Villa",
-    rating: 4.8,
-    price: "$150-250/night",
-    location: "Garden City Suburbs",
-    isOpen: true
-  }
-];
+const PROPERTY_CATEGORIES = ["property", "properties", "apartment", "shortlet", "house", "real estate"];
 
+const asText = (v: any): string => {
+  if (!v) return "";
+  if (typeof v === "string") return v;
+  if (v._lat !== undefined && v._long !== undefined) return `${v._lat.toFixed(4)}, ${v._long.toFixed(4)}`;
+  return String(v);
+};
+
+/** Property & Stays — every shortlet, apartment, hotel and house on CitiTour. */
 const AirbnbPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [places, setPlaces] = useState<AirbnbPlace[]>(mockData);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<PropertyProduct[]>([]);
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "house_listings"));
-        const firebasePlaces = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title || data.name || "Untitled Property",
-            description: data.description || "",
-            image: data.image || (data.images && data.images[0]) || "",
-            category: data.propertySubType === 'hotel' ? 'Hotel' : data.propertySubType === 'rent' ? 'For Rent' : data.propertySubType === 'land' ? 'Land' : data.category || data.type || "Rental",
-            rating: Number(data.rating || 0),
-            price: data.price || (data.pricePerNight ? `₦${data.pricePerNight.toLocaleString()}/night` : ""),
-            location: data.location || data.address || "",
-            phone: data.phone || "",
-            website: data.website || "",
-            isOpen: data.isOpen ?? true
-          } as AirbnbPlace;
-        });
-        
-        // Remove duplicates between mock data and firebase data if any
-        const allPlaces = [...mockData];
-        firebasePlaces.forEach(fbPlace => {
-          if (!allPlaces.find(p => p.id === fbPlace.id)) {
-            allPlaces.push(fbPlace);
-          }
-        });
-        
-        setPlaces(allPlaces);
-      } catch (err) {
-        console.error("Failed to fetch house listings:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { sites, loading } = useMiniSites();
 
-    fetchPlaces();
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, "marketplace"));
+        setProducts(
+          snap.docs
+            .map((d) => {
+              const raw = d.data() as any;
+              return {
+                id: d.id,
+                title: asText(raw.title) || "Untitled property",
+                image: raw.image || getMockImage("Airbnb"),
+                location: asText(raw.location),
+                price: asText(raw.price) || "Price on request",
+                category: asText(raw.category) || "Property",
+              };
+            })
+            .filter((p) => PROPERTY_CATEGORIES.includes(p.category.toLowerCase()))
+        );
+      } catch (err) {
+        console.error("Failed to fetch property products:", err);
+      }
+    })();
   }, []);
 
-  const filteredPlaces = places.filter(place =>
-    (place.title?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-    (place.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-    (place.category?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-    (place.location?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  const q = searchTerm.trim().toLowerCase();
+
+  const stays = useMemo(
+    () =>
+      sites
+        .filter((s) => s.type !== "restaurant")
+        .filter(
+          (s) =>
+            !q ||
+            s.name.toLowerCase().includes(q) ||
+            s.city.toLowerCase().includes(q) ||
+            (s.propertyType ?? "").toLowerCase().includes(q) ||
+            s.tags.some((t) => t.toLowerCase().includes(q))
+        ),
+    [sites, q]
   );
 
-  const handlePlaceClick = (placeId: string) => {
-    navigate(`/airbnb/${placeId}`);
-  };
+  const filteredProducts = products.filter(
+    (p) => !q || p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q)
+  );
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Property & Stays in Nigeria | CitiTour"
+        description="Browse verified shortlets, serviced apartments, hotels and houses across Nigeria — each with its own CitiTour mini website."
+        canonicalUrl={`${window.location.origin}/airbnb`}
+      />
+
       <SearchHeader
-        title="Airbnb & Rentals"
+        title="Property & Stays"
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
-        placeholder="Search rentals..."
+        placeholder="Search shortlets, apartments, hotels..."
       />
-      
+
       <div className="px-4 py-6">
-        {loading && <p className="text-center py-4">Loading rentals...</p>}
-        
-        <MiniSiteStrip types={["shortlet", "hotel"]} title="Serviced shortlets with their own storefront" subtitle="Self check-in, live rates and verified photos." />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlaces.map((place) => (
-            <ListingCard
-              key={place.id}
-              {...place}
-              location={place.location}
-              onClick={() => handlePlaceClick(place.id)}
-            />
-          ))}
-        </div>
-        
-        {!loading && filteredPlaces.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No rentals found matching your search.</p>
-          </div>
+        <section className="mb-10">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Mini websites</p>
+          <h2 className="mb-4 text-xl font-bold text-foreground">Shortlets, apartments &amp; hotels you can book</h2>
+
+          {loading && stays.length === 0 ? (
+            <p className="py-6 text-sm text-muted-foreground">Loading stays…</p>
+          ) : stays.length === 0 ? (
+            <p className="py-6 text-sm text-muted-foreground">No stays match your search.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {stays.map((site) => (
+                <MiniSiteCard key={site.slug} site={site} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {filteredProducts.length > 0 && (
+          <section>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary">From the marketplace</p>
+            <h2 className="mb-4 text-xl font-bold text-foreground">Property for sale &amp; rent</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {filteredProducts.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(`/marketplace/${item.id}`)}
+                  className="group overflow-hidden rounded-2xl border border-border bg-card text-left shadow-soft transition-all hover:-translate-y-1 hover:shadow-card"
+                >
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-3.5">
+                    <h3 className="truncate text-sm font-semibold text-foreground">{item.title}</h3>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{item.location}</span>
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-primary">{item.price}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
+
+        <button
+          onClick={() => navigate("/profile/dashboard?tab=listings&action=create&type=property")}
+          className="mt-10 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/50 p-4 text-sm font-bold text-primary transition-colors hover:bg-primary/5"
+        >
+          <Building2 className="h-4 w-4" /> List your property on CitiTour
+        </button>
       </div>
     </div>
   );

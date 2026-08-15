@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search, Heart, MapPin, ShoppingBag, Car,
@@ -7,27 +7,11 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import SEO from "@/components/SEO";
-import { useMarketplaceItems, fmt } from "@/lib/useFirestore";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { getMockImage } from "@/lib/mockImages";
 import MiniSiteCard from "@/components/MiniSiteCard";
 import { useMiniSites } from "@/hooks/useMiniSites";
-
-function isRecentlyListed(createdAt?: any): boolean {
-  if (!createdAt) return false;
-  try {
-    let ts: number;
-    if (typeof createdAt === "string") ts = new Date(createdAt).getTime();
-    else if (typeof createdAt === "number") ts = createdAt;
-    else if (createdAt?.seconds) ts = createdAt.seconds * 1000;
-    else return false;
-    if (isNaN(ts)) return false;
-    return Date.now() - ts < 24 * 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
-const PLACEHOLDER_IMG = "/placeholder.svg";
 
 const categories = [
   { id: "all", label: "All Products", icon: ShoppingBag },
@@ -35,9 +19,32 @@ const categories = [
   { id: "fashion", label: "Fashion", icon: Shirt },
   { id: "home", label: "Home", icon: Home },
   { id: "vehicles", label: "Vehicles", icon: Car },
-  { id: "property", label: "Property", icon: Building2 },
   { id: "minisites", label: "Stays & Food", icon: UtensilsCrossed },
 ];
+
+type MarketplaceItem = {
+  id: string;
+  title: string;
+  image: string;
+  location: string;
+  price: string;
+  promoPrice?: string;
+  badge?: string;
+  badgeColor?: string;
+  category: string;
+  rating?: number;
+};
+
+const PLACEHOLDER_IMG = "/placeholder.svg";
+
+const formatLocation = (loc: any): string => {
+  if (!loc) return "";
+  if (typeof loc === "string") return loc;
+  if (loc._lat !== undefined && loc._long !== undefined) {
+    return `${loc._lat.toFixed(4)}, ${loc._long.toFixed(4)}`;
+  }
+  return String(loc);
+};
 
 const MarketplacePage = () => {
   const navigate = useNavigate();
@@ -48,24 +55,38 @@ const MarketplacePage = () => {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-
-  const { data: rawItems, isLoading } = useMarketplaceItems();
   const { sites: miniSites } = useMiniSites();
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const marketplaceItems = useMemo(() => {
-    if (!rawItems) return [];
-    return rawItems.map((raw: any) => ({
-      id: raw.id,
-      title: String(raw.title || "Untitled"),
-      image: raw.image || getMockImage(raw.category) || PLACEHOLDER_IMG,
-      location: fmt(raw.location),
-      price: fmt(raw.price) || "Price on request",
-      promoPrice: fmt(raw.promoPrice) || "",
-      category: String(raw.category || "Other"),
-      rating: raw.rating || 0,
-      createdAt: raw.createdAt,
-    }));
-  }, [rawItems]);
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoadingData(true);
+      try {
+        const snap = await getDocs(collection(db, "marketplace"));
+        setMarketplaceItems(
+          snap.docs.map((d) => {
+            const raw = d.data() as any;
+            return {
+              id: d.id,
+              title: String(raw.title || "Untitled"),
+              image: raw.image || getMockImage(raw.category) || PLACEHOLDER_IMG,
+              location: formatLocation(raw.location),
+              price: formatLocation(raw.price) || "Price on request",
+              promoPrice: formatLocation(raw.promoPrice) || "",
+              category: String(raw.category || "Other"),
+              rating: raw.rating || 0,
+            };
+          })
+        );
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchAll();
+  }, []);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
@@ -80,21 +101,24 @@ const MarketplacePage = () => {
     return !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q));
   });
 
-  const filteredProducts = useMemo(() => {
-    return marketplaceItems.filter((l) => {
-      const q = search.trim().toLowerCase();
-      const matchSearch = !q || l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q);
-      const matchCat = activeCategory === "all" || l.category.toLowerCase() === activeCategory;
-      return matchSearch && matchCat;
-    });
-  }, [marketplaceItems, search, activeCategory]);
+  // Property / apartment listings live on the Property & Stays page, not here.
+  const isPropertyItem = (cat: string) =>
+    ["property", "properties", "apartment", "shortlet", "house", "real estate"].includes(cat.trim().toLowerCase());
+
+  const filteredProducts = marketplaceItems.filter((l) => {
+    if (isPropertyItem(l.category)) return false;
+    const q = search.trim().toLowerCase();
+    const matchSearch = !q || l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q);
+    const matchCat = activeCategory === "all" || l.category.toLowerCase() === activeCategory;
+    return matchSearch && matchCat;
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Marketplace | CitivasNG"
-        description="Buy and sell electronics, fashion, vehicles, property and more on the CitivasNG marketplace."
-        keywords={["marketplace", "buy", "sell", "Nigeria", "electronics", "fashion", "vehicles", "property"]}
+        title="Marketplace | CititourNG"
+        description="Buy and sell electronics, fashion, vehicles, property and more on the CititourNG marketplace."
+        keywords={["marketplace", "buy", "sell", "Nigeria", "electronics", "fashion", "vehicles", "property", "businesses"]}
         canonicalUrl={`${window.location.origin}/marketplace`}
       />
 
@@ -131,42 +155,42 @@ const MarketplacePage = () => {
             <div className="border-t border-border/50 pt-5">
               <h3 className="font-semibold text-foreground mb-4">Filters</h3>
               <div className="mb-5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Condition</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {["all", "new", "used"].map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCondition(c)}
-                      className={`px-3 py-1 text-[11px] font-bold rounded-full capitalize transition-colors ${
-                        condition === c
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-accent text-muted-foreground hover:bg-primary/20"
-                      }`}
-                    >
-                      {c === "all" ? "All" : c}
-                    </button>
-                  ))}
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Condition</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["all", "new", "used"].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCondition(c)}
+                        className={`px-3 py-1 text-[11px] font-bold rounded-full capitalize transition-colors ${
+                          condition === c
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-accent text-muted-foreground hover:bg-primary/20"
+                        }`}
+                      >
+                        {c === "all" ? "All" : c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius (KM)</label>
+                  <div className="flex gap-1.5">
+                    {["5km", "15km", "30km"].map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setRadius(r)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                          radius === r
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-border/50 bg-accent text-muted-foreground"
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="mb-6">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Radius (KM)</label>
-                <div className="flex gap-1.5">
-                  {["5km", "15km", "30km"].map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setRadius(r)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                        radius === r
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "border-border/50 bg-accent text-muted-foreground"
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
 
             <button
               onClick={() => navigate("/profile/dashboard?tab=listings&action=create")}
@@ -246,6 +270,21 @@ const MarketplacePage = () => {
             </div>
           )}
 
+          {/* ── Property moved to its own page ── */}
+          <button
+            onClick={() => navigate("/airbnb")}
+            className="mb-6 flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left shadow-soft transition-colors hover:border-primary/40"
+          >
+            <span className="flex items-center gap-3">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span>
+                <span className="block text-sm font-bold text-foreground">Looking for apartments, shortlets or houses?</span>
+                <span className="block text-xs text-muted-foreground">All property listings now live on Property &amp; Stays.</span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+          </button>
+
           {/* ── Mini websites: hotels, shortlets & restaurants ── */}
           {(activeCategory === "all" || activeCategory === "minisites") && filteredMiniSites.length > 0 && (
             <section className="mb-8">
@@ -269,7 +308,7 @@ const MarketplacePage = () => {
             </section>
           )}
 
-          {activeCategory === "minisites" ? null : isLoading ? (
+          {activeCategory === "minisites" ? null : loadingData ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
@@ -288,69 +327,63 @@ const MarketplacePage = () => {
               </button>
             </div>
           ) : (
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5"
-                  : "flex flex-col gap-4"
-              }
-            >
-              {filteredProducts.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer p-3 ${
-                    viewMode === "list" ? "flex" : ""
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                  onClick={() => navigate(`/marketplace/${item.id}`)}
-                >
-                  <div className={`relative overflow-hidden rounded-xl ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-[4/3]"}`}>
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
-                      className="absolute top-2.5 right-2.5 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
-                    >
-                      <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
-                    </button>
-                    {isRecentlyListed(item.createdAt) && (
-                      <div className="absolute top-2.5 left-2.5">
-                        <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider bg-emerald-500 text-white">
-                          Just Listed
-                        </span>
-                      </div>
-                    )}
-                    {item.badge && (
-                      <div className="absolute bottom-2.5 left-2.5">
-                        <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>
-                          {item.badge}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={`px-1 pt-3 pb-1 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
-                    <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{item.title}</h3>
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1.5 mb-2.5">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{item.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.promoPrice && Number(item.promoPrice.replace(/[^0-9]/g, '')) < Number(item.price.replace(/[^0-9]/g, '')) ? (
-                        <>
-                          <span className="font-medium text-sm text-muted-foreground line-through">{item.price}</span>
-                          <span className="font-bold text-base text-primary">{item.promoPrice}</span>
-                        </>
-                      ) : (
-                        <span className="font-bold text-base text-accent">{item.price}</span>
+            /* ── Products View ── */
+            <>
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"
+                    : "flex flex-col gap-4"
+                }
+              >
+                {filteredProducts.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`group bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-card animate-fade-in cursor-pointer ${
+                      viewMode === "list" ? "flex" : ""
+                    }`}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                    onClick={() => navigate(`/marketplace/${item.id}`)}
+                  >
+                    <div className={`relative overflow-hidden ${viewMode === "list" ? "w-32 sm:w-44 shrink-0" : "aspect-square"}`}>
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
+                        className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:text-destructive transition-colors"
+                      >
+                        <Heart className={`w-4 h-4 ${likedIds.has(item.id) ? "fill-destructive text-destructive" : ""}`} />
+                      </button>
+                      {item.badge && (
+                        <div className="absolute bottom-3 left-3">
+                          <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${item.badgeColor}`}>
+                            {item.badge}
+                          </span>
+                        </div>
                       )}
                     </div>
+                    <div className={`p-3.5 ${viewMode === "list" ? "flex-1 flex flex-col justify-center" : ""}`}>
+                      <h3 className="font-semibold text-sm md:text-base text-foreground truncate">{item.title}</h3>
+                      <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1 mb-2.5">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{item.location}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm md:text-base text-accent">{item.price}</span>
+                          {item.promoPrice && (
+                            <span className="font-bold text-sm text-primary">{item.promoPrice}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </main>
       </div>

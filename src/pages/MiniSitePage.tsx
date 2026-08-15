@@ -1,516 +1,403 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { PROPERTY_AMENITIES } from "@/lib/nigerianStates";
-import { Phone, Mail, MapPin, Star, ChevronLeft, Share2, X, ChevronRight, Camera, ZoomIn } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft, MapPin, Phone, Mail, Globe, MessageCircle, Star, Clock,
+  ShieldCheck, Plus, Minus, ShoppingBag, Navigation, UtensilsCrossed, BedDouble, X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import SEO from "@/components/SEO";
+import StampIcon from "@/components/StampIcon";
+import { useToast } from "@/hooks/use-toast";
+import { getMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
+import { useMiniSites } from "@/hooks/useMiniSites";
 
-interface RoomCategory {
-  name: string;
-  bedType: string;
-  bathrooms: number;
-  maxOccupancy: number;
-  quantity: number;
-  pricePerNight: number;
-  minNights: number;
-  deposit: number;
-  images: string[];
-}
-
-interface PropertyData {
-  id: string;
-  title: string;
-  description: string;
-  address: string;
-  propertyType: string;
-  location: string;
-  state: string;
-  city: string;
-  image: string;
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  checkin: string;
-  checkout: string;
-  rooms: RoomCategory[];
-  amenities: string[];
-  phone: string;
-  whatsapp: string;
-  contactEmail: string;
-  priceNum: number;
-}
-
-function makeSlug(title: string) {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
-}
-
-function formatTime(t: string) {
-  if (!t) return "";
-  const [h, m] = t.split(":").map(Number);
-  const ampm = h >= 12 ? "PM" : "AM";
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`;
-}
-
-function useScrollReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return { ref, visible };
-}
-
-function ScrollReveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const { ref, visible } = useScrollReveal();
-  return (
-    <div ref={ref} className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
-      {children}
-    </div>
-  );
-}
-
-export default function MiniSitePage() {
-  const { slug } = useParams();
+const MiniSitePage = () => {
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [property, setProperty] = useState<PropertyData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const { toast } = useToast();
+  const { sites, loading } = useMiniSites();
+  const site = sites.find((s) => s.slug === slug) ?? getMiniSite(slug);
 
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [activeSection, setActiveSection] = useState<string>("All");
+  const [cartOpen, setCartOpen] = useState(false);
 
-    const fetchProperty = async () => {
-      try {
-        const snap = await getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true)));
-        const found = snap.docs.find((d) => {
-          const data = d.data();
-          return makeSlug(data.title || "") === slug;
-        });
-        if (found) {
-          setProperty({ id: found.id, ...found.data() } as PropertyData);
-        }
-      } catch (e) {
-        console.error("Error fetching property:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const sections = useMemo(() => {
+    if (!site?.menu) return [];
+    return ["All", ...Array.from(new Set(site.menu.map((m) => m.section)))];
+  }, [site]);
 
-    fetchProperty();
-  }, [slug]);
+  const items = site?.menu ?? [];
+  const rooms = site?.rooms ?? [];
 
-  if (loading) {
+  const visibleItems = activeSection === "All" ? items : items.filter((i) => i.section === activeSection);
+
+  const cartLines = items
+    .filter((i) => cart[i.id])
+    .map((i) => ({ ...i, qty: cart[i.id] }));
+  const cartCount = cartLines.reduce((n, l) => n + l.qty, 0);
+  const cartTotal = cartLines.reduce((n, l) => n + l.qty * l.price, 0);
+
+  if (!site) {
+    if (loading) {
+      return (
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
+          <p className="text-sm text-muted-foreground">Loading mini site…</p>
+        </div>
+      );
+    }
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-pulse text-gray-400 text-sm">Loading property...</div>
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
+        <h1 className="text-2xl font-bold text-foreground">Mini site not found</h1>
+        <p className="text-sm text-muted-foreground">This listing may have been removed by an administrator.</p>
+        <Button onClick={() => navigate("/mini-sites")}>Browse all mini sites</Button>
       </div>
     );
   }
 
-  if (!property) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500 text-sm">Property not found.</p>
-        <a href="/explore" className="text-[#1a56db] text-sm font-semibold hover:underline">Browse Properties &rarr;</a>
-      </div>
-    );
-  }
+  const setQty = (id: string, delta: number) =>
+    setCart((prev) => {
+      const next = { ...prev };
+      const q = (next[id] || 0) + delta;
+      if (q <= 0) delete next[id];
+      else next[id] = q;
+      return next;
+    });
 
-  const allImages = property.images?.length > 0 ? property.images : (property.image ? [property.image] : []);
-  const coverImage = allImages[0] || "";
-  const galleryImages = allImages.slice(1);
-  const amenityObjects = (property.amenities || []).map((id) => PROPERTY_AMENITIES.find((a) => a.id === id)).filter(Boolean);
-  const rooms = property.rooms || [];
-  const totalRooms = rooms.reduce((sum: number, r: any) => sum + (r.quantity || 1), 0);
+  const placeOrder = () => {
+    if (!cartCount) return;
+    const lines = cartLines.map((l) => `${l.qty} x ${l.name}`).join(", ");
+    toast({
+      title: "Order sent to " + site.name,
+      description: `${lines} — total ${formatNaira(cartTotal)}. The restaurant will confirm on WhatsApp.`,
+    });
+    window.open(
+      `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
+        `Hello ${site.name}, I'd like to order: ${lines}. Total ${formatNaira(cartTotal)}.`
+      )}`,
+      "_blank",
+      "noopener"
+    );
+    setCart({});
+    setCartOpen(false);
+  };
+
+  const isFood = site.type === "restaurant";
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.address)}`;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => window.history.back()} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-[#1a56db] rounded-md flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-            </div>
-            <span className="text-[15px] font-bold text-gray-800">{property.title}</span>
-          </div>
-        </div>
-        <span className="text-[11px] text-gray-400 hidden sm:block">Powered by <span className="font-semibold text-gray-500">Citivas Hospitality</span></span>
-      </header>
+    <div className="pb-28">
+      <SEO
+        title={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city} | CitiTour`}
+        description={site.tagline + ". " + site.description.slice(0, 110)}
+        canonicalUrl={`${window.location.origin}/m/${site.slug}`}
+      />
 
-      {/* Hero */}
-      <section className="relative w-full h-[85vh] min-h-[560px] bg-gray-200 overflow-hidden cursor-pointer group" onClick={() => { if (coverImage) { setLightboxIndex(0); setLightboxOpen(true); } }}>
-        {coverImage ? (
-          <img src={coverImage} alt={property.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-50" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-12 lg:p-16 max-w-6xl mx-auto">
-          {/* Location tag */}
-          {(property.city || property.state) && (
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-[2px] bg-white/60" />
-              <span className="text-white/80 text-[11px] font-semibold tracking-[0.2em] uppercase">{[property.city, property.state].filter(Boolean).join(" · ")}</span>
+      {/* ── Hero ── */}
+      <section className="relative -mx-4 -mt-6 h-64 overflow-hidden md:h-80">
+        <img src={site.cover} alt={`${site.name} interior`} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/45" />
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-card/95 px-3 py-2 text-sm font-medium text-foreground shadow-soft"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <Badge className="bg-primary text-primary-foreground">{MINI_SITE_TYPE_LABEL[site.type]}</Badge>
+              <Badge variant="secondary" className="gap-1 bg-card/95 text-foreground">
+                <ShieldCheck className="h-3 w-3 text-success" /> Verified by CitiTour
+              </Badge>
             </div>
-          )}
-          {/* Title */}
-          <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight max-w-2xl mb-4">{property.title}</h1>
-          {/* Description preview */}
-          {property.description && (
-            <p className="text-white/70 text-[15px] leading-relaxed max-w-xl mb-6 line-clamp-2">{property.description}</p>
-          )}
-          {/* Action buttons */}
-          <div className="flex items-center gap-4 mb-10">
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/book/${slug}`); }} className="bg-white text-gray-900 px-7 py-3 rounded-lg text-[13px] font-bold hover:bg-gray-100 transition-colors">
-              Book Now
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); document.getElementById("rooms-section")?.scrollIntoView({ behavior: "smooth" }); }} className="border border-white/40 text-white px-7 py-3 rounded-lg text-[13px] font-bold hover:bg-white/10 transition-colors">
-              View Rooms
-            </button>
-          </div>
-          {/* Bottom stats */}
-          <div className="flex items-center gap-8 sm:gap-12 pt-6 border-t border-white/20">
-            {property.rating > 0 && (
-              <div>
-                <p className="text-white text-xl font-bold">{property.rating}<span className="text-white/60 text-sm ml-0.5">★</span></p>
-                <p className="text-white/50 text-[10px] font-semibold tracking-wider uppercase mt-1">Guest Rating</p>
-              </div>
-            )}
-            {rooms.length > 0 && (
-              <div>
-                <p className="text-white text-xl font-bold">{rooms.length}</p>
-                <p className="text-white/50 text-[10px] font-semibold tracking-wider uppercase mt-1">{rooms.length === 1 ? "Room Type" : "Room Types"}</p>
-              </div>
-            )}
-            {totalRooms > 0 && (
-              <div>
-                <p className="text-white text-xl font-bold">{totalRooms}</p>
-                <p className="text-white/50 text-[10px] font-semibold tracking-wider uppercase mt-1">Total Units</p>
-              </div>
-            )}
-            {property.city && (
-              <div>
-                <p className="text-white text-xl font-bold">{property.city}</p>
-                <p className="text-white/50 text-[10px] font-semibold tracking-wider uppercase mt-1">{property.state || "Nigeria"}</p>
-              </div>
-            )}
+            <h1 className="text-3xl font-extrabold leading-tight text-background md:text-4xl">{site.name}</h1>
+            <p className="mt-1 text-sm text-background/85 md:text-base">{site.tagline}</p>
           </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-5 sm:px-8">
-        {/* About Us */}
-        <ScrollReveal>
-        <section className="py-14 sm:py-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-16 items-start">
-            {/* Left: heading + description + check-in/out */}
-            <div>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-8 h-[2px] bg-[#1a56db]" />
-                <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#1a56db]">About Us</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-gray-800 leading-[1.15] mb-6">
-                Welcome to<br />
-                <span className="text-[#1a56db]">{property.title}.</span>
-              </h2>
-              <p className="text-[15px] text-gray-500 leading-[1.85] mb-5">
-                {property.description || "Experience unparalleled luxury and privacy at this exclusive retreat. Our property offers bespoke service, breathtaking views, and exquisite accommodations for the discerning traveler. Discover a world of tranquility and refinement, where every detail is curated to provide a seamless and unforgettable stay."}
-              </p>
-              <div className="flex flex-wrap gap-5 text-[13px] text-gray-500">
-                {property.checkin && <span><strong className="text-gray-700">Check-in:</strong> {formatTime(property.checkin)}</span>}
-                {property.checkout && <span><strong className="text-gray-700">Check-out:</strong> {formatTime(property.checkout)}</span>}
-              </div>
-              {property.address && (
-                <div className="flex items-center gap-2 mt-4 text-[13px] text-gray-500">
-                  <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                  <span>{property.address}</span>
-                </div>
-              )}
+      <div className="mx-auto mt-6 max-w-5xl space-y-10">
+        {/* ── Key facts ── */}
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            { icon: Star, label: "Rating", value: `${site.rating} (${site.reviews})` },
+            { icon: MapPin, label: "Location", value: site.city },
+            { icon: Clock, label: "Hours", value: site.hours },
+            {
+              icon: isFood ? UtensilsCrossed : BedDouble,
+              label: isFood ? "Average plate" : "From",
+              value: formatNaira(site.priceFrom),
+            },
+          ].map((f) => (
+            <div key={f.label} className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+              <f.icon className="mb-2 h-4 w-4 text-primary" />
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
+              <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-foreground">{f.value}</p>
             </div>
-            {/* Right: image only */}
-            <div className="overflow-hidden rounded-2xl bg-gray-100">
-              {allImages[1] ? (
-                <img src={allImages[1]} alt="" className="w-full h-64 sm:h-80 object-cover rounded-2xl transition-transform duration-500 hover:scale-105" />
-              ) : (
-                <div className="w-full h-64 sm:h-80 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded-2xl">
-                  <Camera className="w-10 h-10 text-gray-300" />
-                </div>
-              )}
+          ))}
+        </section>
+
+        {/* ── Stay details (uniform for seeded + user-listed properties) ── */}
+        {!isFood && (site.bedrooms || site.propertyType) && (
+          <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+            <h2 className="text-xl font-bold text-foreground">Stay details</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { label: "Property type", value: site.propertyType },
+                { label: "Bedrooms", value: site.bedrooms ? String(site.bedrooms) : undefined },
+                { label: "Bathrooms", value: site.bathrooms ? String(site.bathrooms) : undefined },
+                { label: "Sleeps", value: site.guests ? `${site.guests} guests` : undefined },
+                { label: "Check-in", value: site.checkIn },
+                { label: "Check-out", value: site.checkOut },
+                { label: "Rate", value: site.priceFrom ? `${formatNaira(site.priceFrom)} / ${site.priceUnit ?? "night"}` : undefined },
+                { label: "Host", value: site.hostName },
+              ]
+                .filter((f) => f.value)
+                .map((f) => (
+                  <div key={f.label}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-foreground">{f.value}</p>
+                  </div>
+                ))}
             </div>
+          </section>
+        )}
+
+        {/* ── About ── */}
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+          <h2 className="text-xl font-bold text-foreground">About</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{site.description}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {site.amenities.map((a) => (
+              <span key={a} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                {a}
+              </span>
+            ))}
           </div>
         </section>
-        </ScrollReveal>
 
-        {/* Gallery */}
-        {galleryImages.length > 0 && (
-          <ScrollReveal delay={100}>
-          <section className="pb-12 sm:pb-16">
-            <div className="flex items-center gap-3 mb-6">
-              <Camera className="w-6 h-6 text-[#1a56db]" />
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Gallery</h2>
-              <span className="text-[12px] text-gray-400 font-medium ml-auto">{galleryImages.length} photos</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 auto-rows-[140px] sm:auto-rows-[160px]">
-              {galleryImages.slice(0, 8).map((img, i) => (
-                <div
-                  key={i}
-                  onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
-                  className={`relative overflow-hidden rounded-xl cursor-pointer group ${i === 0 ? "col-span-2 row-span-2" : ""} ${i === 3 ? "sm:col-span-2" : ""}`}
-                >
-                  <img
-                    src={img}
-                    alt=""
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                    <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:scale-100 scale-75" />
-                  </div>
-                  {i === 0 && galleryImages.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm">
-                      +{galleryImages.length - 1} more
-                    </div>
-                  )}
-                </div>
-              ))}
-              {galleryImages.length > 8 && (
-                <div
-                  onClick={() => { setLightboxIndex(8); setLightboxOpen(true); }}
-                  className="relative overflow-hidden rounded-xl cursor-pointer group bg-gray-100 flex items-center justify-center"
-                >
-                  <span className="text-2xl font-bold text-gray-400 group-hover:text-[#1a56db] transition-colors">+{galleryImages.length - 8}</span>
-                </div>
-              )}
-            </div>
-          </section>
-          </ScrollReveal>
-        )}
-
-        {/* Rooms */}
-        {property.rooms && property.rooms.length > 0 && (
-          <ScrollReveal delay={200}>
-          <section id="rooms-section" className="pb-12 sm:pb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Rooms</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {property.rooms.map((room, idx) => (
-                <div key={idx} className="rounded-xl border border-gray-200 overflow-hidden bg-white hover:shadow-lg hover:shadow-[#1a56db]/10 transition-all duration-300 hover:-translate-y-1">
-                  <div className="relative h-44 bg-gray-100">
-                    {room.images?.[0] ? (
-                      <img src={room.images[0]} alt={room.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-gray-300 text-xs">No image</div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="text-[14px] font-bold text-gray-800">{room.name || `Room ${idx + 1}`}</h3>
-                      <span className="text-[11px] font-semibold text-[#1a56db] whitespace-nowrap">
-                        {room.pricePerNight > 0 ? `₦${room.pricePerNight.toLocaleString()}/night` : "Price on request"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[11px] text-gray-400 mb-3">
-                      <span>Max Guests: <strong className="text-gray-600">{room.maxOccupancy}</strong></span>
-                      <span>{room.bedType}</span>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/book/${slug}`)}
-                      className="w-full py-2.5 rounded-lg text-[12px] font-bold transition-colors bg-[#1a56db] text-white hover:bg-[#1548b8]"
-                    >
-                      Select
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-          </ScrollReveal>
-        )}
-
-        {/* Amenities */}
-        {amenityObjects.length > 0 && (
-          <ScrollReveal delay={300}>
-          <section className="py-12 sm:py-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-10">Amenities</h2>
-            <div className="flex flex-wrap justify-center gap-10 sm:gap-14">
-              {amenityObjects.map((a) => (
-                <div key={a!.id} className="flex flex-col items-center gap-3 group cursor-default">
-                  <div className="w-18 h-18 rounded-full border-2 border-[#1a56db]/30 flex items-center justify-center text-3xl transition-all duration-300 group-hover:border-[#1a56db] group-hover:bg-[#1a56db]/10 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[#1a56db]/20">
-                    {a!.icon}
-                  </div>
-                  <span className="text-[12px] text-gray-600 font-medium text-center transition-colors group-hover:text-[#1a56db]">{a!.label}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-          </ScrollReveal>
-        )}
-
-        {/* Contact Us */}
-        <ScrollReveal delay={400}>
-        <section className="py-12 sm:py-16 border-t border-gray-200">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-6">
-            {/* Address */}
-            {property.address && (
+        {/* ── Menu (restaurants) ── */}
+        {isFood && items.length > 0 && (
+          <section id="menu">
+            <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="w-4 h-4 text-[#1a56db]" />
-                  <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Address</span>
-                </div>
-                <p className="text-[14px] text-gray-600 leading-relaxed">{property.address}</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Order online</p>
+                <h2 className="text-2xl font-bold text-foreground">Food menu</h2>
               </div>
-            )}
-            {/* Phone + WhatsApp */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Phone className="w-4 h-4 text-[#1a56db]" />
-                <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Phone</span>
-              </div>
-              <div className="space-y-1.5">
-                {property.phone && (
-                  <a href={`tel:${property.phone}`} className="block text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors">{property.phone}</a>
-                )}
-                {property.whatsapp && (
-                  <a href={`https://wa.me/${property.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="block text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors">{property.whatsapp}</a>
-                )}
-                {!property.phone && !property.whatsapp && <span className="text-[14px] text-gray-400">Not available</span>}
-              </div>
+              <span className="text-sm text-muted-foreground">{items.length} items</span>
             </div>
-            {/* Email */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Mail className="w-4 h-4 text-[#1a56db]" />
-                <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400">Email</span>
-              </div>
-              {property.contactEmail ? (
-                <a href={`mailto:${property.contactEmail}`} className="text-[14px] text-gray-600 hover:text-[#1a56db] transition-colors break-all">{property.contactEmail}</a>
-              ) : (
-                <span className="text-[14px] text-gray-400">Not available</span>
-              )}
+
+            <div className="scrollbar-hide -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
+              {sections.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setActiveSection(s)}
+                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                    activeSection === s
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
-            {/* Reservations box */}
-            <div className="border border-gray-200 rounded-xl p-5 flex flex-col justify-center">
-              <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400 mb-1">Reservations</span>
-              <p className="text-[20px] font-bold text-[#1a56db]">Open 24 / 7</p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {visibleItems.map((item) => (
+                <article key={item.id} className="flex gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    loading="lazy"
+                    className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{item.name}</h3>
+                      {item.popular && (
+                        <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase text-accent">
+                          Popular
+                        </span>
+                      )}
+                    </div>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                    <div className="mt-auto flex items-center justify-between pt-2">
+                      <span className="text-sm font-bold text-foreground">{formatNaira(item.price)}</span>
+                      {cart[item.id] ? (
+                        <div className="flex items-center gap-2 rounded-full border border-primary px-1.5 py-1">
+                          <button onClick={() => setQty(item.id, -1)} aria-label={`Remove one ${item.name}`}>
+                            <Minus className="h-3.5 w-3.5 text-primary" />
+                          </button>
+                          <span className="min-w-4 text-center text-xs font-bold text-foreground">{cart[item.id]}</span>
+                          <button onClick={() => setQty(item.id, 1)} aria-label={`Add one ${item.name}`}>
+                            <Plus className="h-3.5 w-3.5 text-primary" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Button size="sm" className="h-8 rounded-full px-3 text-xs" onClick={() => setQty(item.id, 1)}>
+                          <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
+          </section>
+        )}
+
+        {/* ── Rooms (stays) ── */}
+        {!isFood && rooms.length > 0 && (
+          <section>
+            <div className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Availability</p>
+              <h2 className="text-2xl font-bold text-foreground">Rooms & rates</h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {rooms.map((room) => (
+                <article key={room.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+                  <img src={room.image} alt={room.name} loading="lazy" className="h-36 w-full object-cover" />
+                  <div className="space-y-2 p-4">
+                    <h3 className="text-sm font-semibold text-foreground">{room.name}</h3>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{room.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Sleeps {room.capacity} · {room.beds} bed{room.beds > 1 ? "s" : ""}
+                    </p>
+                    <div className="flex items-center justify-between border-t border-border pt-3">
+                      <span className="text-sm font-bold text-foreground">
+                        {formatNaira(room.price)}
+                        <span className="text-xs font-normal text-muted-foreground"> /night</span>
+                      </span>
+                      <Button
+                        size="sm"
+                        className="h-8 rounded-full px-3 text-xs"
+                        onClick={() =>
+                          toast({
+                            title: "Reservation request sent",
+                            description: `${site.name} — ${room.name}. You'll get a confirmation shortly.`,
+                          })
+                        }
+                      >
+                        Reserve
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Gallery ── */}
+        <section>
+          <h2 className="mb-4 text-2xl font-bold text-foreground">Gallery</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {[site.cover, ...site.gallery].map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt={`${site.name} photo ${i + 1}`}
+                loading="lazy"
+                className="h-36 w-full rounded-2xl object-cover md:h-44"
+              />
+            ))}
           </div>
         </section>
-        </ScrollReveal>
+
+        {/* ── Contact ── */}
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+          <h2 className="text-2xl font-bold text-foreground">Find & contact</h2>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" /> {site.address}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Phone, label: "Call", href: `tel:${site.phone.replace(/\s/g, "")}`, tone: "primary" as const },
+              { icon: MessageCircle, label: "WhatsApp", href: `https://wa.me/${site.whatsapp}`, tone: "success" as const },
+              { icon: Mail, label: "Email", href: `mailto:${site.email}`, tone: "accent" as const },
+              { icon: Navigation, label: "Directions", href: mapsUrl, tone: "primary-dark" as const },
+            ].map((c) => (
+              <a
+                key={c.label}
+                href={c.href}
+                target={c.href.startsWith("http") ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center gap-2 rounded-2xl border border-border p-4 transition-colors hover:bg-muted"
+              >
+                <StampIcon icon={c.icon} tone={c.tone} size="sm" />
+                <span className="text-sm font-semibold text-foreground">{c.label}</span>
+              </a>
+            ))}
+          </div>
+          {site.website && (
+            <a
+              href={site.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            >
+              <Globe className="h-4 w-4" /> {site.website.replace("https://", "")}
+            </a>
+          )}
+        </section>
+
+        <p className="text-center text-xs text-muted-foreground">
+          {site.listedBy === "admin" ? "Listed by CitiTour admin" : `Listed by ${site.hostName ?? "a CitiTour host"}`} on{" "}
+          {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
+          <Link to="/mini-sites" className="font-semibold text-primary hover:underline">
+            Browse more mini sites
+          </Link>
+        </p>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 mt-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <span className="text-[16px] font-bold text-[#1a56db]">{property.title}</span>
-              {property.address && (
-                <p className="text-[12px] text-gray-400 mt-1 flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3" /> {property.address}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-6">
-              {property.phone && (
-                <a href={`tel:${property.phone}`} className="flex items-center gap-2 text-[12px] text-gray-500 hover:text-[#1a56db] transition-colors">
-                  <Phone className="w-4 h-4" /> {property.phone}
-                </a>
-              )}
-              {property.contactEmail && (
-                <a href={`mailto:${property.contactEmail}`} className="flex items-center gap-2 text-[12px] text-gray-500 hover:text-[#1a56db] transition-colors">
-                  <Mail className="w-4 h-4" /> {property.contactEmail}
-                </a>
-              )}
-              <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
-                <Share2 className="w-4 h-4 text-gray-500" />
-              </button>
-            </div>
-          </div>
-          <div className="mt-6 pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-[12px] text-gray-400">&copy; {new Date().getFullYear()} {property.title}. All rights reserved.</p>
-            <p className="text-[11px] text-gray-300">Powered by <span className="font-semibold text-gray-400">Citivas Hospitality</span></p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Lightbox */}
-      {lightboxOpen && allImages.length > 0 && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
-          onClick={() => setLightboxOpen(false)}
-        >
-          {/* Close */}
-          <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-
-          {/* Counter */}
-          <div className="absolute top-5 left-5 bg-white/10 backdrop-blur-sm text-white text-[13px] font-semibold px-3 py-1.5 rounded-full z-10">
-            {lightboxIndex + 1} / {allImages.length}
-          </div>
-
-          {/* Prev */}
-          {lightboxIndex > 0 && (
+      {/* ── Order bar ── */}
+      {isFood && cartCount > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card p-3 shadow-hero">
+          <div className="mx-auto flex max-w-5xl items-center gap-3">
             <button
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex((prev) => prev - 1); }}
-              className="absolute left-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all z-10 hover:scale-110"
+              onClick={() => setCartOpen((v) => !v)}
+              className="flex flex-1 items-center gap-3 text-left"
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <span className="relative rounded-full bg-primary p-2.5">
+                <ShoppingBag className="h-4 w-4 text-primary-foreground" />
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
+                  {cartCount}
+                </span>
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-foreground">{formatNaira(cartTotal)}</span>
+                <span className="block text-xs text-muted-foreground">{cartOpen ? "Hide items" : "View items"}</span>
+              </span>
             </button>
-          )}
+            <Button className="rounded-full px-6" onClick={placeOrder}>
+              Place order
+            </Button>
+          </div>
 
-          {/* Next */}
-          {lightboxIndex < allImages.length - 1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex((prev) => prev + 1); }}
-              className="absolute right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all z-10 hover:scale-110"
-            >
-              <ChevronRight className="w-6 h-6 text-white" />
-            </button>
-          )}
-
-          {/* Image */}
-          <img
-            key={lightboxIndex}
-            src={allImages[lightboxIndex]}
-            alt=""
-            className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg animate-in zoom-in-95 fade-in duration-300"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* Thumbnails */}
-          {allImages.length > 1 && (
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-              {allImages.slice(Math.max(0, lightboxIndex - 4), lightboxIndex + 5).map((img, i) => {
-                const actualIdx = Math.max(0, lightboxIndex - 4) + i;
-                return (
-                  <button
-                    key={actualIdx}
-                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(actualIdx); }}
-                    className={`w-12 h-9 rounded-md overflow-hidden border-2 transition-all ${actualIdx === lightboxIndex ? "border-white scale-110" : "border-transparent opacity-60 hover:opacity-100"}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                );
-              })}
+          {cartOpen && (
+            <div className="mx-auto mt-3 max-w-5xl space-y-2 border-t border-border pt-3">
+              {cartLines.map((l) => (
+                <div key={l.id} className="flex items-center justify-between text-sm">
+                  <span className="text-foreground">
+                    {l.qty} × {l.name}
+                  </span>
+                  <span className="flex items-center gap-3">
+                    <span className="font-semibold text-foreground">{formatNaira(l.qty * l.price)}</span>
+                    <button onClick={() => setQty(l.id, -l.qty)} aria-label={`Remove ${l.name}`}>
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
     </div>
   );
-}
+};
+
+export default MiniSitePage;
