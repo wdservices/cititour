@@ -7,6 +7,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 import HeroSlider from "@/components/HeroSlider";
 import SEO from "@/components/SEO";
 import { getMockImage } from "@/lib/mockImages";
+import { propertySlug } from "@/content/miniSites";
 import { useRegion } from "@/contexts/RegionContext";
 
 type ListingItem = {
@@ -47,11 +48,19 @@ const CategoriesPage = () => {
 
         setBusinesses(allBusinesses.slice(0, 4));
         setEvents(allEvents.slice(0, 4));
-        setMarketplace(
-          mktSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
-        );
+        const mktDocs = mktSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as ListingItem[];
+        const isProperty = (cat: unknown) =>
+          ["property", "properties", "apartment", "shortlet", "house", "real estate", "stays"].includes(
+            String(cat || "").toLowerCase()
+          );
+
+        // Property-type marketplace products belong in Properties & Stays.
+        setMarketplace(mktDocs.filter((m) => !isProperty(m.category)).slice(0, 4));
         setProperties(
-          propSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).slice(0, 4)
+          [
+            ...propSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })),
+            ...mktDocs.filter((m) => isProperty(m.category)).map((m) => ({ ...m, fromMarketplace: true })),
+          ].slice(0, 8) as ListingItem[]
         );
       } catch (err) {
         console.error("Error fetching listings:", err);
@@ -99,7 +108,11 @@ const CategoriesPage = () => {
   };
 
   const handlePropClick = (item: ListingItem) => {
-    navigate(`/airbnb/${item.id}`);
+    if ((item as any).fromMarketplace) {
+      navigate(`/marketplace/${item.id}`);
+      return;
+    }
+    navigate(`/property/${propertySlug(r(item.title) || "listing", item.id)}`);
   };
 
   const r = (val: any): string => {
