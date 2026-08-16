@@ -19,12 +19,17 @@ export function useMiniSites() {
     let active = true;
     (async () => {
       try {
-        const [removalSnap, propSnap] = await Promise.all([
+        const [removalRes, propRes] = await Promise.allSettled([
           getDocs(collection(db, "mini_site_removals")),
           getDocs(collection(db, "house_listings")),
         ]);
-        const removed = new Set(removalSnap.docs.map((d) => d.id));
-        const userSites = propSnap.docs.map((d) => propertyDocToMiniSite(d.id, d.data() as any));
+        const removed = new Set(
+          removalRes.status === "fulfilled" ? removalRes.value.docs.map((d) => d.id) : []
+        );
+        const userSites =
+          propRes.status === "fulfilled"
+            ? propRes.value.docs.map((d) => propertyDocToMiniSite(d.id, d.data() as any))
+            : [];
         const all = [...userSites, ...MINI_SITES].filter((s) => !removed.has(s.slug));
         if (active) setSites(all);
       } catch {

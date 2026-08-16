@@ -139,6 +139,8 @@ const App = () => (
                   <Route path="/businessplace" element={<Navigate to="/marketplace" replace />} />
                   <Route path="/business-place" element={<Navigate to="/marketplace" replace />} />
                   <Route path="/nigeria/:stateSlug" element={<StatePage />} />
+                  <Route path="/m/:slug" element={<MiniSitePage />} />
+                  <Route path="/property/:slug" element={<MiniSitePage />} />
                   <Route path="/blog" element={<BlogIndexPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="/events/:eventId" element={<DynamicEventPage />} />
