@@ -20,21 +20,29 @@ export function useMiniSites() {
     let active = true;
     (async () => {
       try {
-        const [removalSnap, propSnap, mpSnap] = await Promise.all([
+        const [removalRes, propRes, mpRes] = await Promise.allSettled([
           getDocs(collection(db, "mini_site_removals")),
           getDocs(collection(db, "house_listings")),
           getDocs(collection(db, "marketplace")),
         ]);
-        const removed = new Set(removalSnap.docs.map((d) => d.id));
+        const removed = new Set(
+          removalRes.status === "fulfilled" ? removalRes.value.docs.map((d) => d.id) : []
+        );
 
         // Properties from house_listings
-        const userSites = propSnap.docs.map((d) => propertyDocToMiniSite(d.id, d.data() as any));
+        const userSites =
+          propRes.status === "fulfilled"
+            ? propRes.value.docs.map((d) => propertyDocToMiniSite(d.id, d.data() as any))
+            : [];
 
         // Property-type items from marketplace (shortlet, hotel, apartment, etc.)
         const PROPERTY_RE = /property|shortlet|hotel|apartment|house|real.estate/i;
-        const mpSites = mpSnap.docs
-          .map((d) => marketplaceDocToMiniSite(d.id, d.data() as any))
-          .filter((s) => PROPERTY_RE.test(s.type) || PROPERTY_RE.test(s.propertyType ?? ""));
+        const mpSites =
+          mpRes.status === "fulfilled"
+            ? mpRes.value.docs
+                .map((d) => marketplaceDocToMiniSite(d.id, d.data() as any))
+                .filter((s) => PROPERTY_RE.test(s.type) || PROPERTY_RE.test(s.propertyType ?? ""))
+            : [];
 
         // Merge all sources, dedupe by slug (house_listings wins over marketplace over seed)
         const slugMap = new Map<string, MiniSite>();

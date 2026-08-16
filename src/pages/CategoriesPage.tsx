@@ -5,6 +5,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 import HeroSlider from "@/components/HeroSlider";
 import SEO from "@/components/SEO";
 import { getMockImage } from "@/lib/mockImages";
+import { propertySlug } from "@/content/miniSites";
 import { useRegion } from "@/contexts/RegionContext";
 import { useBusinesses, useEvents, useMarketplaceItems, useHouseListings, fmt } from "@/lib/useFirestore";
 
@@ -66,27 +67,53 @@ const CategoriesPage = () => {
       .map((b: any) => ({ id: b.id, title: fmt(b.title), description: fmt(b.description), image: b.image || "", category: fmt(b.category), rating: b.rating || 0, location: fmt(b.location), price: fmt(b.price), createdAt: b.createdAt }));
   }, [bizData]);
 
+  const isProperty = (cat: unknown) =>
+    ["property", "properties", "apartment", "shortlet", "house", "real estate", "stays"].includes(
+      String(cat || "").toLowerCase()
+    );
+
   const marketplace = useMemo(() => {
     if (!mktData) return [];
-    return mktData.slice(0, 4).map((m: any) => ({ id: m.id, title: fmt(m.title), description: fmt(m.description), image: m.image || "", category: fmt(m.category), rating: m.rating || 0, location: fmt(m.location), price: fmt(m.price), createdAt: m.createdAt }));
+    return mktData
+      .filter((m: any) => !isProperty(m.category))
+      .slice(0, 4)
+      .map((m: any) => ({ id: m.id, title: fmt(m.title), description: fmt(m.description), image: m.image || "", category: fmt(m.category), rating: m.rating || 0, location: fmt(m.location), price: fmt(m.price), createdAt: m.createdAt }));
   }, [mktData]);
 
   const properties = useMemo(() => {
-    if (!propData) return [];
-    return propData.slice(0, 4).map((p: any) => ({
-      id: p.id,
-      title: fmt(p.title),
-      description: fmt(p.description),
-      image: p.image || "",
-      category: fmt(p.category),
-      rating: p.rating || 0,
-      location: fmt(p.location),
-      price: fmt(p.price),
-      createdAt: p.createdAt,
-      miniSiteActive: p.miniSiteActive || false,
-      slug: (p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, ""),
-    }));
-  }, [propData]);
+    const propItems = propData
+      ? propData.map((p: any) => ({
+          id: p.id,
+          title: fmt(p.title),
+          description: fmt(p.description),
+          image: p.image || "",
+          category: fmt(p.category),
+          rating: p.rating || 0,
+          location: fmt(p.location),
+          price: fmt(p.price),
+          createdAt: p.createdAt,
+          miniSiteActive: p.miniSiteActive || false,
+          slug: (p.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, ""),
+        }))
+      : [];
+    const mktPropertyItems = mktData
+      ? mktData
+          .filter((m: any) => isProperty(m.category))
+          .map((m: any) => ({
+            id: m.id,
+            title: fmt(m.title),
+            description: fmt(m.description),
+            image: m.image || "",
+            category: fmt(m.category),
+            rating: m.rating || 0,
+            location: fmt(m.location),
+            price: fmt(m.price),
+            createdAt: m.createdAt,
+            fromMarketplace: true,
+          }))
+      : [];
+    return [...propItems, ...mktPropertyItems].slice(0, 8);
+  }, [propData, mktData]);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
@@ -106,10 +133,14 @@ const CategoriesPage = () => {
   const handleEventClick = (item: ListingItem) => navigate(`/events/${item.id}`);
   const handleMktClick = (item: ListingItem) => navigate(`/marketplace/${item.id}`);
   const handlePropClick = (item: ListingItem) => {
+    if ((item as any).fromMarketplace) {
+      navigate(`/marketplace/${item.id}`);
+      return;
+    }
     if (item.miniSiteActive && item.slug) {
       navigate(`/property/${item.slug}`);
     } else {
-      navigate(`/airbnb/${item.id}`);
+      navigate(`/property/${propertySlug(r(item.title) || "listing", item.id)}`);
     }
   };
 
