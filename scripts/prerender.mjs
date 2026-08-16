@@ -123,7 +123,7 @@ async function main() {
       const url = `http://localhost:${PORT}${route}`;
       console.log(`Prerendering ${route} ...`);
 
-      await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
       // Wait for React to have mounted content into #root
       await page

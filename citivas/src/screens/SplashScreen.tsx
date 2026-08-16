@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Image, Animated, Platform, Text } from 'react-native';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { View, StyleSheet, Dimensions, Image, Animated, Text } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -12,6 +12,15 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
+  const [videoHasError, setVideoHasError] = useState(false);
+  const finishedRef = useRef(false);
+
+  const finishOnce = useCallback(() => {
+    if (!finishedRef.current) {
+      finishedRef.current = true;
+      onFinish();
+    }
+  }, [onFinish]);
 
   useEffect(() => {
     Animated.sequence([
@@ -23,26 +32,35 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
 
-    const timer = setTimeout(() => onFinish(), 8000);
+    const timer = setTimeout(() => finishOnce(), 3500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [finishOnce, logoScale, logoOpacity, textOpacity]);
 
-  const handlePlaybackStatusUpdate = (status: any) => {
-    if (status.didJustFinish) onFinish();
-  };
+  const handlePlaybackStatusUpdate = useCallback((status: any) => {
+    if (status && status.didJustFinish) finishOnce();
+  }, [finishOnce]);
+
+  const handleVideoError = useCallback(() => {
+    setVideoHasError(true);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Video
-        source={require('../../assets/citivas-splashscreen.mp4')}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping={false}
-        useNativeControls={false}
-        isMuted={Platform.OS === 'web'}
-        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-      />
+      {videoHasError ? (
+        <View style={styles.staticBackground} />
+      ) : (
+        <Video
+          source={require('../../assets/citivas-splashscreen.mp4')}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping={false}
+          useNativeControls={false}
+          isMuted
+          onError={handleVideoError}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+        />
+      )}
 
       <View style={styles.logoOverlay}>
         <Animated.View style={{ alignItems: 'center', opacity: logoOpacity, transform: [{ scale: logoScale }] }}>
@@ -64,6 +82,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  staticBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0A2540',
   },
   logoOverlay: {
     ...StyleSheet.absoluteFillObject,

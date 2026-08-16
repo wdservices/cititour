@@ -144,6 +144,27 @@ export function listenHouseListings(callback: (items: any[]) => void): Unsubscri
   });
 }
 
+export async function createHouseListing(data: Record<string, any>, adminUserId: string) {
+  return addDoc(collection(db, 'house_listings'), {
+    ...data,
+    ownerId: data.ownerId || adminUserId,
+    rating: data.rating ?? 0,
+    status: data.status ?? 'Active',
+    bedrooms: data.bedrooms ?? 0,
+    bathrooms: data.bathrooms ?? 0,
+    createdAt: serverTimestamp(),
+    createdByAdmin: true,
+  });
+}
+
+export async function updateHouseListing(id: string, data: Record<string, any>) {
+  return updateDoc(doc(db, 'house_listings', id), data);
+}
+
+export async function deleteHouseListing(id: string) {
+  return deleteDoc(doc(db, 'house_listings', id));
+}
+
 // ── Revenue — derived from ticket commissions across all events ────────
 // Uses a Firestore collectionGroup query to read every business's `tickets`
 // subcollection in one listener, instead of one listener per event (which

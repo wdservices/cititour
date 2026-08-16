@@ -2,8 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
@@ -73,26 +72,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Safe localStorage check — Edge Tracking Prevention blocks it
-function getSafeStorage(): Storage | undefined {
-  try {
-    const s = window.localStorage;
-    // Test write/read to confirm it's actually usable
-    const k = "__citivas_test__";
-    s.setItem(k, "1");
-    s.removeItem(k);
-    return s;
-  } catch {
-    return undefined;
-  }
-}
-
-const safeStorage = getSafeStorage();
-
-const persister = safeStorage
-  ? createSyncStoragePersister({ storage: safeStorage, key: "citivas-query-cache" })
-  : undefined;
 
 /** Mounts the background chat notification listener (web). */
 function ChatNotificationListeners() {
@@ -225,13 +204,7 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {persister ? (
-        <PersistQueryClientProvider client={queryClient} persister={persister} persistOptions={{ maxAge: 30 * 60 * 1000 }}>
-          {inner}
-        </PersistQueryClientProvider>
-      ) : (
-        inner
-      )}
+      {inner}
     </QueryClientProvider>
   );
 };

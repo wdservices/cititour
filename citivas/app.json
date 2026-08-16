@@ -12,20 +12,21 @@
       "resizeMode": "contain",
       "backgroundColor": "#F5F7FA"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "package": "com.bwtng.citivas",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E88E5"
       },
-      "compileSdkVersion": 35,
-      "targetSdkVersion": 35,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
       "permissions": [
-        "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION"
       ]
     },
     "ios": {
@@ -37,7 +38,21 @@
     },
     "plugins": [
       "expo-location",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "extraMavenRepos": [],
+            "networkSecurityConfig": {
+              "domain": "exp.host",
+              "usesCleartextTraffic": true
+            }
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

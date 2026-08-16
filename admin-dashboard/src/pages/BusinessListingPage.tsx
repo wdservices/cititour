@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 
 const BUSINESS_CATEGORIES = ['Hotel', 'Restaurant', 'Business Services', 'Fun Places', 'Other']
-const PRODUCT_CATEGORIES = ['Electronics', 'Fashion', 'Home', 'Vehicles', 'Property', 'Other']
+const PRODUCT_CATEGORIES = ['Electronics', 'Fashion', 'Home', 'Vehicles', 'Other']
 
 export default function BusinessListingPage() {
   const { user } = useAuth()

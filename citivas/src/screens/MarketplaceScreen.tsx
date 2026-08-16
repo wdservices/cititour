@@ -12,7 +12,7 @@ import { useExploreData } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';
 import { formatPrice, parsePrice, discountPercent, isRecentlyListed } from '../lib/formatPrice';
 
-const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Vehicles', 'Property'];
+const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Home', 'Vehicles'];
 
 export default function MarketplaceScreen() {
   const { colors } = useTheme();
@@ -21,14 +21,20 @@ export default function MarketplaceScreen() {
   const { setActiveTab } = useMainNavigation();
   const [activeCategory, setActiveCategory] = useState('All');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const { marketplace, properties, loading } = useExploreData();
+  const { marketplace, loading } = useExploreData();
 
   const items = useMemo(() => {
-    const all = [...marketplace, ...properties];
-    if (activeCategory === 'All') return all;
-    if (activeCategory === 'Property') return properties;
-    return all.filter((i) => i.category.toLowerCase().includes(activeCategory.toLowerCase()));
-  }, [activeCategory, marketplace, properties]);
+    const filteredProducts = marketplace.filter((i) => {
+      const cat = (i.category || '').toLowerCase();
+      if (
+        cat === 'property' || cat === 'shortlet' || cat === 'rent' ||
+        cat === 'land' || cat === 'hotel'
+      ) return false;
+      return true;
+    });
+    if (activeCategory === 'All') return filteredProducts;
+    return filteredProducts.filter((i) => i.category.toLowerCase().includes(activeCategory.toLowerCase()));
+  }, [activeCategory, marketplace]);
 
   const toggleLike = (id: string) => {
     setLikedIds((prev) => {
@@ -48,7 +54,7 @@ export default function MarketplaceScreen() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={[s.headerTitle, { color: colors.foreground }]}>Marketplace</Text>
-            <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Products & stays</Text>
+            <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Buy & sell products</Text>
           </View>
         </View>
       </View>

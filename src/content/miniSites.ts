@@ -466,3 +466,78 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
     sourceCollection: "house_listings",
   };
 }
+
+/** Convert a marketplace listing (property/shortlet/hotel) to MiniSite shape. */
+export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): MiniSite {
+  const name = str(raw.title, "Untitled property");
+  const category = str(raw.category, "Property").toLowerCase();
+  const isProperty = /property|shortlet|hotel|apartment|house|real.estate/i.test(category);
+  const propertyType = isProperty ? str(raw.category, "Shortlet apartment") : "Shortlet apartment";
+  const city = str(raw.city) || str(raw.location, "Nigeria");
+  const state = str(raw.state);
+  const cover = str(raw.image, "/placeholder.svg");
+  const gallery: string[] = Array.isArray(raw.images) && raw.images.length
+    ? raw.images.filter((g: unknown) => typeof g === "string")
+    : [cover];
+  const price = num(raw.pricePerNight ?? raw.priceFrom ?? raw.price);
+  const amenities: string[] = Array.isArray(raw.amenities) && raw.amenities.length
+    ? raw.amenities
+    : ["24h power", "Self check-in", "Free wifi", "Secure parking"];
+  const bedrooms = num(raw.bedrooms, 1);
+  const bathrooms = num(raw.bathrooms, 1);
+  const guests = num(raw.guests, bedrooms * 2);
+
+  return {
+    slug: str(raw.slug) || propertySlug(name, id),
+    name,
+    type: /hotel/i.test(propertyType) ? "hotel" : "shortlet",
+    tagline: str(raw.tagline, `${propertyType} • ${[city, state].filter(Boolean).join(", ")}`),
+    description: str(
+      raw.description,
+      `${name} is a ${propertyType.toLowerCase()} in ${city}. Contact the host for availability, rates and check-in details.`
+    ),
+    cover,
+    gallery,
+    city: [city, state].filter(Boolean).join(", "),
+    address: str(raw.address) || [city, state].filter(Boolean).join(", "),
+    phone: str(raw.phone, "+234 000 000 0000"),
+    whatsapp: str(raw.whatsapp) || str(raw.phone).replace(/\D/g, ""),
+    email: str(raw.email, "hello@cititour.ng"),
+    website: str(raw.website) || undefined,
+    hours: `Check-in ${str(raw.checkIn, "14:00")} · Check-out ${str(raw.checkOut, "12:00")}`,
+    rating: num(raw.rating, 0),
+    reviews: num(raw.reviews, 0),
+    priceFrom: price,
+    tags: Array.isArray(raw.tags) && raw.tags.length ? raw.tags : [propertyType, city].filter(Boolean),
+    amenities,
+    rooms: [
+      {
+        id: `${id}-unit`,
+        name: `${bedrooms} bedroom ${propertyType.toLowerCase()}`,
+        description: `${bedrooms} bedroom · ${bathrooms} bathroom · sleeps ${guests}.`,
+        price,
+        capacity: guests,
+        beds: bedrooms,
+        image: cover,
+      },
+    ],
+    propertyType,
+    guests,
+    bedrooms,
+    bathrooms,
+    checkIn: str(raw.checkIn, "14:00"),
+    checkOut: str(raw.checkOut, "12:00"),
+    state,
+    priceUnit: str(raw.priceUnit, "night"),
+    sellerType: raw.sellerType === "business" ? "business" : "individual",
+    status: str(raw.status, "Published"),
+    hostName: str(raw.hostName ?? raw.ownerName, "CitiTour host"),
+    listedBy: "user",
+    listedOn:
+      typeof raw.createdAt?.toDate === "function"
+        ? raw.createdAt.toDate().toISOString()
+        : str(raw.listedOn, new Date().toISOString()),
+    sourceId: id,
+    sourceCollection: "marketplace",
+  };
+}
