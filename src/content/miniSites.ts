@@ -362,6 +362,25 @@ export const MINI_SITES: MiniSite[] = [
 export const getMiniSite = (slug?: string) =>
   MINI_SITES.find((s) => s.slug === slug);
 
+/**
+ * Tolerant slug matching so a mini site opens whether the link used the
+ * stored slug, a name-only slug (e.g. `asemi-shortlets`) or the raw doc id.
+ */
+export const findMiniSite = <T extends { slug: string; name: string; id?: string }>(
+  sites: T[],
+  slug?: string
+): T | undefined => {
+  if (!slug) return undefined;
+  const key = slug.toLowerCase();
+  return (
+    sites.find((s) => s.slug.toLowerCase() === key) ??
+    sites.find((s) => slugifyName(s.name) === key) ??
+    sites.find((s) => s.slug.toLowerCase().startsWith(key) || key.startsWith(s.slug.toLowerCase())) ??
+    sites.find((s) => (s as any).id === slug)
+  );
+};
+
+
 export const formatNaira = (value: number) =>
   `₦${value.toLocaleString("en-NG")}`;
 
