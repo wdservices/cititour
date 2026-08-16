@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import SEO from "@/components/SEO";
 import StampIcon from "@/components/StampIcon";
 import { useToast } from "@/hooks/use-toast";
-import { getMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
+import { getMiniSite, findMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
 import { useMiniSites } from "@/hooks/useMiniSites";
 
 const MiniSitePage = () => {
@@ -17,7 +17,7 @@ const MiniSitePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { sites, loading } = useMiniSites();
-  const site = sites.find((s) => s.slug === slug) ?? getMiniSite(slug);
+  const site = findMiniSite(sites, slug) ?? getMiniSite(slug);
 
   const [cart, setCart] = useState<Record<string, number>>({});
   const [activeSection, setActiveSection] = useState<string>("All");
@@ -94,31 +94,49 @@ const MiniSitePage = () => {
         canonicalUrl={`${window.location.origin}/m/${site.slug}`}
       />
 
-      {/* ── Hero ── */}
-      <section className="relative -mx-4 -mt-6 h-64 overflow-hidden md:h-80">
-        <img src={site.cover} alt={`${site.name} interior`} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/45" />
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-card/95 px-3 py-2 text-sm font-medium text-foreground shadow-soft"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-        <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
-          <div className="mx-auto max-w-5xl">
+      {/* ── Hero — contained card, never edge-to-edge ── */}
+      <section className="mx-auto mt-4 max-w-5xl px-4">
+        <div className="relative overflow-hidden rounded-3xl border border-border shadow-card">
+          <img
+            src={site.cover}
+            alt={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city}`}
+            className="h-56 w-full object-cover md:h-[22rem]"
+          />
+          <div className="absolute inset-0 bg-foreground/45" />
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-card/95 px-3 py-2 text-sm font-medium text-foreground shadow-soft"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <Badge className="bg-primary text-primary-foreground">{MINI_SITE_TYPE_LABEL[site.type]}</Badge>
               <Badge variant="secondary" className="gap-1 bg-card/95 text-foreground">
                 <ShieldCheck className="h-3 w-3 text-success" /> Verified by CitiTour
               </Badge>
             </div>
-            <h1 className="text-3xl font-extrabold leading-tight text-background md:text-4xl">{site.name}</h1>
-            <p className="mt-1 text-sm text-background/85 md:text-base">{site.tagline}</p>
+            <h1 className="font-display text-3xl font-extrabold leading-tight text-background md:text-4xl">{site.name}</h1>
+            <p className="mt-1 max-w-2xl text-sm text-background/85 md:text-base">{site.tagline}</p>
           </div>
         </div>
+
+        {site.gallery.length > 1 && (
+          <div className="scrollbar-hide mt-3 flex gap-3 overflow-x-auto pb-1">
+            {site.gallery.slice(0, 8).map((g, i) => (
+              <img
+                key={g + i}
+                src={g}
+                alt={`${site.name} photo ${i + 1}`}
+                loading="lazy"
+                className="h-20 w-28 shrink-0 rounded-xl border border-border object-cover md:h-24 md:w-36"
+              />
+            ))}
+          </div>
+        )}
       </section>
 
-      <div className="mx-auto mt-6 max-w-5xl space-y-10">
+      <div className="mx-auto mt-8 max-w-5xl space-y-10 px-4">
         {/* ── Key facts ── */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
