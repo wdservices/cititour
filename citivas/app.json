@@ -39,17 +39,15 @@
     "plugins": [
       "expo-location",
       "expo-font",
+      "expo-av",
+      "expo-image-picker",
       [
         "expo-build-properties",
         {
           "android": {
             "enableProguardInReleaseBuilds": false,
             "enableShrinkResourcesInReleaseBuilds": false,
-            "extraMavenRepos": [],
-            "networkSecurityConfig": {
-              "domain": "exp.host",
-              "usesCleartextTraffic": true
-            }
+            "extraMavenRepos": []
           }
         }
       ]
