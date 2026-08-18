@@ -12,13 +12,15 @@ import {
   Settings, Clock, CheckCircle2, Upload, Filter, ChevronRight, MoreHorizontal,
   ExternalLink, Eye, FileSpreadsheet, X, ChevronLeft, ChevronDown,
   DoorOpen, Wrench, Sparkles, User, Phone, Mail, MapPin, Star, Globe, MessageCircle,
-  Send, CalendarDays, AlertCircle, TrendingDown, RotateCcw, Edit3, Trash2, Save, Lock,
+  Send, CalendarDays, AlertCircle, TrendingDown, RotateCcw, Edit3, Trash2, Save, Lock, UtensilsCrossed,
 } from "lucide-react";
+import AdminFoodMenu from "./admin/FoodMenu";
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Overview" },
   { icon: TrendingUp, label: "Performance" },
   { icon: Hotel, label: "Inventory" },
+  { icon: UtensilsCrossed, label: "Food Menu" },
   { icon: FileText, label: "Reports" },
   { icon: Settings, label: "Settings" },
 ];
@@ -1175,6 +1177,7 @@ const handleCopy = () => {
 
             {activeNav === "Performance" && renderPerformance()}
             {activeNav === "Inventory" && renderInventory()}
+            {activeNav === "Food Menu" && <AdminFoodMenu rooms={rooms} bookings={realBookings} />}
             {activeNav === "Settings" && renderSettings()}
           </div>
         </div>

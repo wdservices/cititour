@@ -59,6 +59,7 @@ import MiniSitePage from "./pages/MiniSitePage";
 import BookingEngine from "./pages/BookingEngine";
 import BookingPayment from "./pages/BookingPayment";
 import ChildSafetyPage from "./pages/ChildSafetyPage";
+import FoodMenuPage from "./pages/FoodMenu";
 import WebNotificationListener from "./components/WebNotificationListener";
 
 const queryClient = new QueryClient({
@@ -104,6 +105,7 @@ const ProtectedRoutes = () => {
         <Route path="/business/:id" element={<DetailPage />} />
         <Route path="/mini-sites" element={<MiniSitesPage />} />
         <Route path="/m/:slug" element={<MiniSitePage />} />
+        <Route path="/food-menu" element={<FoodMenuPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/hotels" element={<HotelsPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />

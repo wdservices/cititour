@@ -96,7 +96,7 @@ const AMENITY_MAP: Record<string, AmenityInfo> = {
   "pet friendly": { icon: Dog, label: "Pet Friendly", description: "Pets welcome at the property" },
 
   // Payments
-  "card payments": { icon: CreditCardIcon, label: "Card Payments", description: "Accepts debit and credit cards" },
+  "card payments": { icon: CreditCard, label: "Card Payments", description: "Accepts debit and credit cards" },
   "transfer payments": { icon: Phone, label: "Transfer Payments", description: "Bank transfer accepted" },
 
   // Food-specific
