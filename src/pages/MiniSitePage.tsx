@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, MapPin, Phone, Mail, Globe, MessageCircle, Star, Clock,
   ShieldCheck, Plus, Minus, ShoppingBag, Navigation, UtensilsCrossed, BedDouble, X,
+  Users, Wifi, Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,125 @@ import StampIcon from "@/components/StampIcon";
 import { useToast } from "@/hooks/use-toast";
 import { getMiniSite, findMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
 import { useMiniSites } from "@/hooks/useMiniSites";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { format, addDays, differenceInCalendarDays, isBefore, isSameDay, isAfter } from "date-fns";
+
+/* ── Firestore room shape (from house_listings) ── */
+interface DbRoom {
+  name: string;
+  bedType: string;
+  bathrooms: number;
+  maxOccupancy: number;
+  quantity: number;
+  pricePerNight: number;
+  minNights: number;
+  deposit: number;
+  images: string[];
+}
+
+interface DbProperty {
+  id: string;
+  title: string;
+  rooms: DbRoom[];
+  ownerId?: string;
+  userId?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+}
+
+/* ── Mini calendar ── */
+function DateRangePicker({
+  checkIn, checkOut, onRangeChange,
+}: {
+  checkIn: Date | null;
+  checkOut: Date | null;
+  onRangeChange: (start: Date | null, end: Date | null) => void;
+}) {
+  const [viewDate, setViewDate] = useState(() => {
+    const d = checkIn || new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+
+  const year = viewDate.getFullYear();
+  const mon = viewDate.getMonth();
+  const daysInMonth = new Date(year, mon + 1, 0).getDate();
+  const firstDay = new Date(year, mon, 1).getDay();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const blanks = Array.from({ length: firstDay }, (_, i) => i);
+  const days = Array.from({ length: daysInMonth }, (_, i) => new Date(year, mon, i + 1));
+
+  const handleDayClick = (d: Date) => {
+    if (isBefore(d, today)) return;
+    if (!checkIn || (checkIn && checkOut)) {
+      onRangeChange(d, null);
+    } else if (isBefore(d, checkIn)) {
+      onRangeChange(d, null);
+    } else {
+      onRangeChange(checkIn, d);
+    }
+  };
+
+  const isInRange = (d: Date) => {
+    if (!checkIn || !checkOut) return false;
+    return isAfter(d, checkIn) && isBefore(d, checkOut);
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => setViewDate(new Date(year, mon - 1, 1))}
+          className="rounded-lg p-1.5 hover:bg-muted transition-colors text-sm font-bold text-muted-foreground">
+          ‹
+        </button>
+        <h3 className="text-sm font-bold text-foreground">{format(viewDate, "MMMM yyyy")}</h3>
+        <button onClick={() => setViewDate(new Date(year, mon + 1, 1))}
+          className="rounded-lg p-1.5 hover:bg-muted transition-colors text-sm font-bold text-muted-foreground">
+          ›
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-muted-foreground mb-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="py-1">{d.charAt(0)}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-sm">
+        {blanks.map((b) => <div key={`b-${b}`} />)}
+        {days.map((d) => {
+          const isPast = isBefore(d, today);
+          const isStart = checkIn && isSameDay(d, checkIn);
+          const isEnd = checkOut && isSameDay(d, checkOut);
+          const inRange = isInRange(d);
+          return (
+            <div key={d.getTime()} onClick={() => handleDayClick(d)}
+              className={`p-2 rounded-full cursor-pointer transition-all text-xs font-medium ${
+                isPast ? "text-muted-foreground/40 cursor-not-allowed"
+                  : isStart || isEnd ? "bg-primary text-primary-foreground font-bold"
+                    : inRange ? "bg-primary/10 text-primary"
+                      : "hover:bg-muted text-foreground"
+              }`}>
+              {d.getDate()}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex items-center justify-between bg-muted/50 rounded-xl px-4 py-3">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Check-in</span>
+          <span className="text-sm font-bold text-foreground">{checkIn ? format(checkIn, "MMM d") : "Select"}</span>
+        </div>
+        <span className="text-muted-foreground">→</span>
+        <div className="text-right">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Check-out</span>
+          <span className="text-sm font-bold text-foreground">{checkOut ? format(checkOut, "MMM d") : "Select"}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const MiniSitePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -24,13 +144,20 @@ const MiniSitePage = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
+  /* ── Room booking state ── */
+  const [dbRooms, setDbRooms] = useState<DbRoom[]>([]);
+  const [dbProperty, setDbProperty] = useState<DbProperty | null>(null);
+  const [selectedRoomIdx, setSelectedRoomIdx] = useState<number | null>(null);
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+
   const sections = useMemo(() => {
     if (!site?.menu) return [];
     return ["All", ...Array.from(new Set(site.menu.map((m) => m.section)))];
   }, [site]);
 
   const items = site?.menu ?? [];
-  const rooms = site?.rooms ?? [];
   const allImages = site ? [site.cover, ...site.gallery] : [];
 
   const visibleItems = activeSection === "All" ? items : items.filter((i) => i.section === activeSection);
@@ -40,6 +167,44 @@ const MiniSitePage = () => {
     .map((i) => ({ ...i, qty: cart[i.id] }));
   const cartCount = cartLines.reduce((n, l) => n + l.qty, 0);
   const cartTotal = cartLines.reduce((n, l) => n + l.qty * l.price, 0);
+
+  /* ── Fetch actual rooms from Firestore house_listings ── */
+  useEffect(() => {
+    if (!site || site.type === "restaurant") return;
+    setRoomsLoading(true);
+    (async () => {
+      try {
+        const snap = await getDocs(
+          query(collection(db, "house_listings"), where("miniSiteActive", "==", true))
+        );
+        const match = snap.docs.find((d) => {
+          const data = d.data();
+          const titleSlug = (data.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+          return titleSlug === slug || d.id === site.sourceId;
+        });
+        if (match) {
+          const data = match.data() as any;
+          const rooms: DbRoom[] = Array.isArray(data.rooms) ? data.rooms : [];
+          setDbRooms(rooms);
+          setDbProperty({ id: match.id, ...data } as DbProperty);
+        }
+      } catch (e) {
+        console.error("Failed to load rooms from DB:", e);
+      } finally {
+        setRoomsLoading(false);
+      }
+    })();
+  }, [site, slug]);
+
+  /* ── Derived room data ── */
+  const displayRooms = useMemo(() => {
+    if (dbRooms.length > 0) return dbRooms;
+    return [];
+  }, [dbRooms]);
+
+  const selectedRoom = selectedRoomIdx !== null ? displayRooms[selectedRoomIdx] : null;
+  const nights = checkIn && checkOut ? differenceInCalendarDays(checkOut, checkIn) : 0;
+  const roomTotal = selectedRoom && nights > 0 ? selectedRoom.pricePerNight * nights : 0;
 
   if (!site) {
     if (loading) {
@@ -85,6 +250,33 @@ const MiniSitePage = () => {
     setCartOpen(false);
   };
 
+  const handleBookRoom = () => {
+    if (!selectedRoom || !checkIn || !checkOut || nights <= 0) {
+      toast({ title: "Select dates", description: "Please choose check-in and check-out dates.", variant: "destructive" });
+      return;
+    }
+    const bookingSlug = dbProperty
+      ? (dbProperty.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "")
+      : slug;
+    navigate(`/book/${bookingSlug}`, {
+      state: {
+        roomName: selectedRoom.name,
+        roomImage: selectedRoom.images?.[0] || site.cover,
+        pricePerNight: selectedRoom.pricePerNight,
+        nights,
+        checkIn: format(checkIn, "MMM d, yyyy"),
+        checkOut: format(checkOut, "MMM d, yyyy"),
+        guests: selectedRoom.maxOccupancy,
+        total: roomTotal,
+        deposit: selectedRoom.deposit || 0,
+        propertyTitle: site.name,
+        propertyLocation: site.city,
+        ownerId: dbProperty?.ownerId || dbProperty?.userId || "",
+        propertyId: dbProperty?.id || "",
+      }
+    });
+  };
+
   const isFood = site.type === "restaurant";
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.address)}`;
 
@@ -96,13 +288,13 @@ const MiniSitePage = () => {
         canonicalUrl={`${window.location.origin}/m/${site.slug}`}
       />
 
-      {/* ── Hero — contained card, never edge-to-edge ── */}
+      {/* ── Hero — taller for properties ── */}
       <section className="mx-auto mt-4 max-w-5xl px-4">
         <div className="relative overflow-hidden rounded-3xl border border-border shadow-card">
           <img
             src={site.cover}
             alt={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city}`}
-            className="h-56 w-full object-cover md:h-[22rem]"
+            className="w-full object-cover h-72 sm:h-80 md:h-[28rem] lg:h-[32rem]"
           />
           <div className="absolute inset-0 bg-foreground/45" />
           <button
@@ -139,6 +331,20 @@ const MiniSitePage = () => {
       </section>
 
       <div className="mx-auto mt-8 max-w-5xl space-y-10 px-4">
+
+        {/* ── About — directly under hero ── */}
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+          <h2 className="text-xl font-bold text-foreground">About</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{site.description}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {site.amenities.map((a) => (
+              <span key={a} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                {a}
+              </span>
+            ))}
+          </div>
+        </section>
+
         {/* ── Key facts ── */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
@@ -185,18 +391,126 @@ const MiniSitePage = () => {
           </section>
         )}
 
-        {/* ── About ── */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="text-xl font-bold text-foreground">About</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{site.description}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {site.amenities.map((a) => (
-              <span key={a} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                {a}
-              </span>
-            ))}
-          </div>
-        </section>
+        {/* ── Rooms with date picker (from Firestore) ── */}
+        {!isFood && (
+          <section>
+            <div className="mb-6">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Availability</p>
+              <h2 className="text-2xl font-bold text-foreground">Select a room &amp; dates</h2>
+            </div>
+
+            {roomsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : displayRooms.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center">
+                <BedDouble className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
+                <p className="text-sm font-medium text-muted-foreground">No room listings available yet.</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">Contact the host directly for availability.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-12">
+                {/* ── Left: Date picker ── */}
+                <div className="lg:col-span-4">
+                  <DateRangePicker
+                    checkIn={checkIn}
+                    checkOut={checkOut}
+                    onRangeChange={(s, e) => { setCheckIn(s); setCheckOut(e); setSelectedRoomIdx(null); }}
+                  />
+                </div>
+
+                {/* ── Right: Room cards ── */}
+                <div className="lg:col-span-8 flex flex-col gap-4">
+                  {displayRooms.map((room, idx) => {
+                    const isSelected = selectedRoomIdx === idx;
+                    return (
+                      <div key={idx}
+                        className={`overflow-hidden rounded-2xl border bg-card transition-all ${
+                          isSelected
+                            ? "border-primary shadow-card ring-1 ring-primary/20"
+                            : "border-border shadow-soft hover:border-primary/30"
+                        }`}>
+                        <div className="flex flex-col sm:flex-row">
+                          {/* Room image */}
+                          <div className="w-full sm:w-40 shrink-0 h-40 sm:h-auto bg-muted relative">
+                            {room.images?.[0] ? (
+                              <img src={room.images[0]} alt={room.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                                <BedDouble className="h-8 w-8 text-muted-foreground/30" />
+                              </div>
+                            )}
+                            {isSelected && (
+                              <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                                Selected
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Room details */}
+                          <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
+                            <div>
+                              <div className="flex items-start justify-between gap-2">
+                                <h3 className="text-base font-bold text-foreground">{room.name || `Room ${idx + 1}`}</h3>
+                                {room.quantity > 0 && room.quantity <= 3 && (
+                                  <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent">
+                                    {room.quantity} left
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {room.bedType} · {room.bathrooms} bath{room.bathrooms !== 1 ? "s" : ""}
+                              </p>
+                              <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {room.maxOccupancy} guests</span>
+                                <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3" /> WiFi</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
+                              <div>
+                                <span className="text-lg font-extrabold text-foreground">
+                                  {room.pricePerNight > 0 ? formatNaira(room.pricePerNight) : "TBD"}
+                                </span>
+                                <span className="text-xs text-muted-foreground"> /night</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant={isSelected ? "default" : "outline"}
+                                className="h-8 rounded-full px-4 text-xs"
+                                onClick={() => setSelectedRoomIdx(isSelected ? null : idx)}
+                              >
+                                {isSelected ? "Selected" : "Select"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* ── Book button ── */}
+                  {selectedRoom && checkIn && checkOut && nights > 0 && (
+                    <div className="mt-2 rounded-2xl border border-primary bg-primary/5 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-bold text-foreground">
+                          {selectedRoom.name} · {nights} night{nights !== 1 ? "s" : ""}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(checkIn, "MMM d")} → {format(checkOut, "MMM d")} · {formatNaira(roomTotal)} total
+                        </p>
+                      </div>
+                      <Button className="rounded-full px-6" onClick={handleBookRoom}>
+                        <Calendar className="mr-2 h-4 w-4" /> Book &amp; Pay
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── Menu (restaurants) ── */}
         {isFood && items.length > 0 && (
@@ -261,48 +575,6 @@ const MiniSitePage = () => {
                           <Plus className="mr-1 h-3.5 w-3.5" /> Add
                         </Button>
                       )}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Rooms (stays) ── */}
-        {!isFood && rooms.length > 0 && (
-          <section>
-            <div className="mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Availability</p>
-              <h2 className="text-2xl font-bold text-foreground">Rooms & rates</h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {rooms.map((room) => (
-                <article key={room.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-                  <img src={room.image} alt={room.name} loading="lazy" className="h-36 w-full object-cover" />
-                  <div className="space-y-2 p-4">
-                    <h3 className="text-sm font-semibold text-foreground">{room.name}</h3>
-                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{room.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Sleeps {room.capacity} · {room.beds} bed{room.beds > 1 ? "s" : ""}
-                    </p>
-                    <div className="flex items-center justify-between border-t border-border pt-3">
-                      <span className="text-sm font-bold text-foreground">
-                        {formatNaira(room.price)}
-                        <span className="text-xs font-normal text-muted-foreground"> /night</span>
-                      </span>
-                      <Button
-                        size="sm"
-                        className="h-8 rounded-full px-3 text-xs"
-                        onClick={() =>
-                          toast({
-                            title: "Reservation request sent",
-                            description: `${site.name} — ${room.name}. You'll get a confirmation shortly.`,
-                          })
-                        }
-                      >
-                        Reserve
-                      </Button>
                     </div>
                   </div>
                 </article>
