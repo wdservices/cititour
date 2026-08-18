@@ -164,88 +164,138 @@ const MiniSitePage = () => {
         canonicalUrl={`${window.location.origin}/m/${site.slug}`}
       />
 
-      {/* ── Hero — taller for properties ── */}
-      <section className="mx-auto mt-4 max-w-5xl px-4">
-        <div className="relative overflow-hidden rounded-3xl border border-border shadow-card">
-          <img
-            src={site.cover}
-            alt={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city}`}
-            className="w-full object-cover h-72 sm:h-80 md:h-[28rem] lg:h-[32rem]"
-          />
-          <div className="absolute inset-0 bg-foreground/45" />
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-card/95 px-3 py-2 text-sm font-medium text-foreground shadow-soft"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground">{MINI_SITE_TYPE_LABEL[site.type]}</Badge>
-              <Badge variant="secondary" className="gap-1 bg-card/95 text-foreground">
-                <ShieldCheck className="h-3 w-3 text-success" /> Verified by CitiTour
-              </Badge>
-            </div>
-            <h1 className="font-display text-3xl font-extrabold leading-tight text-background md:text-4xl">{site.name}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-background/85 md:text-base">{site.tagline}</p>
+      {/* ── Hero — full-width, edge-to-edge ── */}
+      <section className="relative w-full h-[70vh] min-h-[480px] max-h-[700px]">
+        <img
+          src={site.cover}
+          alt={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city}`}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
+
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-4 sm:left-8 sm:top-8 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-lg hover:bg-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+
+        {/* Centered hero content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-primary/90 px-3 py-1 text-xs font-bold text-primary-foreground">
+              {MINI_SITE_TYPE_LABEL[site.type]}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-800">
+              <ShieldCheck className="h-3 w-3 text-green-600" /> Verified by CitiTour
+            </span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-white drop-shadow-lg max-w-4xl">
+            {site.name}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base sm:text-lg text-white/90 drop-shadow font-medium">
+            {site.tagline}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {!isFood && displayRooms.length > 0 && (
+              <button
+                onClick={() => {
+                  const el = document.getElementById("rooms-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="bg-primary text-primary-foreground px-8 py-3.5 rounded-full text-sm sm:text-base font-bold shadow-lg hover:bg-primary/90 transition-colors"
+              >
+                Book Now
+              </button>
+            )}
+            <button
+              onClick={() => {
+                const el = document.getElementById("about-section");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="bg-white/95 text-gray-800 px-8 py-3.5 rounded-full text-sm sm:text-base font-bold shadow-lg hover:bg-white transition-colors"
+            >
+              {isFood ? "View Menu" : "Explore Rooms"}
+            </button>
           </div>
         </div>
 
+        {/* Gallery thumbnails at bottom */}
         {site.gallery.length > 1 && (
-          <div className="scrollbar-hide mt-3 flex gap-3 overflow-x-auto pb-1">
-            {site.gallery.slice(0, 8).map((g, i) => (
-              <img
-                key={g + i}
-                src={g}
-                alt={`${site.name} photo ${i + 1}`}
-                loading="lazy"
-                className="h-20 w-28 shrink-0 rounded-xl border border-border object-cover md:h-24 md:w-36"
-              />
-            ))}
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-12 pb-4">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto px-4 sm:px-8 justify-center">
+              {site.gallery.slice(0, 8).map((g, i) => (
+                <img
+                  key={g + i}
+                  src={g}
+                  alt={`${site.name} photo ${i + 1}`}
+                  loading="lazy"
+                  className="h-16 w-24 sm:h-20 sm:w-28 shrink-0 rounded-lg border-2 border-white/40 object-cover hover:border-white transition-colors cursor-pointer"
+                />
+              ))}
+            </div>
           </div>
         )}
       </section>
 
-      <div className="mx-auto mt-8 max-w-5xl space-y-10 px-4">
+      {/* ── About — centered, full-width ── */}
+      <section id="about-section" className="py-16 sm:py-20 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Welcome to</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-6">{site.name}</h2>
+          <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">{site.description}</p>
+        </div>
+      </section>
 
-        {/* ── About — directly under hero ── */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="text-xl font-bold text-foreground">About</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{site.description}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {site.amenities.map((a) => (
-              <span key={a} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                {a}
-              </span>
+      {/* ── Key facts — full-width strip ── */}
+      <section className="bg-muted/40 py-12 sm:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[
+              { icon: Star, label: "Rating", value: `${site.rating} (${site.reviews})` },
+              { icon: MapPin, label: "Location", value: site.city },
+              { icon: Clock, label: "Hours", value: site.hours },
+              {
+                icon: isFood ? UtensilsCrossed : BedDouble,
+                label: isFood ? "Average plate" : "Starting from",
+                value: formatNaira(site.priceFrom),
+              },
+            ].map((f) => (
+              <div key={f.label} className="text-center p-4">
+                <f.icon className="mx-auto mb-2 h-5 w-5 text-primary" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
+                <p className="mt-1 text-sm sm:text-base font-bold text-foreground">{f.value}</p>
+              </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── Key facts ── */}
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[
-            { icon: Star, label: "Rating", value: `${site.rating} (${site.reviews})` },
-            { icon: MapPin, label: "Location", value: site.city },
-            { icon: Clock, label: "Hours", value: site.hours },
-            {
-              icon: isFood ? UtensilsCrossed : BedDouble,
-              label: isFood ? "Average plate" : "From",
-              value: formatNaira(site.priceFrom),
-            },
-          ].map((f) => (
-            <div key={f.label} className="rounded-2xl border border-border bg-card p-4 shadow-soft">
-              <f.icon className="mb-2 h-4 w-4 text-primary" />
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
-              <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-foreground">{f.value}</p>
+      {/* ── Amenities — separate section ── */}
+      {site.amenities.length > 0 && (
+        <section className="py-12 sm:py-16 px-4">
+          <div className="max-w-6xl mx-auto text-center">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">What we offer</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-8">Amenities</h2>
+            <div className="flex flex-wrap justify-center gap-3">
+              {site.amenities.map((a) => (
+                <span key={a} className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-soft hover:border-primary/30 transition-colors">
+                  {a}
+                </span>
+              ))}
             </div>
-          ))}
+          </div>
         </section>
+      )}
 
-        {/* ── Stay details (uniform for seeded + user-listed properties) ── */}
-        {!isFood && (site.bedrooms || site.propertyType) && (
-          <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-            <h2 className="text-xl font-bold text-foreground">Stay details</h2>
-            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+      {/* ── Stay details ── */}
+      {!isFood && (site.bedrooms || site.propertyType) && (
+        <section className="py-12 sm:py-16 px-4 bg-muted/40">
+          <div className="max-w-6xl mx-auto text-center">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Property info</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-8">Stay Details</h2>
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4 max-w-4xl mx-auto">
               {[
                 { label: "Property type", value: site.propertyType },
                 { label: "Bedrooms", value: site.bedrooms ? String(site.bedrooms) : undefined },
@@ -258,21 +308,23 @@ const MiniSitePage = () => {
               ]
                 .filter((f) => f.value)
                 .map((f) => (
-                  <div key={f.label}>
+                  <div key={f.label} className="text-center">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</p>
-                    <p className="mt-0.5 text-sm font-semibold text-foreground">{f.value}</p>
+                    <p className="mt-1 text-sm font-bold text-foreground">{f.value}</p>
                   </div>
                 ))}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        {/* ── Rooms grid (from Firestore) ── */}
-        {!isFood && (
-          <section>
-            <div className="mb-6">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Availability</p>
-              <h2 className="text-2xl font-bold text-foreground">Select a room</h2>
+      {/* ── Rooms grid (from Firestore) ── */}
+      {!isFood && (
+        <section id="rooms-section" className="py-12 sm:py-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-10">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Availability</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Featured Rooms</h2>
             </div>
 
             {roomsLoading ? (
@@ -280,16 +332,16 @@ const MiniSitePage = () => {
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : displayRooms.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center">
+              <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center max-w-lg mx-auto">
                 <BedDouble className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
                 <p className="text-sm font-medium text-muted-foreground">No room listings available yet.</p>
                 <p className="mt-1 text-xs text-muted-foreground/70">Contact the host directly for availability.</p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {displayRooms.map((room, idx) => (
                   <div key={idx}
-                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft hover:border-primary/30 hover:shadow-card transition-all cursor-pointer group"
+                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft hover:shadow-card hover:border-primary/30 transition-all cursor-pointer group"
                     onClick={() => {
                       const bookingSlug = dbProperty
                         ? (dbProperty.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "")
@@ -297,8 +349,7 @@ const MiniSitePage = () => {
                       navigate(`/book/${bookingSlug}`, { state: { preSelectedRoom: idx } });
                     }}
                   >
-                    {/* Room image */}
-                    <div className="relative h-44 w-full bg-muted overflow-hidden">
+                    <div className="relative h-52 w-full bg-muted overflow-hidden">
                       {room.images?.[0] ? (
                         <img src={room.images[0]} alt={room.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
@@ -307,30 +358,28 @@ const MiniSitePage = () => {
                         </div>
                       )}
                       {room.quantity > 0 && room.quantity <= 3 && (
-                        <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent backdrop-blur-sm">
+                        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-accent/90 px-2.5 py-1 text-[11px] font-bold text-accent-foreground backdrop-blur-sm">
                           {room.quantity} left
                         </span>
                       )}
                     </div>
-
-                    {/* Room details */}
-                    <div className="p-4">
-                      <h3 className="text-base font-bold text-foreground">{room.name || `Room ${idx + 1}`}</h3>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-foreground">{room.name || `Room ${idx + 1}`}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {room.bedType} · {room.bathrooms} bath{room.bathrooms !== 1 ? "s" : ""}
                       </p>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {room.maxOccupancy} guests</span>
-                        <span className="inline-flex items-center gap-1"><Wifi className="h-3 w-3" /> WiFi</span>
+                      <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4" /> {room.maxOccupancy} guests</span>
+                        <span className="inline-flex items-center gap-1.5"><Wifi className="h-4 w-4" /> WiFi</span>
                       </div>
-                      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                      <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
                         <div>
-                          <span className="text-lg font-extrabold text-foreground">
+                          <span className="text-xl font-extrabold text-foreground">
                             {room.pricePerNight > 0 ? formatNaira(room.pricePerNight) : "TBD"}
                           </span>
-                          <span className="text-xs text-muted-foreground"> /night</span>
+                          <span className="text-sm text-muted-foreground"> /night</span>
                         </div>
-                        <Button size="sm" className="h-8 rounded-full px-4 text-xs">
+                        <Button size="sm" className="h-9 rounded-full px-5 text-sm">
                           Select
                         </Button>
                       </div>
@@ -339,26 +388,26 @@ const MiniSitePage = () => {
                 ))}
               </div>
             )}
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        {/* ── Menu (restaurants) ── */}
-        {isFood && items.length > 0 && (
-          <section id="menu">
-            <div className="mb-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Order online</p>
-                <h2 className="text-2xl font-bold text-foreground">Food menu</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">{items.length} items</span>
+      {/* ── Menu (restaurants) ── */}
+      {isFood && items.length > 0 && (
+        <section id="menu" className="py-12 sm:py-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Order online</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Food Menu</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{items.length} items</p>
             </div>
 
-            <div className="scrollbar-hide -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
+            <div className="scrollbar-hide mb-6 flex gap-2 overflow-x-auto justify-center pb-1">
               {sections.map((s) => (
                 <button
                   key={s}
                   onClick={() => setActiveSection(s)}
-                  className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`whitespace-nowrap rounded-full border px-5 py-2.5 text-sm font-medium transition-colors ${
                     activeSection === s
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-foreground hover:border-primary/50"
@@ -369,29 +418,29 @@ const MiniSitePage = () => {
               ))}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visibleItems.map((item) => (
-                <article key={item.id} className="flex gap-3 rounded-2xl border border-border bg-card p-3 shadow-soft">
+                <article key={item.id} className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-soft hover:shadow-card transition-all">
                   <img
                     src={item.image}
                     alt={item.name}
                     loading="lazy"
-                    className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                    className="h-24 w-24 shrink-0 rounded-xl object-cover"
                   />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{item.name}</h3>
+                      <h3 className="line-clamp-1 text-sm font-bold text-foreground">{item.name}</h3>
                       {item.popular && (
                         <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase text-accent">
                           Popular
                         </span>
                       )}
                     </div>
-                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
-                    <div className="mt-auto flex items-center justify-between pt-2">
-                      <span className="text-sm font-bold text-foreground">{formatNaira(item.price)}</span>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground mt-1">{item.description}</p>
+                    <div className="mt-auto flex items-center justify-between pt-3">
+                      <span className="text-base font-bold text-foreground">{formatNaira(item.price)}</span>
                       {cart[item.id] ? (
-                        <div className="flex items-center gap-2 rounded-full border border-primary px-1.5 py-1">
+                        <div className="flex items-center gap-2 rounded-full border border-primary px-2 py-1">
                           <button onClick={() => setQty(item.id, -1)} aria-label={`Remove one ${item.name}`}>
                             <Minus className="h-3.5 w-3.5 text-primary" />
                           </button>
@@ -401,7 +450,7 @@ const MiniSitePage = () => {
                           </button>
                         </div>
                       ) : (
-                        <Button size="sm" className="h-8 rounded-full px-3 text-xs" onClick={() => setQty(item.id, 1)}>
+                        <Button size="sm" className="h-8 rounded-full px-4 text-xs" onClick={() => setQty(item.id, 1)}>
                           <Plus className="mr-1 h-3.5 w-3.5" /> Add
                         </Button>
                       )}
@@ -410,13 +459,18 @@ const MiniSitePage = () => {
                 </article>
               ))}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        {/* ── Gallery ── */}
-        <section>
-          <h2 className="mb-4 text-2xl font-bold text-foreground">Gallery</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      {/* ── Gallery — full-width grid ── */}
+      <section className="py-12 sm:py-16 px-4 bg-muted/40">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Photos</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Gallery</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {[site.cover, ...site.gallery].map((img, i) => (
               <button
                 key={i}
@@ -428,7 +482,7 @@ const MiniSitePage = () => {
                   src={img}
                   alt={`${site.name} photo ${i + 1}`}
                   loading="lazy"
-                  className="h-36 w-full object-cover md:h-44 transition-transform duration-300 group-hover:scale-105"
+                  className="h-36 sm:h-44 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <span className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors flex items-center justify-center">
                   <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -438,52 +492,57 @@ const MiniSitePage = () => {
               </button>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── Lightbox ── */}
-        {lightboxIdx !== null && (
-          <div
-            className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4"
+      {/* ── Lightbox ── */}
+      {lightboxIdx !== null && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-4"
+          onClick={() => setLightboxIdx(null)}
+        >
+          <button
             onClick={() => setLightboxIdx(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+            aria-label="Close lightbox"
           >
-            <button
-              onClick={() => setLightboxIdx(null)}
-              className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
-              aria-label="Close lightbox"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx - 1 + allImages.length) % allImages.length); }}
-              className="absolute left-2 sm:left-6 text-white/80 hover:text-white p-2 text-3xl font-bold"
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
-            <img
-              src={allImages[lightboxIdx]}
-              alt={`${site.name} photo ${lightboxIdx + 1}`}
-              className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % allImages.length); }}
-              className="absolute right-2 sm:right-6 text-white/80 hover:text-white p-2 text-3xl font-bold"
-              aria-label="Next image"
-            >
-              ›
-            </button>
-            <p className="text-white/60 text-sm mt-3">{lightboxIdx + 1} / {allImages.length}</p>
-          </div>
-        )}
+            <X className="w-8 h-8" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx - 1 + allImages.length) % allImages.length); }}
+            className="absolute left-2 sm:left-6 text-white/80 hover:text-white p-2 text-3xl font-bold"
+            aria-label="Previous image"
+          >
+            ‹
+          </button>
+          <img
+            src={allImages[lightboxIdx]}
+            alt={`${site.name} photo ${lightboxIdx + 1}`}
+            className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIdx((lightboxIdx + 1) % allImages.length); }}
+            className="absolute right-2 sm:right-6 text-white/80 hover:text-white p-2 text-3xl font-bold"
+            aria-label="Next image"
+          >
+            ›
+          </button>
+          <p className="text-white/60 text-sm mt-3">{lightboxIdx + 1} / {allImages.length}</p>
+        </div>
+      )}
 
-        {/* ── Contact ── */}
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="text-2xl font-bold text-foreground">Find & contact</h2>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" /> {site.address}
-          </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── Contact ── */}
+      <section className="py-12 sm:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Get in touch</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Find & Contact</h2>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" /> {site.address}
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-4xl mx-auto">
             {[
               { icon: Phone, label: "Call", href: `tel:${site.phone.replace(/\s/g, "")}`, tone: "primary" as const },
               { icon: MessageCircle, label: "WhatsApp", href: `https://wa.me/${site.whatsapp}`, tone: "success" as const },
@@ -495,7 +554,7 @@ const MiniSitePage = () => {
                 href={c.href}
                 target={c.href.startsWith("http") ? "_blank" : undefined}
                 rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-2 rounded-2xl border border-border p-4 transition-colors hover:bg-muted"
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-border p-5 transition-colors hover:bg-muted shadow-soft"
               >
                 <StampIcon icon={c.icon} tone={c.tone} size="sm" />
                 <span className="text-sm font-semibold text-foreground">{c.label}</span>
@@ -503,17 +562,22 @@ const MiniSitePage = () => {
             ))}
           </div>
           {site.website && (
-            <a
-              href={site.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-            >
-              <Globe className="h-4 w-4" /> {site.website.replace("https://", "")}
-            </a>
+            <div className="text-center mt-6">
+              <a
+                href={site.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              >
+                <Globe className="h-4 w-4" /> {site.website.replace("https://", "")}
+              </a>
+            </div>
           )}
-        </section>
+        </div>
+      </section>
 
+      {/* ── Footer note ── */}
+      <div className="border-t border-border py-8 px-4">
         <p className="text-center text-xs text-muted-foreground">
           {site.listedBy === "admin" ? "Listed by CitiTour admin" : `Listed by ${site.hostName ?? "a CitiTour host"}`} on{" "}
           {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
