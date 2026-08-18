@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { format, addMonths, startOfMonth, getDaysInMonth, getDay, isSameDay, isAfter, isBefore, addDays } from "date-fns";
@@ -96,6 +96,8 @@ function CalendarMonth({ month, selectedStart, selectedEnd, onDateClick }: {
 export default function BookingEngine() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const preSelectedRoom = (location.state as any)?.preSelectedRoom as number | undefined;
   const [property, setProperty] = useState<PropertyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
@@ -112,7 +114,12 @@ export default function BookingEngine() {
       try {
         const snap = await getDocs(query(collection(db, "house_listings"), where("miniSiteActive", "==", true)));
         const found = snap.docs.find((d) => makeSlug(d.data().title || "") === slug);
-        if (found) setProperty({ id: found.id, ...found.data() } as PropertyData);
+        if (found) {
+          setProperty({ id: found.id, ...found.data() } as PropertyData);
+          if (preSelectedRoom !== undefined) {
+            setSelectedRoom(preSelectedRoom);
+          }
+        }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
