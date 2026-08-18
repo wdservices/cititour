@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Camera, Edit, MapPin, Phone, Mail, Calendar, Shield, Bell, CheckCircle } from "lucide-react";
+import { ArrowLeft, User, Camera, Edit, MapPin, Phone, Mail, Calendar, Shield, Bell, CheckCircle, Hotel, MapPin as MapPinIcon, Clock, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { getUserProfile, updateUserProfile } from "@/lib/firebase";
+import { useMyPropertyBookings } from "@/lib/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRegion } from "@/contexts/RegionContext";
 import StampIcon from "@/components/StampIcon";
@@ -40,6 +41,8 @@ const ProfilePage = () => {
   const creationTime = undefined;
   const lastSignInTime = undefined;
   const providerId = 'email';
+
+  const { data: myBookings = [], isLoading: bookingsLoading } = useMyPropertyBookings(user?.id || null);
   
   // Get initials for fallback avatar
   const getInitials = (name: string) => {
@@ -378,57 +381,80 @@ const ProfilePage = () => {
             </Card>
           </TabsContent>
 
-          {/* Preferences Tab */}
+          {/* Bookings Tab */}
           <TabsContent value="preferences" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>App Preferences</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  My Bookings
+                </CardTitle>
                 <CardDescription>
-                  Customize your TourPH experience
+                  Your property reservations and booking history
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Dark Mode</Label>
-                    <p className="text-sm text-muted-foreground">Use dark theme</p>
+              <CardContent>
+                {bookingsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                   </div>
-                  <Switch />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Location Services</Label>
-                    <p className="text-sm text-muted-foreground">Allow location access for better recommendations</p>
+                ) : myBookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Hotel className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-2">No bookings yet</p>
+                    <p className="text-sm text-muted-foreground mb-4">When you book a property, it will appear here.</p>
+                    <Button variant="outline" onClick={() => navigate("/explore")}>
+                      Browse Properties
+                    </Button>
                   </div>
-                  <Switch defaultChecked />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Auto-save Favorites</Label>
-                    <p className="text-sm text-muted-foreground">Automatically save places you visit</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-
-                <Separator />
-
-                <div>
-                  <Label>Preferred Categories</Label>
-                  <p className="text-sm text-muted-foreground mb-3">Select categories you're most interested in</p>
-                  <div className="flex flex-wrap gap-2">
-                    {["Restaurants", "Hotels", "Events", "Shopping", "Attractions", "Nightlife"].map((category) => (
-                      <Badge key={category} variant="outline" className="cursor-pointer">
-                        {category}
-                      </Badge>
+                ) : (
+                  <div className="space-y-4">
+                    {myBookings.map((booking: any) => (
+                      <div key={booking.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex gap-4">
+                          {booking.roomImage && (
+                            <img
+                              src={booking.roomImage}
+                              alt={booking.roomName}
+                              className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h4 className="font-semibold truncate">{booking.propertyTitle}</h4>
+                              <Badge
+                                variant={booking.status === "Confirmed" ? "default" : "secondary"}
+                                className="flex-shrink-0"
+                              >
+                                {booking.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
+                              <Hotel className="h-3 w-3" /> {booking.roomName}
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {booking.checkIn} → {booking.checkOut}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {booking.nights} night{booking.nights !== 1 ? "s" : ""}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <CreditCard className="h-3 w-3" />
+                                ₦{(booking.totalPaid || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Ref: <span className="font-mono">{booking.bookingRef}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

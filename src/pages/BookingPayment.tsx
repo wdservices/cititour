@@ -160,9 +160,9 @@ export default function BookingPayment() {
                   <span className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase block mb-1">Booking Reference</span>
                   <span className="text-[20px] font-bold text-[#005ea4] font-mono tracking-wider">{bookingRef}</span>
                 </div>
-                <div className="flex gap-3 justify-center">
-                  <button className="bg-white text-[#005ea4] border border-[#005ea4] text-[14px] font-medium rounded-lg py-2.5 px-6 hover:bg-[#d3e4ff] transition-colors flex items-center gap-2">
-                    <CalendarPlus className="w-5 h-5" /> Add to Calendar
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <button onClick={() => navigate("/profile?tab=preferences")} className="bg-white text-[#005ea4] border border-[#005ea4] text-[14px] font-medium rounded-lg py-2.5 px-6 hover:bg-[#d3e4ff] transition-colors flex items-center gap-2">
+                    <CalendarPlus className="w-5 h-5" /> View My Bookings
                   </button>
                   <button onClick={() => navigate("/explore")} className="bg-[#005ea4] text-white text-[14px] font-medium rounded-lg py-2.5 px-6 hover:bg-[#004881] transition-colors">
                     Browse More

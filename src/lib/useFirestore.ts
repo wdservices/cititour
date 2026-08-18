@@ -105,6 +105,20 @@ export function usePropertyBookings(ownerId: string | null) {
   });
 }
 
+/** Fetch bookings made by the current user (guest). */
+export function useMyPropertyBookings(userId: string | null) {
+  return useQuery({
+    queryKey: ["my_property_bookings", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const q = query(collection(db, "property_bookings"), where("payerId", "==", userId));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    },
+    enabled: !!userId,
+  });
+}
+
 /** Fetch products and properties belonging to a specific business */
 export function useBusinessChildren(businessId: string | null) {
   return useQuery({
