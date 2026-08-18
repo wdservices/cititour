@@ -4,7 +4,7 @@ import { listenHouseListings, createHouseListing, deleteHouseListing } from '../
 import { MOCK_PROPERTY_LISTINGS, type PropertyListing } from '../data/propertyListings'
 import { useAuth } from '../contexts/AuthContext'
 
-const DELETED_MOCKS_KEY = 'cititour.admin.deletedPropertyMocks'
+const DELETED_MOCKS_KEY = 'citivas.admin.deletedPropertyMocks'
 
 const HOUSE_TYPES = [
   'Apartment', 'Studio', 'Penthouse', 'Villa', 'House',

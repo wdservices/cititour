@@ -34,19 +34,19 @@ const MiniSitesPage = () => {
   return (
     <div className="mx-auto max-w-6xl pb-12">
       <SEO
-        title="Stays & Restaurants with Mini Websites | CitiTour"
-        description="Browse hotels, shortlets and restaurants running their own CitiTour mini website — full menus, room rates, direct ordering and booking."
+        title="Stays & Restaurants with Mini Websites | Citivas"
+        description="Browse hotels, shortlets and restaurants running their own Citivas mini website — full menus, room rates, direct ordering and booking."
         canonicalUrl={`${window.location.origin}/mini-sites`}
       />
 
       {/* ── Header ── */}
       <header className="mb-6">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-primary">CitiTour mini websites</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-primary">Citivas mini websites</p>
         <h1 className="mt-1 text-3xl font-extrabold leading-tight text-foreground md:text-4xl">
           Stays &amp; restaurants, with their own storefront
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          Every business here runs a full mini website on CitiTour — photo gallery, live menu or room rates,
+          Every business here runs a full mini website on Citivas — photo gallery, live menu or room rates,
           contact details and one-tap ordering or booking.
         </p>
       </header>

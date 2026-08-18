@@ -11,6 +11,7 @@ import SEO from "@/components/SEO";
 import StampIcon from "@/components/StampIcon";
 import { useToast } from "@/hooks/use-toast";
 import { getMiniSite, findMiniSite, formatNaira, MINI_SITE_TYPE_LABEL } from "@/content/miniSites";
+import { getAmenityInfo } from "@/lib/amenityIcons";
 import { useMiniSites } from "@/hooks/useMiniSites";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -159,7 +160,7 @@ const MiniSitePage = () => {
   return (
     <div className="pb-28">
       <SEO
-        title={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city} | CitiTour`}
+        title={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city} | Citivas`}
         description={site.tagline + ". " + site.description.slice(0, 110)}
         canonicalUrl={`${window.location.origin}/m/${site.slug}`}
       />
@@ -188,7 +189,7 @@ const MiniSitePage = () => {
               {MINI_SITE_TYPE_LABEL[site.type]}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-800">
-              <ShieldCheck className="h-3 w-3 text-green-600" /> Verified by CitiTour
+              <ShieldCheck className="h-3 w-3 text-green-600" /> Verified by Citivas
             </span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-white drop-shadow-lg max-w-4xl">
@@ -272,18 +273,35 @@ const MiniSitePage = () => {
         </div>
       </section>
 
-      {/* ── Amenities — separate section ── */}
+      {/* ── Amenities — card grid with icons ── */}
       {site.amenities.length > 0 && (
         <section className="py-12 sm:py-16 px-4">
-          <div className="max-w-6xl mx-auto text-center">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">What we offer</p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-8">Amenities</h2>
-            <div className="flex flex-wrap justify-center gap-3">
-              {site.amenities.map((a) => (
-                <span key={a} className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-soft hover:border-primary/30 transition-colors">
-                  {a}
-                </span>
-              ))}
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-10">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">What we offer</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mb-3">
+                {isFood ? "Facilities" : "Hotel Amenities"}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                {isFood
+                  ? "Enjoy our world-class facilities and services designed for your comfort"
+                  : "Enjoy world-class facilities and services designed for your comfort"}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {site.amenities.map((a) => {
+                const info = getAmenityInfo(a);
+                const Icon = info.icon;
+                return (
+                  <div key={a} className="flex flex-col items-center text-center rounded-2xl border border-border bg-card p-6 shadow-soft hover:shadow-card hover:border-primary/20 transition-all">
+                    <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mb-4">
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-sm font-bold text-foreground mb-1">{info.label}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{info.description}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -579,7 +597,7 @@ const MiniSitePage = () => {
       {/* ── Footer note ── */}
       <div className="border-t border-border py-8 px-4">
         <p className="text-center text-xs text-muted-foreground">
-          {site.listedBy === "admin" ? "Listed by CitiTour admin" : `Listed by ${site.hostName ?? "a CitiTour host"}`} on{" "}
+          {site.listedBy === "admin" ? "Listed by Citivas admin" : `Listed by ${site.hostName ?? "a Citivas host"}`} on{" "}
           {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
           <Link to="/mini-sites" className="font-semibold text-primary hover:underline">
             Browse more mini sites

@@ -1,6 +1,6 @@
 /**
  * Mini-site catalogue — restaurants, hotels and shortlets that have a
- * CitiTour "mini website" (own page, gallery, menu / rooms, ordering).
+ * Citivas "mini website" (own page, gallery, menu / rooms, ordering).
  *
  * Every seeded entry is flagged `listedBy: "admin"` so the admin dashboard
  * can identify and remove them. Removals are stored in Firestore
@@ -223,7 +223,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 934,
     priceFrom: 145000,
     tags: ["5 star", "Spa", "Pool"],
-    amenities: ["Rooftop pool", "Spa & gym", "Airport shuttle", "Business centre", "24h room service", "Free wifi"],
+    amenities: ["Rooftop pool", "Spa & gym", "Airport shuttle", "Business centre", "24h room service", "Free wifi", "Restaurant", "Bar"],
     propertyType: "Hotel room",
     guests: 2,
     bedrooms: 1,
@@ -262,7 +262,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 271,
     priceFrom: 68000,
     tags: ["Shortlet", "24h power", "Self check-in"],
-    amenities: ["24h power", "Self check-in", "Washer & dryer", "Netflix", "Secure parking", "Housekeeping"],
+    amenities: ["24h power", "Self check-in", "Washer & dryer", "Netflix", "Secure parking", "Housekeeping", "Kitchen", "Air conditioning"],
     propertyType: "Serviced apartment",
     guests: 4,
     bedrooms: 2,
@@ -300,7 +300,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 508,
     priceFrom: 132000,
     tags: ["Business", "Boutique", "Bistro"],
-    amenities: ["Meeting pods", "Bistro", "Gym", "Laundry", "Free wifi", "Airport pickup"],
+    amenities: ["Meeting pods", "Bistro", "Gym", "Laundry", "Free wifi", "Airport pickup", "Room service", "Business centre"],
     propertyType: "Hotel room",
     guests: 2,
     bedrooms: 1,
@@ -338,7 +338,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 148,
     priceFrom: 95000,
     tags: ["Designer", "Lake view", "Concierge"],
-    amenities: ["Lake view", "Rooftop terrace", "Private chef", "24h power", "Concierge", "Gated estate"],
+    amenities: ["Lake view", "Rooftop terrace", "Private chef", "24h power", "Concierge", "Gated estate", "Air conditioning", "Netflix"],
     propertyType: "Shortlet apartment",
     guests: 4,
     bedrooms: 2,
@@ -446,7 +446,7 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
     whatsapp: str(raw.whatsapp) || str(raw.phone).replace(/\D/g, ""),
-    email: str(raw.email, "hello@cititour.ng"),
+    email: str(raw.email, "hello@citivas.ng"),
     website: str(raw.website) || undefined,
     hours: `Check-in ${str(raw.checkIn, "14:00")} · Check-out ${str(raw.checkOut, "12:00")}`,
     rating: num(raw.rating, 0),
@@ -475,7 +475,7 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
     priceUnit: str(raw.priceUnit, "night"),
     sellerType: raw.sellerType === "business" ? "business" : "individual",
     status: str(raw.status, "Published"),
-    hostName: str(raw.hostName ?? raw.ownerName, "CitiTour host"),
+    hostName: str(raw.hostName ?? raw.ownerName, "Citivas host"),
     listedBy: "user",
     listedOn:
       typeof raw.createdAt?.toDate === "function"
@@ -521,7 +521,7 @@ export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): 
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
     whatsapp: str(raw.whatsapp) || str(raw.phone).replace(/\D/g, ""),
-    email: str(raw.email, "hello@cititour.ng"),
+    email: str(raw.email, "hello@citivas.ng"),
     website: str(raw.website) || undefined,
     hours: `Check-in ${str(raw.checkIn, "14:00")} · Check-out ${str(raw.checkOut, "12:00")}`,
     rating: num(raw.rating, 0),
@@ -550,7 +550,7 @@ export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): 
     priceUnit: str(raw.priceUnit, "night"),
     sellerType: raw.sellerType === "business" ? "business" : "individual",
     status: str(raw.status, "Published"),
-    hostName: str(raw.hostName ?? raw.ownerName, "CitiTour host"),
+    hostName: str(raw.hostName ?? raw.ownerName, "Citivas host"),
     listedBy: "user",
     listedOn:
       typeof raw.createdAt?.toDate === "function"

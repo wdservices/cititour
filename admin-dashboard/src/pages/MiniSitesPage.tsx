@@ -53,7 +53,7 @@ export default function MiniSitesPage() {
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Mini Websites</h1>
         <p className="mt-1 text-sm text-sand-500">
-          Hotel, shortlet and restaurant storefronts seeded by CitiTour admin. Removing one hides it everywhere in the app.
+          Hotel, shortlet and restaurant storefronts seeded by Citivas admin. Removing one hides it everywhere in the app.
         </p>
       </header>
 

@@ -72,7 +72,7 @@ const SideMenu = ({ onMenuItemClick }: SideMenuProps) => {
       "My Dashboard": "/profile/dashboard",
       "Favourites": "/favourites",
       "Wallet": "/wallet",
-      "Share CitiTour": "/share-app",
+      "Share Citivas": "/share-app",
       "Share App": "/share-app",
       "Feedback": "/feedback",
       "Settings & Privacy": "/settings",

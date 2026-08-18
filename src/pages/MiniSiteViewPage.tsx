@@ -80,7 +80,7 @@ const MiniSitePage = () => {
   return (
     <div className="pb-28">
       <SEO
-        title={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city} | CitiTour`}
+        title={`${site.name} — ${MINI_SITE_TYPE_LABEL[site.type]} in ${site.city} | Citivas`}
         description={site.tagline + ". " + site.description.slice(0, 110)}
         canonicalUrl={`${window.location.origin}/m/${site.slug}`}
       />
@@ -100,7 +100,7 @@ const MiniSitePage = () => {
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <Badge className="bg-primary text-primary-foreground">{MINI_SITE_TYPE_LABEL[site.type]}</Badge>
               <Badge variant="secondary" className="gap-1 bg-card/95 text-foreground">
-                <ShieldCheck className="h-3 w-3 text-success" /> Verified by CitiTour
+                <ShieldCheck className="h-3 w-3 text-success" /> Verified by Citivas
               </Badge>
             </div>
             <h1 className="text-3xl font-extrabold leading-tight text-background md:text-4xl">{site.name}</h1>
@@ -310,7 +310,7 @@ const MiniSitePage = () => {
         </section>
 
         <p className="text-center text-xs text-muted-foreground">
-          Listed by CitiTour admin on {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
+          Listed by Citivas admin on {new Date(site.listedOn).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
           <Link to="/mini-sites" className="font-semibold text-primary hover:underline">
             Browse more mini sites
           </Link>

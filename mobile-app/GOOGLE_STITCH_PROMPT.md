@@ -1,4 +1,4 @@
-# CitiTour Mobile — Google Stitch Design Prompt
+# Citivas Mobile — Google Stitch Design Prompt
 
 Paste this into Google Stitch to generate the mobile UI independently of
 the coded version — useful if you want to see design alternatives, or if
@@ -9,7 +9,7 @@ the same brand foundation.
 
 ## App overview
 
-CitiTour is a mobile app for discovering, booking, and paying for hotels,
+Citivas is a mobile app for discovering, booking, and paying for hotels,
 restaurants, events, and local businesses across major Nigerian cities
 (Lagos, Abuja, Port Harcourt, Kano, Owerri, Kaduna). The app detects the
 user's city via GPS and rebrands its header to match — e.g. "Tour Lagos"
@@ -50,7 +50,7 @@ signature, tying to the "touring cities" concept.
 ## Screens to design
 
 ### 1. Home / Explore (main tab)
-- Header: eyebrow label "CITITOUR CONCIERGE" above a large headline reading
+- Header: eyebrow label "CITIVAS CONCIERGE" above a large headline reading
   "Tour [City]" where [City] is in the primary blue color
 - A location pill showing the detected city, top-right
 - A prominent search bar: "Search restaurants, events, hotels..."

@@ -1,6 +1,6 @@
 /**
  * Mini-site catalogue — restaurants, hotels and shortlets that have a
- * CitiTour "mini website" (own page, gallery, menu / rooms, ordering).
+ * Citivas "mini website" (own page, gallery, menu / rooms, ordering).
  *
  * Every seeded entry is flagged `listedBy: "admin"` so the admin dashboard
  * can identify and remove them. Removals are stored in Firestore
@@ -206,7 +206,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 934,
     priceFrom: 145000,
     tags: ["5 star", "Spa", "Pool"],
-    amenities: ["Rooftop pool", "Spa & gym", "Airport shuttle", "Business centre", "24h room service", "Free wifi"],
+    amenities: ["Rooftop pool", "Spa & gym", "Airport shuttle", "Business centre", "24h room service", "Free wifi", "Restaurant", "Bar"],
     listedBy: "admin",
     listedOn: "2026-01-08",
     rooms: [
@@ -234,7 +234,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 271,
     priceFrom: 68000,
     tags: ["Shortlet", "24h power", "Self check-in"],
-    amenities: ["24h power", "Self check-in", "Washer & dryer", "Netflix", "Secure parking", "Housekeeping"],
+    amenities: ["24h power", "Self check-in", "Washer & dryer", "Netflix", "Secure parking", "Housekeeping", "Kitchen", "Air conditioning"],
     listedBy: "admin",
     listedOn: "2026-02-01",
     rooms: [
@@ -261,7 +261,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 508,
     priceFrom: 132000,
     tags: ["Business", "Boutique", "Bistro"],
-    amenities: ["Meeting pods", "Bistro", "Gym", "Laundry", "Free wifi", "Airport pickup"],
+    amenities: ["Meeting pods", "Bistro", "Gym", "Laundry", "Free wifi", "Airport pickup", "Room service", "Business centre"],
     listedBy: "admin",
     listedOn: "2026-01-29",
     rooms: [
@@ -288,7 +288,7 @@ export const MINI_SITES: MiniSite[] = [
     reviews: 148,
     priceFrom: 95000,
     tags: ["Designer", "Lake view", "Concierge"],
-    amenities: ["Lake view", "Rooftop terrace", "Private chef", "24h power", "Concierge", "Gated estate"],
+    amenities: ["Lake view", "Rooftop terrace", "Private chef", "24h power", "Concierge", "Gated estate", "Air conditioning", "Netflix"],
     listedBy: "admin",
     listedOn: "2026-02-16",
     rooms: [

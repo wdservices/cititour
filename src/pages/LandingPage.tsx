@@ -525,7 +525,7 @@ const LandingPage = () => {
       </section>
 
       {/* Property & Stays — every shortlet, apartment and hotel listed on
-          CitiTour, including properties users list themselves. */}
+          Citivas, including properties users list themselves. */}
       <section className="py-20 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-end justify-between gap-4">

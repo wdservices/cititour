@@ -1,5 +1,5 @@
 const CLOUDINARY_CLOUD_NAME = 'diq3wnetq';
-const CLOUDINARY_UNSIGNED_PRESET = 'cititour_preset';
+const CLOUDINARY_UNSIGNED_PRESET = 'citivas_preset';
 
 export async function uploadImageToCloudinary(uri: string, folder: string): Promise<{ secureUrl: string; publicId: string }> {
   const formData = new FormData();
@@ -26,9 +26,9 @@ export async function uploadImageToCloudinary(uri: string, folder: string): Prom
 }
 
 export const CLOUDINARY_FOLDERS = {
-  BUSINESSES: 'cititour/businesses',
-  MARKETPLACE: 'cititour/marketplace',
-  PROPERTIES: 'cititour/properties',
-  EVENTS: 'cititour/events',
-  LISTINGS: 'cititour/listings',
+  BUSINESSES: 'citivas/businesses',
+  MARKETPLACE: 'citivas/marketplace',
+  PROPERTIES: 'citivas/properties',
+  EVENTS: 'citivas/events',
+  LISTINGS: 'citivas/listings',
 };
