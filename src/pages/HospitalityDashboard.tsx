@@ -783,6 +783,7 @@ const handleCopy = () => {
 
   const handleSaveSettings = async () => {
     if (!primaryProperty?.id) return;
+    const logo = primaryProperty.logo || undefined;
     await updateProperty.mutateAsync({
       id: primaryProperty.id,
       data: {
@@ -791,7 +792,7 @@ const handleCopy = () => {
         phone: settingsPhone,
         whatsapp: settingsWhatsapp,
         contactEmail: settingsEmail,
-        logo: primaryProperty.logo || "",
+        ...(logo !== undefined && { logo }),
       },
     });
     setSettingsSaved(true);
