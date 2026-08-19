@@ -28,6 +28,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  isAdminLoading: boolean;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmailPassword: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -46,6 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
   const logoutTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -116,11 +118,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const adminStatus = await checkAdminStatus(fbUser.uid);
         setUser({ ...convertFirebaseUser(fbUser), isAdmin: adminStatus });
         setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
         mirrorUserToFirestore(fbUser);
         setIsLoading(false);
       }
     }).catch((error) => {
       console.error('Redirect result error:', error);
+      setIsAdminLoading(false);
       setIsLoading(false);
     });
 
@@ -129,11 +133,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const adminStatus = await checkAdminStatus(firebaseUser.uid);
         setUser({ ...convertFirebaseUser(firebaseUser), isAdmin: adminStatus });
         setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
         mirrorUserToFirestore(firebaseUser);
         resetInactivityTimer();
       } else {
         setUser(null);
         setIsAdmin(false);
+        setIsAdminLoading(false);
         if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       }
       setIsLoading(false);
@@ -213,6 +219,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     isLoading,
     isAdmin,
+    isAdminLoading,
     loginWithEmail,
     signUpWithEmailPassword,
     loginWithGoogle,
