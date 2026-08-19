@@ -39,11 +39,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
 
-  const ADMIN_DASHBOARD_URL = 'http://localhost:3001';
+  const ADMIN_DASHBOARD_URL = '/admin';
 
   const redirectAfterLogin = () => {
     if (isAdmin) {
-      window.location.href = ADMIN_DASHBOARD_URL;
+      navigate('/admin');
     } else {
       navigate('/explore');
     }
@@ -218,7 +218,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   useEffect(() => {
     if (!forceLogin && !isLoading && isAuthenticated) {
       if (isAdmin) {
-        window.location.href = ADMIN_DASHBOARD_URL;
+        navigate('/admin', { replace: true });
       } else {
         navigate('/explore', { replace: true });
       }

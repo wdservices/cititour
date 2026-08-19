@@ -1,0 +1,10 @@
+import React from 'react';
+
+export default function AdminBookingsPage() {
+  return (
+    <div>
+      <h1 className="font-display text-3xl md:text-4xl font-extrabold text-ink">Bookings Management</h1>
+      <p className="text-sm text-ink/60 mt-1">Content for Bookings Management will go here.</p>
+    </div>
+  );
+}

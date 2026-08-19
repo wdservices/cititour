@@ -62,6 +62,28 @@ import ChildSafetyPage from "./pages/ChildSafetyPage";
 import FoodMenuPage from "./pages/FoodMenu";
 import WebNotificationListener from "./components/WebNotificationListener";
 
+// Admin dashboard
+import { AdminGuard } from "./components/admin/AdminGuard";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboardPage from "./pages/admin/DashboardPage";
+import AdminUsersPage from "./pages/admin/UsersPage";
+import AdminAdsPage from "./pages/admin/AdsPage";
+import AdminContentPage from "./pages/admin/ContentPage";
+import AdminComplaintsPage from "./pages/admin/ComplaintsPage";
+import AdminBusinessListingPage from "./pages/admin/BusinessListingPage";
+import AdminEventsPage from "./pages/admin/EventsPage";
+import AdminPropertiesPage from "./pages/admin/PropertiesPage";
+import AdminMiniSitesPage from "./pages/admin/MiniSitesPage";
+import AdminBookingsPage from "./pages/admin/BookingsPage";
+import AdminReviewsPage from "./pages/admin/ReviewsPage";
+import AdminFeedbackPage from "./pages/admin/FeedbackPage";
+import AdminAppSettingsPage from "./pages/admin/AppSettingsPage";
+import AdminAdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminAnalyticsPage from "./pages/admin/AnalyticsPage";
+import AdminWalletPage from "./pages/admin/WalletPage";
+import AdminQRValidatePage from "./pages/admin/QRValidatePage";
+import AdminActivityLogsPage from "./pages/admin/ActivityLogsPage";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -195,6 +217,26 @@ const App = () => {
                   <Route path="/terms" element={<TermsOfUsePage />} />
                   <Route path="/docs" element={<DocsPage />} />
                   <Route path="/child-safety" element={<ChildSafetyPage />} />
+                  {/* Admin Dashboard Routes */}
+                  <Route path="/admin" element={<AdminGuard><AdminLayout><AdminDashboardPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/dashboard" element={<AdminGuard><AdminLayout><AdminDashboardPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/users" element={<AdminGuard><AdminLayout><AdminUsersPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/ads" element={<AdminGuard><AdminLayout><AdminAdsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/content" element={<AdminGuard><AdminLayout><AdminContentPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/complaints" element={<AdminGuard><AdminLayout><AdminComplaintsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/business-listings" element={<AdminGuard><AdminLayout><AdminBusinessListingPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/events" element={<AdminGuard><AdminLayout><AdminEventsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/properties" element={<AdminGuard><AdminLayout><AdminPropertiesPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/mini-sites" element={<AdminGuard><AdminLayout><AdminMiniSitesPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/bookings" element={<AdminGuard><AdminLayout><AdminBookingsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/reviews" element={<AdminGuard><AdminLayout><AdminReviewsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/feedback" element={<AdminGuard><AdminLayout><AdminFeedbackPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/app-settings" element={<AdminGuard><AdminLayout><AdminAppSettingsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/admin-users" element={<AdminGuard><AdminLayout><AdminAdminUsersPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/analytics" element={<AdminGuard><AdminLayout><AdminAnalyticsPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/wallet" element={<AdminGuard><AdminLayout><AdminWalletPage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/qr-validate" element={<AdminGuard><AdminLayout><AdminQRValidatePage /></AdminLayout></AdminGuard>} />
+                  <Route path="/admin/activity-logs" element={<AdminGuard><AdminLayout><AdminActivityLogsPage /></AdminLayout></AdminGuard>} />
                   <Route path="/*" element={<ProtectedRoutes />} />
                 </Routes>
               </BrowserRouter>

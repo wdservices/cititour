@@ -61,6 +61,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Admin dashboard theme colors
+        marigold: { DEFAULT: "#D9891F", dark: "#B8720F" },
+        ink: "#1C1710",
+        ivory: "#FAF7F1",
+        sand: { 100: "#F2EDE1", 200: "#E8E0D4", 300: "#D4C9B8", 500: "#9C8E7C" },
+        palm: "#146B5E",
+        coral: { DEFAULT: "#D9422E", light: "#E25A48" },
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',

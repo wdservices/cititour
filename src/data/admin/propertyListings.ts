@@ -1,0 +1,535 @@
+export type PropertyListingType =
+  | 'Apartment'
+  | 'Studio'
+  | 'Penthouse'
+  | 'Villa'
+  | 'House'
+  | 'Loft'
+  | 'Townhouse'
+  | 'Hotel'
+  | 'Shortlet'
+  | 'Land'
+  | 'For Rent'
+  | 'For Sale';
+
+export interface PropertyAmenity {
+  id: string;
+  label: string;
+}
+
+export interface PropertyRoom {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  capacity: number;
+  beds: number;
+  image?: string;
+}
+
+export interface PropertyListing {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  images?: string[];
+  gallery?: string[];
+  type: PropertyListingType;
+  propertySubType?: 'rent' | 'sale' | 'land' | 'hotel' | 'shortlet';
+  price: string;
+  pricePerNight?: number;
+  pricePerMonth?: number;
+  priceTotal?: number;
+  rating: number;
+  reviews?: number;
+  guests?: number;
+  bedrooms: number;
+  bathrooms: number;
+  location: string;
+  address?: string;
+  state?: string;
+  city?: string;
+  lat?: number;
+  lon?: number;
+  status: 'Active' | 'Pending' | 'Approved' | 'Inactive';
+  ownerId: string;
+  createdByAdmin?: boolean;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  amenities?: string[];
+  rooms?: PropertyRoom[];
+  tags?: string[];
+  listedOn?: string;
+  areaSize?: string;
+  plotSize?: string;
+  isMock?: boolean;
+}
+
+const u = (id: string, w = 1200) =>
+  `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
+
+export const MOCK_PROPERTY_LISTINGS: PropertyListing[] = [
+  {
+    id: 'mock-prop-001',
+    title: 'Luxury Oceanview Penthouse',
+    description:
+      'Stunning 3-bedroom penthouse with panoramic ocean views, modern interiors, private rooftop terrace and infinity plunge pool. Chef kitchen, home automation, 24/7 concierge.',
+    image: u('1600596542815-ffad4c1539a9'),
+    gallery: [
+      u('1600607687939-ce8a6c25118c'),
+      u('1600566753086-00f18fb6b3ea'),
+      u('1600585154340-be6161a56a0c'),
+    ],
+    type: 'Penthouse',
+    propertySubType: 'shortlet',
+    price: '₦120,000/night',
+    pricePerNight: 120000,
+    rating: 4.9,
+    reviews: 47,
+    guests: 6,
+    bedrooms: 3,
+    bathrooms: 3,
+    location: 'Victoria Island, Lagos',
+    address: '4A Yesufu Abiodun, Victoria Island, Lagos',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 000 1001',
+    whatsapp: '2348030001001',
+    email: 'stays@oceanview.ng',
+    amenities: ['WiFi', 'Parking', 'Swimming Pool', 'Full Kitchen', 'Gym', 'Laundry', 'Balcony/Terrace', '24h Power', 'Concierge', 'Elevator'],
+    rooms: [
+      { id: 'php-1', name: 'Master Suite', description: 'King bed, ocean view, rain shower, walk-in closet.', price: 120000, capacity: 2, beds: 1, image: u('1590490360182-c33d57733427', 600) },
+      { id: 'php-2', name: 'Guest Bedroom 1', description: 'Queen bed, ensuite, city view.', price: 0, capacity: 2, beds: 1, image: u('1618773928121-c32242e63f39', 600) },
+      { id: 'php-3', name: 'Guest Bedroom 2 + Office', description: 'Twin beds convertible, study nook.', price: 0, capacity: 2, beds: 2, image: u('1566665797739-1674de7a421a', 600) },
+    ],
+    tags: ['Luxury', 'Ocean View', 'Shortlet', 'Serviced'],
+    listedOn: '2026-02-20',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-002',
+    title: 'Modern Lekki Studio Apartment',
+    description:
+      'Sleek and cozy studio apartment in the heart of Lekki Phase 1. Open-plan living, fitted kitchen, fast Wi-Fi, 24/7 security. Perfect for business travellers and short stays.',
+    image: u('1522708323590-d24dbb6b0267'),
+    gallery: [u('1560448204-e02f11c3d0e2'), u('1502672260266-1c1ef2d93688'), u('1493809842364-78817add7ffb')],
+    type: 'Studio',
+    propertySubType: 'rent',
+    price: '₦850,000/month',
+    pricePerMonth: 850000,
+    pricePerNight: 45000,
+    rating: 4.6,
+    reviews: 82,
+    guests: 2,
+    bedrooms: 1,
+    bathrooms: 1,
+    location: 'Lekki Phase 1, Lagos',
+    address: '19B Admiralty Road, Lekki Phase 1, Lagos',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 810 222 0011',
+    whatsapp: '2348102220011',
+    email: 'rentals@lekkihomes.ng',
+    amenities: ['WiFi', 'Parking', 'Full Kitchen', 'Laundry', '24h Power', 'CCTV', 'Access Gate'],
+    tags: ['Rent', 'Studio', 'Lekki', 'Business Travel'],
+    listedOn: '2026-03-01',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-003',
+    title: 'Ikoyi Villa with Private Pool',
+    description:
+      'Exquisite 5-bedroom detached villa with swimming pool, home cinema, smart home systems, boys quarters and lush gardens. Ideal for family retreats and executive stays.',
+    image: u('1613490493576-7fde63acd811'),
+    gallery: [u('1600585154340-be6161a56a0c'), u('1600607687939-ce8a6c25118c'), u('1600566753086-00f18fb6b3ea')],
+    type: 'Villa',
+    propertySubType: 'sale',
+    price: '₦480,000,000',
+    priceTotal: 480000000,
+    rating: 5.0,
+    reviews: 19,
+    guests: 10,
+    bedrooms: 5,
+    bathrooms: 5,
+    location: 'Banana Island, Ikoyi, Lagos',
+    address: 'Plot 12C Ocean Parade, Banana Island, Ikoyi',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 805 555 0003',
+    whatsapp: '2348055550003',
+    email: 'sales@ikoyiestates.ng',
+    amenities: ['WiFi', 'Parking', 'Swimming Pool', 'Full Kitchen', 'Gym', 'Laundry', 'Pet Friendly', 'Balcony/Terrace', '24h Power', 'Security', 'BQ', 'Home Cinema'],
+    rooms: [
+      { id: 'ikv-1', name: 'Master Wing', description: 'Dual walk-in closet, spa bath, private balcony.', price: 0, capacity: 2, beds: 1, image: u('1590490360182-c33d57733427', 600) },
+      { id: 'ikv-2', name: 'Bedroom 2 (Ensuite)', description: 'Queen bed, pool view, study.', price: 0, capacity: 2, beds: 1, image: u('1618773928121-c32242e63f39', 600) },
+      { id: 'ikv-3', name: 'Family Suite', description: '2 double beds, shared lounge area.', price: 0, capacity: 4, beds: 2, image: u('1566665797739-1674de7a421a', 600) },
+    ],
+    tags: ['For Sale', 'Luxury', 'Villa', 'Private Pool'],
+    listedOn: '2026-01-30',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-004',
+    title: 'Cozy Island Loft',
+    description:
+      'A beautifully designed loft space with exposed brick, industrial-chic decor, floor-to-ceiling windows and Lagos skyline views. Rooftop lounge shared with 6 other units.',
+    image: u('1502672260266-1c1ef2d93688'),
+    gallery: [u('1522708323590-d24dbb6b0267'), u('1560448204-e02f11c3d0e2'), u('1493809842364-78817add7ffb')],
+    type: 'Loft',
+    propertySubType: 'shortlet',
+    price: '₦65,000/night',
+    pricePerNight: 65000,
+    rating: 4.7,
+    reviews: 34,
+    guests: 4,
+    bedrooms: 2,
+    bathrooms: 2,
+    location: 'Oniru, Lekki, Lagos',
+    address: '14 Bisola Durosimi-Etti, Oniru Estate, Lekki',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 809 444 0004',
+    whatsapp: '2348094440004',
+    email: 'stays@islandloft.ng',
+    amenities: ['WiFi', 'Full Kitchen', 'Laundry', 'Balcony/Terrace', 'Rooftop Access', '24h Power'],
+    tags: ['Designer', 'Loft', 'Skyline View'],
+    listedOn: '2026-02-08',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-005',
+    title: 'Port Harcourt Executive 2-Bed Flat',
+    description:
+      'Premium 2-bedroom flat in GRA with 24/7 power, treated water, private car park and estate security. 3-minute drive to Port Harcourt Club and business districts.',
+    image: u('1600585154340-be6161a56a0c'),
+    gallery: [u('1590490360182-c33d57733427'), u('1618773928121-c32242e63f39'), u('1566665797739-1674de7a421a')],
+    type: 'Apartment',
+    propertySubType: 'rent',
+    price: '₦1,200,000/year',
+    pricePerMonth: 100000,
+    rating: 4.5,
+    reviews: 61,
+    guests: 4,
+    bedrooms: 2,
+    bathrooms: 2,
+    location: 'Old GRA, Port Harcourt',
+    address: '38 Forces Avenue, Old GRA, Port Harcourt',
+    state: 'Rivers',
+    city: 'Port Harcourt',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 777 0005',
+    whatsapp: '2348037770005',
+    email: 'rent@phgrahomes.ng',
+    amenities: ['WiFi', 'Parking', 'Full Kitchen', 'Gym', 'Laundry', '24h Power', 'Estate Security'],
+    tags: ['Rent', 'Executive', 'GRA'],
+    listedOn: '2026-02-14',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-006',
+    title: 'Waterfront Townhouse',
+    description:
+      'Elegant 4-bedroom townhouse on the Lagos lagoon with private dock access, lush gardens, double-volume living areas and a rooftop terrace for events.',
+    image: u('1600607687939-ce8a6c25118c'),
+    gallery: [u('1600596542815-ffad4c1539a9'), u('1613490493576-7fde63acd811'), u('1600585154340-be6161a56a0c')],
+    type: 'Townhouse',
+    propertySubType: 'shortlet',
+    price: '₦200,000/night',
+    pricePerNight: 200000,
+    rating: 4.8,
+    reviews: 28,
+    guests: 8,
+    bedrooms: 4,
+    bathrooms: 4,
+    location: 'Banana Island, Lagos',
+    address: 'Plot 7F Banana Island Road, Ikoyi',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 666 0006',
+    whatsapp: '2348036660006',
+    email: 'reservations@waterfront.ng',
+    amenities: ['WiFi', 'Parking', 'Swimming Pool', 'Full Kitchen', 'Laundry', 'Balcony/Terrace', '24h Power', 'Jetty/Dock Access', 'Gardens'],
+    tags: ['Waterfront', 'Luxury', 'Events'],
+    listedOn: '2026-01-22',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-007',
+    title: 'Asemi Premium 3-Bed Shortlet (FCT)',
+    description:
+      'Fully serviced 3-bedroom short-let apartment with premium finishes in a high-security estate. 24/7 power, inverter backup, 3 smart TVs, sound system, all rooms ensuite.',
+    image: u('1600566753086-00f18fb6b3ea'),
+    gallery: [u('1590490360182-c33d57733427'), u('1618773928121-c32242e63f39'), u('1566665797739-1674de7a421a')],
+    type: 'Shortlet',
+    propertySubType: 'shortlet',
+    price: '₦95,000/night',
+    pricePerNight: 95000,
+    rating: 4.9,
+    reviews: 126,
+    guests: 5,
+    bedrooms: 3,
+    bathrooms: 3,
+    location: 'Wuye, Abuja FCT',
+    address: '11 Nyerere Crescent, Wuye District, Abuja',
+    state: 'FCT',
+    city: 'Abuja',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 703 999 0007',
+    whatsapp: '2347039990007',
+    email: 'asemi@premierstays.ng',
+    amenities: ['WiFi', 'Parking', 'Full Kitchen', 'Gym', 'Laundry', 'Pet Friendly', 'Balcony/Terrace', '24h Power', 'Inverter', 'Smart TVs', 'Security', 'Elevator'],
+    rooms: [
+      { id: 'as-1', name: 'Master Bedroom', description: 'King bed, smart TV, rain shower, walk-in robe.', price: 0, capacity: 2, beds: 1, image: u('1590490360182-c33d57733427', 600) },
+      { id: 'as-2', name: 'Guest Room 1', description: 'Queen bed, ensuite, city view.', price: 0, capacity: 2, beds: 1, image: u('1618773928121-c32242e63f39', 600) },
+      { id: 'as-3', name: 'Guest Room 2 / Kids', description: '2 single beds, play corner, adjacent bath.', price: 0, capacity: 2, beds: 2, image: u('1566665797739-1674de7a421a', 600) },
+    ],
+    tags: ['Asemi', 'Abuja', 'Premium', 'Serviced'],
+    listedOn: '2026-01-10',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-008',
+    title: 'Maitama 4-Bed Terrace Duplex',
+    description:
+      'Newly built 4-bedroom terrace duplex with BQ, fitted kitchen, spacious compound, all bedrooms ensuite, excellent drainage, interlocked compound.',
+    image: u('1582719478250-c89cae4dc85b'),
+    gallery: [u('1596394516093-501ba68a0ba6'), u('1571003123894-1f0594d2b5d9'), u('1600585154340-be6161a56a0c')],
+    type: 'House',
+    propertySubType: 'sale',
+    price: '₦125,000,000',
+    priceTotal: 125000000,
+    rating: 4.4,
+    reviews: 12,
+    bedrooms: 4,
+    bathrooms: 4,
+    location: 'Maitama, Abuja FCT',
+    address: 'Plot 212 Off IBB Way, Maitama, Abuja',
+    state: 'FCT',
+    city: 'Abuja',
+    status: 'Active',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 333 0008',
+    whatsapp: '2348033330008',
+    email: 'sales@abujahomes.ng',
+    amenities: ['Parking', 'Full Kitchen', 'Laundry', '24h Power (Estate)', 'BQ', 'Security'],
+    areaSize: '380 sqm',
+    tags: ['For Sale', 'Maitama', 'Terrace Duplex'],
+    listedOn: '2026-03-05',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-009',
+    title: 'Lekki Scheme 2 — Land Parcel',
+    description:
+      '500 sqm dry land plot in a developed area of Lekki Scheme 2. 100% dry, corner piece, accessible road, C of O ready. Suitable for 4-bedroom duplex with BQ.',
+    image: u('1500381123146-e5131e291f67'),
+    gallery: [u('1500381130435-de0a34a0b163'), u('1500381143625-c5469399b396'), u('1500381123146-e5131e291f67')],
+    type: 'Land',
+    propertySubType: 'land',
+    price: '₦18,000,000',
+    priceTotal: 18000000,
+    rating: 0,
+    reviews: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    location: 'Lekki Scheme 2, Lagos',
+    address: 'Block 56, Lekki Scheme II, Ajah, Lagos',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Active',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 111 0009',
+    whatsapp: '2348031110009',
+    email: 'plots@lagosland.ng',
+    plotSize: '500 sqm',
+    tags: ['Land', 'For Sale', 'C of O', 'Lekki'],
+    listedOn: '2026-02-28',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-010',
+    title: 'Guzape Hills 1.2 Hectare Land',
+    description:
+      'Premium 1.2 hectare (12,000 sqm) parcel at Guzape Hills with panoramic Abuja city views. Serene environment, perfect for estate development or luxury mansion.',
+    image: u('1464146071629-c2f83e42bd37'),
+    gallery: [u('1500381123146-e5131e291f67'), u('1464146071629-c2f83e42bd37'), u('1526720234285-12a741fd22ef')],
+    type: 'Land',
+    propertySubType: 'land',
+    price: '₦450,000,000',
+    priceTotal: 450000000,
+    rating: 0,
+    reviews: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    location: 'Guzape Hills, Abuja FCT',
+    address: 'Guzape Hills District, Abuja',
+    state: 'FCT',
+    city: 'Abuja',
+    status: 'Active',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 805 222 0010',
+    whatsapp: '2348052220010',
+    email: 'land@guzape.ng',
+    plotSize: '1.2 Hectares (12,000 sqm)',
+    tags: ['Land', 'For Sale', 'Guzape', 'Hillside', 'C of O'],
+    listedOn: '2026-02-11',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-011',
+    title: 'The Citadel Boutique Hotel (Port Harcourt)',
+    description:
+      '28-room boutique hotel with rooftop bar, conference room (80 pax), restaurant, 24/7 gym and spa. Fully operational with existing occupancy rates, staff and FnB structure.',
+    image: u('1566073771259-6a8506099945'),
+    gallery: [u('1582719478250-c89cae4dc85b'), u('1596394516093-501ba68a0ba6'), u('1571003123894-1f0594d2b5d9')],
+    type: 'Hotel',
+    propertySubType: 'hotel',
+    price: '₦85,000 avg/night',
+    pricePerNight: 85000,
+    rating: 4.7,
+    reviews: 428,
+    bedrooms: 28,
+    bathrooms: 28,
+    location: 'GRA Phase 3, Port Harcourt',
+    address: '52 Stadium Road, GRA Phase 3, Port Harcourt',
+    state: 'Rivers',
+    city: 'Port Harcourt',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 700 248 2335',
+    whatsapp: '2347002482335',
+    email: 'info@citadelhotelph.ng',
+    amenities: ['WiFi', 'Parking', 'Swimming Pool', 'Gym', 'Restaurant', 'Spa', '24h Power', 'Conference Room', 'Room Service', 'Bar/Lounge', 'Airport Shuttle'],
+    rooms: [
+      { id: 'ch-1', name: 'Standard Room', description: '22 sqm, queen bed, work desk.', price: 65000, capacity: 2, beds: 1, image: u('1590490360182-c33d57733427', 600) },
+      { id: 'ch-2', name: 'Deluxe King', description: '32 sqm, king bed, lounge area, balcony.', price: 105000, capacity: 2, beds: 1, image: u('1618773928121-c32242e63f39', 600) },
+      { id: 'ch-3', name: 'Executive Suite', description: '48 sqm, separate lounge, meeting nook.', price: 180000, capacity: 3, beds: 1, image: u('1566665797739-1674de7a421a', 600) },
+    ],
+    tags: ['Hotel', 'Going Concern', 'Boutique'],
+    listedOn: '2026-01-05',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-012',
+    title: 'Ibadan 600 sqm Residential Plot (Bodija)',
+    description:
+      'Fenced and gated 600 sqm residential plot on a tarred street in Bodija. Corner piece, drainage on both sides, already sand-filled. Registered survey + deed of assignment.',
+    image: u('1526720234285-12a741fd22ef'),
+    gallery: [u('1500381123146-e5131e291f67'), u('1464146071629-c2f83e42bd37'), u('1526720234285-12a741fd22ef')],
+    type: 'Land',
+    propertySubType: 'land',
+    price: '₦6,500,000',
+    priceTotal: 6500000,
+    rating: 0,
+    reviews: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    location: 'Bodija, Ibadan, Oyo',
+    address: 'Bodija GRA Phase 2, Ibadan, Oyo State',
+    state: 'Oyo',
+    city: 'Ibadan',
+    status: 'Active',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 803 444 0012',
+    whatsapp: '2348034440012',
+    email: 'plots@ibadanestates.ng',
+    plotSize: '600 sqm',
+    tags: ['Land', 'For Sale', 'Bodija', 'Ibadan'],
+    listedOn: '2026-03-08',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-013',
+    title: 'Millennium Estate 3-Bed Flat',
+    description:
+      'Well-maintained 3-bedroom flat with BQ, POP ceilings, two sitting areas, water treatment, borehole, two-phase prepaid meters, two car parking spaces.',
+    image: u('1596394516093-501ba68a0ba6'),
+    gallery: [u('1600585154340-be6161a56a0c'), u('1590490360182-c33d57733427'), u('1618773928121-c32242e63f39')],
+    type: 'Apartment',
+    propertySubType: 'rent',
+    price: '₦950,000/year',
+    pricePerMonth: 79000,
+    rating: 4.3,
+    reviews: 19,
+    guests: 5,
+    bedrooms: 3,
+    bathrooms: 3,
+    location: 'Millennium Estate, Gbagada, Lagos',
+    address: 'Block 12, Flat 4, Millennium Estate, Gbagada',
+    state: 'Lagos',
+    city: 'Lagos',
+    status: 'Active',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 810 555 0013',
+    whatsapp: '2348105550013',
+    email: 'rent@millenniumng.ng',
+    amenities: ['Parking', 'Full Kitchen', 'Laundry', 'Borehole Water', 'Prepaid Meter', 'Estate Security'],
+    areaSize: '185 sqm',
+    tags: ['Rent', 'Estate', '3-Bedroom', 'BQ'],
+    listedOn: '2026-02-25',
+    isMock: true,
+  },
+  {
+    id: 'mock-prop-014',
+    title: 'The Grand Asaba Hotel & Suites',
+    description:
+      '45-room 4-star hotel with pool, event hall (300 pax), two restaurants, executive floor, gym. Located off the Asaba Expressway with high corporate and events occupancy.',
+    image: u('1571003123894-1f0594d2b5d9'),
+    gallery: [u('1566073771259-6a8506099945'), u('1582719478250-c89cae4dc85b'), u('1596394516093-501ba68a0ba6')],
+    type: 'Hotel',
+    propertySubType: 'hotel',
+    price: '₦60,000 avg/night',
+    pricePerNight: 60000,
+    rating: 4.5,
+    reviews: 219,
+    bedrooms: 45,
+    bathrooms: 45,
+    location: 'Asaba, Delta',
+    address: '7B Okpanam Road, Asaba, Delta State',
+    state: 'Delta',
+    city: 'Asaba',
+    status: 'Approved',
+    ownerId: 'mock-admin',
+    createdByAdmin: true,
+    phone: '+234 700 472 6348',
+    whatsapp: '2347004726348',
+    email: 'bookings@grandasaba.ng',
+    amenities: ['WiFi', 'Parking', 'Swimming Pool', 'Gym', 'Restaurant', '24h Power', 'Event Hall', 'Room Service', 'Bar/Lounge', 'Airport Pickup'],
+    rooms: [
+      { id: 'ga-1', name: 'Standard Room', description: '25 sqm, queen bed.', price: 45000, capacity: 2, beds: 1, image: u('1590490360182-c33d57733427', 600) },
+      { id: 'ga-2', name: 'Executive Room', description: '34 sqm, lounge area, work desk.', price: 75000, capacity: 2, beds: 1, image: u('1618773928121-c32242e63f39', 600) },
+      { id: 'ga-3', name: 'Royal Suite', description: '2 bedroom luxury suite, dining, lounge.', price: 180000, capacity: 4, beds: 2, image: u('1566665797739-1674de7a421a', 600) },
+    ],
+    tags: ['Hotel', '4 Star', 'Events Friendly'],
+    listedOn: '2026-01-18',
+    isMock: true,
+  },
+];
+
+export default MOCK_PROPERTY_LISTINGS;
