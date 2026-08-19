@@ -31,13 +31,23 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     password: '',
   });
 
-  const { loginWithEmail, signUpWithEmailPassword, loginWithGoogle, resetPassword, isAuthenticated, isLoading } = useAuth();
+  const { loginWithEmail, signUpWithEmailPassword, loginWithGoogle, resetPassword, isAuthenticated, isLoading, isAdmin } = useAuth();
   const { brandName, locationName } = useRegion();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
+
+  const ADMIN_DASHBOARD_URL = 'http://localhost:3001';
+
+  const redirectAfterLogin = () => {
+    if (isAdmin) {
+      window.location.href = ADMIN_DASHBOARD_URL;
+    } else {
+      navigate('/explore');
+    }
+  };
 
   useEffect(() => {
     try {
@@ -98,7 +108,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "Your account has been created successfully.",
         });
         onAuthenticated?.();
-        navigate('/explore');
+        redirectAfterLogin();
       } else {
         await loginWithEmail(email, password);
         toast({
@@ -106,7 +116,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "You have successfully signed in.",
         });
         onAuthenticated?.();
-        navigate('/explore');
+        redirectAfterLogin();
       }
     } catch (error: any) {
       const code = String(error?.code || '');
@@ -146,7 +156,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         description: "You have successfully signed in with Google.",
       });
       onAuthenticated?.();
-      navigate('/explore');
+      redirectAfterLogin();
     } catch (error: any) {
       const code = String(error?.code || '');
       if (code === 'auth/popup-closed-by-user') {
@@ -207,9 +217,13 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
 
   useEffect(() => {
     if (!forceLogin && !isLoading && isAuthenticated) {
-      navigate('/explore', { replace: true });
+      if (isAdmin) {
+        window.location.href = ADMIN_DASHBOARD_URL;
+      } else {
+        navigate('/explore', { replace: true });
+      }
     }
-  }, [forceLogin, isAuthenticated, isLoading, navigate]);
+  }, [forceLogin, isAuthenticated, isLoading, isAdmin, navigate]);
 
   const features = [
     { icon: MapPin, title: 'Discover Places', color: 'text-primary' },

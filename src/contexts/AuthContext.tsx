@@ -20,12 +20,14 @@ interface User {
   name: string;
   email: string;
   photoURL?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmailPassword: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -43,6 +45,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const logoutTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
@@ -94,14 +97,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
+  const checkAdminStatus = async (uid: string): Promise<boolean> => {
+    try {
+      const adminDocRef = doc(db, 'admin_users', uid);
+      const adminDocSnap = await getDoc(adminDocRef);
+      return adminDocSnap.exists();
+    } catch {
+      return false;
+    }
+  };
+
   // Listen for authentication state changes
   useEffect(() => {
     // Handle redirect result first
-    handleRedirectResult().then((result) => {
+    handleRedirectResult().then(async (result) => {
       if (result) {
-        // User signed in via redirect
-        setUser(convertFirebaseUser(result.user));
-        mirrorUserToFirestore(result.user);
+        const fbUser = result.user;
+        const adminStatus = await checkAdminStatus(fbUser.uid);
+        setUser({ ...convertFirebaseUser(fbUser), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
+        mirrorUserToFirestore(fbUser);
         setIsLoading(false);
       }
     }).catch((error) => {
@@ -109,13 +124,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     });
 
-    const unsubscribe = onAuthStateChange((firebaseUser) => {
+    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
       if (firebaseUser) {
-        setUser(convertFirebaseUser(firebaseUser));
+        const adminStatus = await checkAdminStatus(firebaseUser.uid);
+        setUser({ ...convertFirebaseUser(firebaseUser), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
         mirrorUserToFirestore(firebaseUser);
         resetInactivityTimer();
       } else {
         setUser(null);
+        setIsAdmin(false);
         if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       }
       setIsLoading(false);
@@ -194,6 +212,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin,
     loginWithEmail,
     signUpWithEmailPassword,
     loginWithGoogle,
