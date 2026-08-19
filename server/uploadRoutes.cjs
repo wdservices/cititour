@@ -32,14 +32,12 @@ router.post('/sign', (req, res) => {
       return res.status(500).json({ error: 'Cloudinary environment not configured', details: { hasCloudName, hasApiKey, hasApiSecret } });
     }
 
-    const { folder, public_id, uploadPreset } = req.body || {};
+    const { folder, public_id } = req.body || {};
     const timestamp = Math.floor(Date.now() / 1000);
-    const presetToUse = uploadPreset || CLOUDINARY_SIGNED_PRESET;
 
     const paramsToSign = { timestamp };
     if (folder) paramsToSign.folder = folder;
     if (public_id) paramsToSign.public_id = public_id;
-    if (presetToUse) paramsToSign.upload_preset = presetToUse;
 
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
@@ -51,7 +49,6 @@ router.post('/sign', (req, res) => {
       timestamp,
       apiKey: CLOUDINARY_API_KEY,
       cloudName: CLOUDINARY_CLOUD_NAME,
-      uploadPreset: presetToUse,
     });
   } catch (err) {
     console.error('Cloudinary signing error:', err);

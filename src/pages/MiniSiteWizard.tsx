@@ -69,6 +69,8 @@ export default function MiniSiteWizard() {
   const [email, setEmail] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [imagePublicIds, setImagePublicIds] = useState<string[]>([]);
+  const [logo, setLogo] = useState("");
+  const [logoPublicId, setLogoPublicId] = useState("");
   const [checkin, setCheckin] = useState("14:00");
   const [checkout, setCheckout] = useState("11:00");
 
@@ -96,6 +98,8 @@ export default function MiniSiteWizard() {
       setEmail(p.contactEmail || "");
       setImages(p.images || (p.image ? [p.image] : []));
       setImagePublicIds(p.imagePublicIds || []);
+      setLogo(p.logo || "");
+      setLogoPublicId(p.logoPublicId || "");
       setCheckin(p.checkin || "14:00");
       setCheckout(p.checkout || "11:00");
       setSelectedAmenities(p.amenities || []);
@@ -215,6 +219,8 @@ export default function MiniSiteWizard() {
         image: primaryImage,
         images: images.length > 0 ? images : primaryImage ? [primaryImage] : [],
         imagePublicIds: imagePublicIds.length > 0 ? imagePublicIds : [],
+        logo: logo || "",
+        logoPublicId: logoPublicId || "",
         totalRooms: rooms.reduce((s, r) => s + r.quantity, 0),
         amenities: selectedAmenities,
         miniSiteActive: true,
@@ -353,6 +359,27 @@ export default function MiniSiteWizard() {
                   <Input className="h-11 rounded-xl pl-10" placeholder="hello@azurevilla.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
               </div>
+            </div>
+
+            <div className="my-8 border-t border-gray-200" />
+
+            <div>
+              <h3 className="text-[15px] font-bold text-foreground mb-4">Logo</h3>
+              <MultiImageUpload
+                onUploadSuccess={(r) => {
+                  setLogo(r.secureUrl);
+                  setLogoPublicId(r.publicId);
+                }}
+                onRemove={() => {
+                  setLogo("");
+                  setLogoPublicId("");
+                }}
+                folder={CLOUDINARY_FOLDERS.LISTINGS}
+                currentImages={logo ? [logo] : []}
+                buttonText="Upload Logo"
+                placeholder="Upload your brand logo"
+                maxImages={1}
+              />
             </div>
 
             <div className="my-8 border-t border-gray-200" />
@@ -620,6 +647,7 @@ export default function MiniSiteWizard() {
                   <div className="bg-white rounded-md px-2.5 py-1 text-[9px] text-gray-400 truncate">citivas.com/{propertySlug}</div>
                 </div>
 
+                {/* Hero */}
                 <div className="relative h-44 bg-gray-200">
                   {images[0] ? (
                     <img src={images[0]} alt="" className="w-full h-full object-cover" />
@@ -628,70 +656,118 @@ export default function MiniSiteWizard() {
                       <Upload className="w-7 h-7 text-gray-300" />
                     </div>
                   )}
-                  <div className="absolute top-2 left-2 bg-[#16a34a] text-white text-[8px] font-bold px-1.5 py-0.5 rounded">VILLA</div>
-                  <div className="absolute top-2 right-2 bg-white/90 text-gray-800 text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">★ 4.9</div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 pt-8">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/95 rounded-lg px-2 py-1 shadow">
+                    {logo ? (
+                      <img src={logo} alt="" className="h-5 w-5 object-contain rounded" />
+                    ) : (
+                      <span className="inline-flex items-center justify-center h-5 w-5 rounded bg-[#1a56db] font-bold text-[7px] text-white">
+                        {(title || "P").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-[9px] font-bold text-gray-800">{title || "Brand"}</span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="bg-[#1a56db] text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full">{propertyType}</span>
+                      <span className="bg-white/90 text-gray-800 text-[7px] font-bold px-1.5 py-0.5 rounded-full">Verified</span>
+                    </div>
                     <p className="text-white text-[12px] font-bold leading-tight">{title || "The Azure Villa"}</p>
-                    <p className="text-white/70 text-[9px] mt-0.5">{[city, state].filter(Boolean).join(", ") || "Lekki, Lagos"}</p>
+                    <p className="text-white/70 text-[8px] mt-0.5">{[city, state].filter(Boolean).join(", ") || "Location"}</p>
                   </div>
                 </div>
 
-                <div className="px-3 py-2.5">
-                  <h4 className="text-[10px] font-bold text-gray-800 mb-1">About Us</h4>
-                  <p className="text-[9px] text-gray-500 leading-[1.5] line-clamp-3">
-                    {description || "Experience unparalleled luxury in the heart of the Aegean. Our villa offers a private sanctuary with breathtaking views."}
+                {/* About + Key Facts */}
+                <div className="px-3 py-3 text-center">
+                  <p className="text-[7px] font-bold uppercase tracking-widest text-[#1a56db] mb-0.5">Welcome to</p>
+                  <h4 className="text-[12px] font-extrabold text-gray-800 mb-1">{title || "Brand"}</h4>
+                  <p className="text-[8px] text-gray-500 leading-[1.5] line-clamp-2 mb-3">
+                    {description || "Experience unparalleled luxury."}
                   </p>
-                </div>
-
-                <div className="px-3 pb-2.5">
-                  <h4 className="text-[10px] font-bold text-gray-800 mb-1">Amenities</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedAmenities.slice(0, 6).map((a) => (
-                      <span key={a} className="text-[8px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{a}</span>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { label: "Rating", value: "0 (0)" },
+                      { label: "Location", value: city || "City" },
+                      { label: "Hours", value: `In ${formatTime(checkin) || "14:00"}` },
+                      { label: "From", value: minPrice > 0 ? `\u20A6${minPrice.toLocaleString()}` : "\u20A60" },
+                    ].map((f) => (
+                      <div key={f.label} className="p-1 rounded-lg border border-gray-200 bg-white">
+                        <p className="text-[6px] font-semibold uppercase tracking-wider text-gray-400">{f.label}</p>
+                        <p className="text-[7px] font-bold text-gray-800">{f.value}</p>
+                      </div>
                     ))}
-                    {selectedAmenities.length > 6 && <span className="text-[8px] text-gray-400">+{selectedAmenities.length - 6}</span>}
-                    {selectedAmenities.length === 0 && <span className="text-[8px] text-gray-300">None selected</span>}
                   </div>
                 </div>
 
-                <div className="px-3 pb-2.5">
-                  <div className="bg-gray-50 rounded-lg p-2 space-y-1.5">
-                    <div className="flex gap-1.5">
-                      <div className="flex-1 bg-white rounded-md px-2 py-1 text-[8px] text-gray-400 border border-gray-200">
-                        <span className="block text-[7px] text-gray-300 mb-0.5">CHECK-IN</span>
-                        {formatTime(checkin) || "2:00 PM"}
-                      </div>
-                      <div className="flex-1 bg-white rounded-md px-2 py-1 text-[8px] text-gray-400 border border-gray-200">
-                        <span className="block text-[7px] text-gray-300 mb-0.5">CHECK-OUT</span>
-                        {formatTime(checkout) || "11:00 AM"}
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-md px-2 py-1 text-[8px] text-gray-400 border border-gray-200">
-                      <span className="block text-[7px] text-gray-300 mb-0.5">GUESTS</span>
-                      2 Guests, 1 Room
-                    </div>
-                  </div>
-                </div>
-
+                {/* Rooms */}
                 {rooms.filter(r => r.name).length > 0 && (
                   <div className="px-3 pb-2.5">
+                    <h4 className="text-[10px] font-bold text-gray-800 mb-1.5">Featured Rooms</h4>
                     <div className="space-y-1.5">
                       {rooms.filter(r => r.name).slice(0, 2).map((room) => (
                         <div key={room.id} className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-50">
                           {room.images[0] && <img src={room.images[0]} alt="" className="w-10 h-8 object-cover rounded" />}
                           <div className="flex-1 min-w-0">
                             <p className="text-[9px] font-semibold text-gray-700 truncate">{room.name}</p>
-                            <p className="text-[8px] text-gray-400">{room.bedType}</p>
+                            <p className="text-[7px] text-gray-400">{room.bedType}</p>
                           </div>
-                          {room.pricePerNight > 0 && <p className="text-[9px] font-bold text-[#1a56db] whitespace-nowrap">₦{room.pricePerNight.toLocaleString()}/nt</p>}
+                          {room.pricePerNight > 0 && <p className="text-[8px] font-bold text-[#1a56db] whitespace-nowrap">\u20A6{room.pricePerNight.toLocaleString()}</p>}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="px-3 pb-3">
-                  <div className="bg-[#1a56db] text-white text-center py-2 rounded-lg text-[9px] font-bold tracking-wide">BOOK NOW</div>
+                {/* Gallery — bento */}
+                <div className="px-3 pb-2.5">
+                  <h4 className="text-[10px] font-bold text-gray-800 mb-1.5">Gallery</h4>
+                  {images.length > 1 ? (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-1.5" style={{ height: "80px" }}>
+                        <div className="flex-[3] overflow-hidden rounded-lg">
+                          <img src={images[0]} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-[2] flex flex-col gap-1.5">
+                          {images[1] && <div className="flex-1 overflow-hidden rounded-lg"><img src={images[1]} alt="" className="w-full h-full object-cover" /></div>}
+                          {images[2] ? <div className="flex-1 overflow-hidden rounded-lg"><img src={images[2]} alt="" className="w-full h-full object-cover" /></div> : <div className="flex-1" />}
+                        </div>
+                      </div>
+                      {images.slice(3, 5).length > 0 && (
+                        <div className="flex gap-1.5">
+                          {images.slice(3, 5).map((img, i) => (
+                            <div key={i} className="flex-1 overflow-hidden rounded-lg" style={{ height: "50px" }}>
+                              <img src={img} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-1.5" style={{ height: "80px" }}>
+                        <div className="flex-[3] rounded-lg bg-gray-100" />
+                        <div className="flex-[2] flex flex-col gap-1.5">
+                          <div className="flex-1 rounded-lg bg-gray-100" />
+                          <div className="flex-1 rounded-lg bg-gray-100" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-3 py-3 bg-gray-900 text-white">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    {logo ? (
+                      <img src={logo} alt="" className="h-5 w-5 object-contain rounded bg-white/10 p-0.5" />
+                    ) : (
+                      <span className="inline-flex items-center justify-center h-5 w-5 rounded bg-[#1a56db] font-bold text-[7px] text-white">
+                        {(title || "P").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold">{title || "Brand"}</span>
+                  </div>
+                  <p className="text-[7px] text-gray-400">&copy; {new Date().getFullYear()} {title || "Property"}</p>
                 </div>
               </div>
             </div>
@@ -774,6 +850,7 @@ export default function MiniSiteWizard() {
               <div className="bg-white rounded-md px-3 py-1.5 text-[10px] text-gray-400 truncate">citivas.com/{propertySlug}</div>
             </div>
 
+            {/* Hero */}
             <div className="relative h-56 bg-gray-200">
               {images[0] ? (
                 <img src={images[0]} alt="" className="w-full h-full object-cover" />
@@ -782,58 +859,71 @@ export default function MiniSiteWizard() {
                   <Upload className="w-8 h-8 text-gray-300" />
                 </div>
               )}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5 pt-12">
-                <h3 className="text-white text-[17px] font-bold leading-tight">{title || "The Azure Villa"}</h3>
-                <p className="text-white/70 text-[12px] mt-0.5">{[city, state].filter(Boolean).join(", ") || "Location"}</p>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
+              {/* Logo + name */}
+              <div className="absolute top-3 left-3 flex items-center gap-2 bg-white/95 rounded-lg px-2.5 py-1.5 shadow">
+                {logo ? (
+                  <img src={logo} alt="" className="h-6 w-6 object-contain rounded" />
+                ) : (
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded bg-[#1a56db] font-bold text-[8px] text-white">
+                    {(title || "P").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                  </span>
+                )}
+                <span className="text-[10px] font-bold text-gray-800">{title || "Brand Name"}</span>
+              </div>
+              {/* Badges */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="bg-[#1a56db] text-white text-[8px] font-bold px-2 py-0.5 rounded-full">{propertyType}</span>
+                  <span className="bg-white/90 text-gray-800 text-[8px] font-bold px-2 py-0.5 rounded-full">Verified by Citivas</span>
+                </div>
+                <h3 className="text-white text-[16px] font-bold leading-tight">{title || "The Azure Villa"}</h3>
+                <p className="text-white/70 text-[10px] mt-0.5">{[city, state].filter(Boolean).join(", ") || "Location"}</p>
               </div>
             </div>
 
-            <div className="px-5 py-3 flex items-center gap-3">
-              <span className="bg-[#fef3c7] text-[#92400e] text-[11px] font-bold px-2.5 py-0.5 rounded flex items-center gap-0.5">&#9733; 4.9</span>
-              <span className="bg-gray-100 text-gray-600 text-[11px] font-bold px-2.5 py-0.5 rounded">{propertyType}</span>
-              {minPrice > 0 && <span className="text-[13px] font-bold text-[#1a56db] ml-auto">&#8358;{minPrice.toLocaleString()}/nt</span>}
-            </div>
-
-            <div className="px-5 pb-3">
-              <h4 className="text-[15px] font-bold text-gray-800 mb-2">About Us</h4>
-              <p className="text-[13px] text-gray-500 leading-[1.8] line-clamp-4">
-                {description || "Experience unparalleled luxury in the heart of the Aegean. Our villa offers a private sanctuary with breathtaking views, bespoke services, and modern amenities designed for the discerning traveler."}
+            {/* About + Key Facts */}
+            <div className="px-5 py-5 text-center">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-[#1a56db] mb-1">Welcome to</p>
+              <h4 className="text-[16px] font-extrabold text-gray-800 mb-2">{title || "The Azure Villa"}</h4>
+              <p className="text-[11px] text-gray-500 leading-[1.7] line-clamp-3 mb-5">
+                {description || "Experience unparalleled luxury in the heart of the Aegean. Our villa offers a private sanctuary with breathtaking views."}
               </p>
-            </div>
-
-            {/* Address in preview */}
-            {address && (
-              <div className="px-5 pb-2 flex items-center gap-2 text-[12px] text-gray-500">
-                <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <span>{address}</span>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: "Rating", value: "0 (0)" },
+                  { label: "Location", value: city || "City" },
+                  { label: "Hours", value: `In ${formatTime(checkin) || "14:00"} · Out ${formatTime(checkout) || "12:00"}` },
+                  { label: "Starting from", value: minPrice > 0 ? `\u20A6${minPrice.toLocaleString()}` : "\u20A60" },
+                ].map((f) => (
+                  <div key={f.label} className="p-2 rounded-xl border border-gray-200 bg-white">
+                    <p className="text-[7px] font-semibold uppercase tracking-wider text-gray-400">{f.label}</p>
+                    <p className="text-[9px] font-bold text-gray-800 mt-0.5">{f.value}</p>
+                  </div>
+                ))}
               </div>
-            )}
-
-            {/* Check-in/out in preview */}
-            <div className="px-5 pb-3 flex items-center gap-5 text-[13px] text-gray-400">
-              <span>Check-in: <strong className="text-gray-600">{formatTime(checkin) || "2:00 PM"}</strong></span>
-              <span>Check-out: <strong className="text-gray-600">{formatTime(checkout) || "11:00 AM"}</strong></span>
             </div>
 
-            {/* Rooms in preview */}
+            {/* Rooms */}
             {rooms.filter(r => r.name).length > 0 && (
-              <div className="px-5 pb-3">
-                <h4 className="text-[13px] font-bold text-gray-800 mb-2">Rooms</h4>
+              <div className="px-5 pb-4">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#1a56db] mb-1 text-center">Availability</p>
+                <h4 className="text-[14px] font-extrabold text-gray-800 mb-3 text-center">Featured Rooms</h4>
                 <div className="space-y-2">
                   {rooms.filter(r => r.name).slice(0, 3).map((room) => (
-                    <div key={room.id} className="p-2.5 rounded-lg bg-gray-50">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-medium text-gray-700">{room.name}</span>
-                        <span className="font-bold text-[#1a56db]">{room.pricePerNight > 0 ? `₦${room.pricePerNight.toLocaleString()}` : ""}</span>
-                      </div>
-                      {room.images.length > 0 && (
-                        <div className="flex gap-1.5 mt-2">
-                          {room.images.slice(0, 3).map((img, i) => (
-                            <img key={i} src={img} alt="" className="w-16 h-12 object-cover rounded border border-gray-200" />
-                          ))}
-                          {room.images.length > 3 && <span className="text-[8px] text-gray-400 self-center">+{room.images.length - 3}</span>}
+                    <div key={room.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                      {room.images[0] && (
+                        <div className="h-24 bg-gray-100">
+                          <img src={room.images[0]} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
+                      <div className="p-2.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-bold text-gray-800">{room.name}</p>
+                          {room.pricePerNight > 0 && <p className="text-[11px] font-bold text-[#1a56db]">\u20A6{room.pricePerNight.toLocaleString()}</p>}
+                        </div>
+                        <p className="text-[9px] text-gray-400 mt-0.5">{room.bedType} · {room.bathrooms} bath · {room.maxOccupancy} guests</p>
+                      </div>
                     </div>
                   ))}
                   {rooms.filter(r => r.name).length > 3 && (
@@ -843,68 +933,123 @@ export default function MiniSiteWizard() {
               </div>
             )}
 
-            {/* Gallery in preview */}
-            {images.length > 1 && (
-              <div className="px-5 pb-3">
-                <h4 className="text-[14px] font-bold text-gray-800 mb-2">Gallery</h4>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {images.slice(1, 7).map((img, i) => (
-                    <div key={i} className={`relative overflow-hidden rounded-lg ${i === 0 ? "col-span-2 row-span-2" : ""}`}>
-                      <img src={img} alt="" className={`w-full object-cover rounded-lg ${i === 0 ? "h-32" : "h-16"}`} />
+            {/* Gallery — bento flex */}
+            <div className="px-5 pb-4">
+              <h4 className="text-[14px] font-extrabold text-gray-800 mb-3">Gallery</h4>
+              {images.length > 1 ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2" style={{ height: "140px" }}>
+                    <div className="flex-[3] overflow-hidden rounded-xl">
+                      <img src={images[0]} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-[2] flex flex-col gap-2">
+                      {images[1] && (
+                        <div className="flex-1 overflow-hidden rounded-xl">
+                          <img src={images[1]} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      {images[2] ? (
+                        <div className="flex-1 overflow-hidden rounded-xl">
+                          <img src={images[2]} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ) : <div className="flex-1" />}
+                    </div>
+                  </div>
+                  {images.slice(3, 5).length > 0 && (
+                    <div className="flex gap-2">
+                      {images.slice(3, 5).map((img, i) => (
+                        <div key={i} className="flex-1 overflow-hidden rounded-xl" style={{ height: "90px" }}>
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2" style={{ height: "140px" }}>
+                    <div className="flex-[3] rounded-xl bg-gray-100" />
+                    <div className="flex-[2] flex flex-col gap-2">
+                      <div className="flex-1 rounded-xl bg-gray-100" />
+                      <div className="flex-1 rounded-xl bg-gray-100" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1 rounded-xl bg-gray-100" style={{ height: "90px" }} />
+                    <div className="flex-1 rounded-xl bg-gray-100" style={{ height: "90px" }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Amenities */}
+            {selectedAmenities.length > 0 && (
+              <div className="px-5 pb-4">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#1a56db] mb-1 text-center">What we offer</p>
+                <h4 className="text-[14px] font-extrabold text-gray-800 mb-3 text-center">Amenities</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedAmenities.slice(0, 4).map((a) => (
+                    <div key={a} className="flex items-center gap-2 p-2 rounded-xl border border-gray-200 bg-white">
+                      <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <Check className="w-3.5 h-3.5 text-[#1a56db]" />
+                      </div>
+                      <span className="text-[10px] font-medium text-gray-700">{a}</span>
                     </div>
                   ))}
                 </div>
-                {images.length > 7 && (
-                  <p className="text-[10px] text-gray-400 text-center mt-1.5">+{images.length - 7} more photos</p>
+                {selectedAmenities.length > 4 && (
+                  <p className="text-[10px] text-gray-400 text-center mt-2">+{selectedAmenities.length - 4} more</p>
                 )}
               </div>
             )}
-            {images.length <= 1 && (
-              <div className="px-5 pb-3">
-                <h4 className="text-[14px] font-bold text-gray-800 mb-2">Gallery</h4>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <div className="col-span-2 row-span-2 h-32 rounded-lg bg-gray-100" />
-                  <div className="h-16 rounded-lg bg-gray-100" />
-                  <div className="h-16 rounded-lg bg-gray-100" />
-                </div>
-              </div>
-            )}
 
-            <div className="px-5 pb-5">
-              <div className="bg-[#1a56db] text-white text-center py-3 rounded-lg text-[13px] font-bold tracking-wide">BOOK NOW</div>
-            </div>
-
-            {/* Contact Us in preview */}
-            {(phone || whatsapp || email) && (
+            {/* Contact */}
+            {(phone || whatsapp || email || address) && (
               <div className="px-5 pb-4 border-t border-gray-100 pt-4">
-                <h4 className="text-[14px] font-bold text-gray-800 mb-3">Contact Us</h4>
-                <div className="space-y-2">
-                  {phone && (
-                    <div className="flex items-center gap-3 text-[12px]">
-                      <Phone className="w-4 h-4 text-[#1a56db]" />
-                      <span className="text-gray-600">{phone}</span>
+                <h4 className="text-[14px] font-extrabold text-gray-800 mb-3">Contact</h4>
+                <div className="space-y-2 text-[11px]">
+                  {address && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-400 font-medium w-16 shrink-0">Address</span>
+                      <span className="text-gray-600">{address}</span>
                     </div>
                   )}
-                  {whatsapp && (
-                    <div className="flex items-center gap-3 text-[12px]">
-                      <MessageCircle className="w-4 h-4 text-green-500" />
-                      <span className="text-gray-600">{whatsapp}</span>
+                  {phone && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 font-medium w-16 shrink-0">Phone</span>
+                      <span className="text-[#1a56db]">{phone}</span>
                     </div>
                   )}
                   {email && (
-                    <div className="flex items-center gap-3 text-[12px]">
-                      <Mail className="w-4 h-4 text-[#1a56db]" />
-                      <span className="text-gray-600">{email}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 font-medium w-16 shrink-0">Email</span>
+                      <span className="text-[#1a56db]">{email}</span>
+                    </div>
+                  )}
+                  {whatsapp && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 font-medium w-16 shrink-0">WhatsApp</span>
+                      <span className="text-green-600">{whatsapp}</span>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Footer in preview */}
-            <div className="px-5 py-4 bg-gray-50 border-t border-gray-100 text-center">
-              <p className="text-[11px] text-gray-400">&copy; {new Date().getFullYear()} {title || "Property Name"}. All rights reserved.</p>
-              <p className="text-[10px] text-gray-300 mt-0.5">Powered by Citivas Hospitality</p>
+            {/* Footer */}
+            <div className="px-5 py-4 bg-gray-900 text-white">
+              <div className="flex items-center gap-2 mb-3">
+                {logo ? (
+                  <img src={logo} alt="" className="h-7 w-7 object-contain rounded bg-white/10 p-0.5" />
+                ) : (
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded bg-[#1a56db] font-bold text-[9px] text-white">
+                    {(title || "P").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                  </span>
+                )}
+                <span className="text-[12px] font-bold">{title || "Brand Name"}</span>
+              </div>
+              <p className="text-[9px] text-gray-400">&copy; {new Date().getFullYear()} {title || "Property"}. All rights reserved.</p>
+              <p className="text-[8px] text-gray-500 mt-0.5">Powered by Bluewaves Technologies</p>
             </div>
           </div>
 

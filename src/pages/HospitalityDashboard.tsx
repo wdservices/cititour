@@ -791,6 +791,7 @@ const handleCopy = () => {
         phone: settingsPhone,
         whatsapp: settingsWhatsapp,
         contactEmail: settingsEmail,
+        logo: primaryProperty.logo || "",
       },
     });
     setSettingsSaved(true);

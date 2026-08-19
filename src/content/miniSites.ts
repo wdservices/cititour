@@ -38,6 +38,7 @@ export interface MiniSite {
   description: string;
   cover: string;
   gallery: string[];
+  logo?: string;
   city: string;
   address: string;
   phone: string;
@@ -422,6 +423,8 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
   const cover = str(raw.image ?? raw.imageUrl, "/placeholder.svg");
   const gallery: string[] = Array.isArray(raw.gallery) && raw.gallery.length
     ? raw.gallery.filter((g: unknown) => typeof g === "string")
+    : Array.isArray(raw.images) && raw.images.length
+    ? raw.images.filter((g: unknown) => typeof g === "string")
     : [cover];
   const price = num(raw.pricePerNight ?? raw.priceFrom ?? raw.price);
   const amenities: string[] = Array.isArray(raw.amenities) && raw.amenities.length
@@ -442,6 +445,7 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
     ),
     cover,
     gallery,
+    logo: str(raw.logo) || undefined,
     city: [city, state].filter(Boolean).join(", "),
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
@@ -517,6 +521,7 @@ export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): 
     ),
     cover,
     gallery,
+    logo: str(raw.logo) || undefined,
     city: [city, state].filter(Boolean).join(", "),
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
