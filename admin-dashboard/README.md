@@ -46,7 +46,7 @@ A comprehensive admin dashboard for managing the TourPH application, built with 
    npm run dev
    ```
 
-4. Open your browser and navigate to `http://localhost:3001`
+4. Open your browser and navigate to `http://localhost:8081`
 
 ### Default Login Credentials
 

@@ -34,7 +34,7 @@ const seed = async () => {
   });
 
   console.log(`admin_users document created for UID: ${uid}`);
-  console.log('Now go to http://localhost:3001 and login.');
+  console.log('Now go to http://localhost:8081/admin and login.');
   process.exit(0);
 };
 
