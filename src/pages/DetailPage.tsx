@@ -677,7 +677,11 @@ const DetailPage = () => {
 
       {/* ── Business Chat Inbox (owner side) ── */}
       {isOwner && (
-        <BusinessChatInbox businessId={id || ''} />
+        <BusinessChatInbox
+          businessId={id || ''}
+          businessAvatar={data.image}
+          businessName={data.title}
+        />
       )}
     </div>
   );

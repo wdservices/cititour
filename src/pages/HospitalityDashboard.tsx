@@ -84,7 +84,7 @@ export default function HospitalityDashboard() {
     [allHouseListings, user?.id]
   );
   const publishedMiniSite = myProperties.find((p: any) => p.miniSiteActive === true || p.status === 'Published' || p.status === 'Approved') as any;
-  const primaryProperty = publishedMiniSite || (myProperties[0] as any);
+  const primaryProperty = publishedMiniSite || null;
 
   const propertyName = primaryProperty?.title || "Your Property";
   const propertySlug = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");

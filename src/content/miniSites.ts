@@ -28,6 +28,7 @@ export interface RoomType {
   capacity: number;
   beds: number;
   image?: string;
+  imagePublicId?: string;
 }
 
 export interface MiniSite {
@@ -39,6 +40,10 @@ export interface MiniSite {
   cover: string;
   gallery: string[];
   logo?: string;
+  logoPublicId?: string;
+  imagePublicId?: string;
+  coverPublicId?: string;
+  galleryPublicIds?: string[];
   city: string;
   address: string;
   phone: string;
@@ -446,6 +451,12 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
     cover,
     gallery,
     logo: str(raw.logo) || undefined,
+    logoPublicId: str(raw.logoPublicId) || undefined,
+    imagePublicId: str(raw.imagePublicId ?? raw.imageCloudinaryId) || undefined,
+    coverPublicId: str(raw.coverPublicId ?? raw.coverCloudinaryId) || undefined,
+    galleryPublicIds: Array.isArray(raw.galleryPublicIds) && raw.galleryPublicIds.length
+      ? raw.galleryPublicIds.filter((g: unknown) => typeof g === "string")
+      : undefined,
     city: [city, state].filter(Boolean).join(", "),
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
@@ -467,6 +478,7 @@ export function propertyDocToMiniSite(id: string, raw: Record<string, any>): Min
         capacity: guests,
         beds: bedrooms,
         image: cover,
+        imagePublicId: str(raw.imagePublicId ?? raw.imageCloudinaryId) || undefined,
       },
     ],
     propertyType,
@@ -522,6 +534,12 @@ export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): 
     cover,
     gallery,
     logo: str(raw.logo) || undefined,
+    logoPublicId: str(raw.logoPublicId) || undefined,
+    imagePublicId: str(raw.imagePublicId ?? raw.imageCloudinaryId) || undefined,
+    coverPublicId: str(raw.coverPublicId ?? raw.coverCloudinaryId) || undefined,
+    galleryPublicIds: Array.isArray(raw.galleryPublicIds) && raw.galleryPublicIds.length
+      ? raw.galleryPublicIds.filter((g: unknown) => typeof g === "string")
+      : undefined,
     city: [city, state].filter(Boolean).join(", "),
     address: str(raw.address) || [city, state].filter(Boolean).join(", "),
     phone: str(raw.phone, "+234 000 000 0000"),
@@ -543,6 +561,7 @@ export function marketplaceDocToMiniSite(id: string, raw: Record<string, any>): 
         capacity: guests,
         beds: bedrooms,
         image: cover,
+        imagePublicId: str(raw.imagePublicId ?? raw.imageCloudinaryId) || undefined,
       },
     ],
     propertyType,

@@ -99,12 +99,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
+  const VALID_ADMIN_ROLES: ReadonlyArray<string> = ['admin', 'super_admin'] as const;
+
   const checkAdminStatus = async (uid: string): Promise<boolean> => {
     try {
       const adminDocRef = doc(db, 'admin_users', uid);
       const adminDocSnap = await getDoc(adminDocRef);
-      return adminDocSnap.exists();
-    } catch {
+      if (!adminDocSnap.exists()) return false;
+      const adminData = adminDocSnap.data() || {};
+      const role = adminData.role;
+      if (typeof role !== 'string' || !VALID_ADMIN_ROLES.includes(role)) {
+        console.warn('[admin-auth] user', uid, 'has invalid role:', role);
+        return false;
+      }
+      if (adminData.disabled === true || adminData.status === 'suspended') {
+        console.warn('[admin-auth] user', uid, 'is suspended or disabled');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error('[admin-auth] checkAdminStatus error:', e);
       return false;
     }
   };

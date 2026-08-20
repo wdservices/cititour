@@ -34,6 +34,9 @@ export interface ChatThread {
 /**
  * Finds or creates a chat thread between a customer and a business owner.
  * Uses a `participants` array [customerId, businessOwnerId] for security rules.
+ * When `fallbackOwnerId` / `fallbackOwnerName` are supplied (e.g. for standalone
+ * product listings without a formal `businesses/*` doc), those values are used
+ * as the owner identity if the business lookup returns nothing.
  * Returns the chat document ID.
  */
 export async function ensureChatExists(
@@ -41,13 +44,14 @@ export async function ensureChatExists(
   customerId: string,
   businessName: string,
   customerName: string,
+  fallbackOwnerId?: string,
+  fallbackOwnerName?: string,
 ): Promise<string> {
   const safeBusinessId = businessId || '';
   const safeCustomerId = customerId || '';
   const safeBusinessName = businessName || 'Business';
   const safeCustomerName = customerName || 'Customer';
 
-  // Fetch the business owner's UID from the business document
   let businessOwnerId = '';
   try {
     const bizDoc = await getDoc(doc(db, 'businesses', safeBusinessId));
@@ -59,28 +63,39 @@ export async function ensureChatExists(
     console.error('Failed to fetch business owner:', err);
   }
 
-  // Build the participants array — both UIDs for security rule access
+  if (!businessOwnerId && fallbackOwnerId) {
+    businessOwnerId = fallbackOwnerId;
+  }
+  const finalBusinessName = (!safeBusinessId || safeBusinessName === 'Business') && fallbackOwnerName
+    ? fallbackOwnerName
+    : safeBusinessName;
+
   const participants = [safeCustomerId, businessOwnerId].filter(Boolean);
 
-  // Check if a chat already exists between this customer and this business
   const q = query(
     collection(db, 'chats'),
     where('participants', 'array-contains', safeCustomerId),
   );
   const snap = await getDocs(q);
 
-  // Filter client-side for the specific business
-  const existing = snap.docs.find((d) => d.data().businessId === safeBusinessId);
+  const existing = snap.docs.find((d) => {
+    const dId = d.data().businessId;
+    if (safeBusinessId && dId === safeBusinessId) return true;
+    if (!safeBusinessId && fallbackOwnerId) {
+      const dOwner = d.data().businessOwnerId;
+      return !dId && dOwner === fallbackOwnerId;
+    }
+    return false;
+  });
   if (existing) {
     return existing.id;
   }
 
-  // Create new chat thread
   const docRef = await addDoc(collection(db, 'chats'), {
     businessId: safeBusinessId,
     customerId: safeCustomerId,
     businessOwnerId,
-    businessName: safeBusinessName,
+    businessName: finalBusinessName,
     customerName: safeCustomerName,
     participants,
     lastMessage: '',

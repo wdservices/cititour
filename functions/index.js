@@ -135,7 +135,7 @@ async function destroyCloudinaryImage(pid) {
   }
 }
 
-function collectPublicIds(userDoc, walletDoc, businesses, marketplace, house_listings) {
+function collectPublicIds(userDoc, walletDoc, businesses, marketplace, house_listings, mini_sites) {
   const ids = new Set();
   const userData = userDoc || {};
   const walletData = walletDoc || {};
@@ -158,6 +158,20 @@ function collectPublicIds(userDoc, walletDoc, businesses, marketplace, house_lis
     if (Array.isArray(hd.imagePublicIds)) hd.imagePublicIds.forEach((i) => i && ids.add(i));
     if (Array.isArray(hd.rooms)) {
       for (const r of hd.rooms) {
+        if (r && Array.isArray(r.imagePublicIds)) r.imagePublicIds.forEach((i) => i && ids.add(i));
+      }
+    }
+  }
+  for (const ms of mini_sites || []) {
+    const msd = ms.data || {};
+    if (msd.logoPublicId) ids.add(msd.logoPublicId);
+    if (msd.imagePublicId) ids.add(msd.imagePublicId);
+    if (msd.coverPublicId) ids.add(msd.coverPublicId);
+    if (Array.isArray(msd.imagePublicIds)) msd.imagePublicIds.forEach((i) => i && ids.add(i));
+    if (Array.isArray(msd.galleryPublicIds)) msd.galleryPublicIds.forEach((i) => i && ids.add(i));
+    if (Array.isArray(msd.rooms)) {
+      for (const r of msd.rooms) {
+        if (r && r.imagePublicId) ids.add(r.imagePublicId);
         if (r && Array.isArray(r.imagePublicIds)) r.imagePublicIds.forEach((i) => i && ids.add(i));
       }
     }
@@ -188,7 +202,7 @@ async function collectOwnedData(userId) {
   miniSnap.docs.forEach((d) => miniSet.set(d.id, { id: d.id, data: d.data() }));
   const mini_sites = Array.from(miniSet.values());
 
-  const allCloudinaryPublicIds = collectPublicIds(userDoc, walletDoc, businesses, marketplace, house_listings);
+  const allCloudinaryPublicIds = collectPublicIds(userDoc, walletDoc, businesses, marketplace, house_listings, mini_sites);
   return { userSnap, walletSnap, userDoc, walletDoc, businesses, marketplace, house_listings, mini_sites, allCloudinaryPublicIds };
 }
 
@@ -225,6 +239,7 @@ exports.archiveAndDeleteUser = onCall(async (request) => {
   businesses.forEach((b) => docsToDelete.push(db.collection("businesses").doc(b.id)));
   marketplace.forEach((m) => docsToDelete.push(db.collection("marketplace").doc(m.id)));
   house_listings.forEach((h) => docsToDelete.push(db.collection("house_listings").doc(h.id)));
+  mini_sites.forEach((ms) => docsToDelete.push(db.collection("mini_sites").doc(ms.id)));
   docsToDelete.forEach((ref) => batch.delete(ref));
   await batch.commit();
   const deletedCount = docsToDelete.length;
@@ -256,13 +271,14 @@ exports.cleanupUserData = functionsV1.firestore.document("users/{userId}").onDel
   }
 
   const collected = await collectOwnedData(userId);
-  const { businesses, marketplace, house_listings, allCloudinaryPublicIds } = collected;
+  const { businesses, marketplace, house_listings, mini_sites, allCloudinaryPublicIds } = collected;
 
   const db = admin.firestore();
   const batch = db.batch();
   businesses.forEach((b) => batch.delete(db.collection("businesses").doc(b.id)));
   marketplace.forEach((m) => batch.delete(db.collection("marketplace").doc(m.id)));
   house_listings.forEach((h) => batch.delete(db.collection("house_listings").doc(h.id)));
+  mini_sites.forEach((ms) => batch.delete(db.collection("mini_sites").doc(ms.id)));
   try {
     await batch.commit();
   } catch (e) {
