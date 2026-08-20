@@ -11,3 +11,6 @@ ios/
 *.orig.*
 web-build/
 .env
+google-services.json
+GoogleService-Info.plist
+google-service-account.json

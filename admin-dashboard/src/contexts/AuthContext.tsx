@@ -6,7 +6,7 @@ import {
   onAuthStateChanged, 
   User as FirebaseUser 
 } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 
 interface User {
   uid: string
@@ -23,7 +23,43 @@ interface AuthContextType {
   loading: boolean
 }
 
+const VALID_ROLES: ReadonlyArray<User['role']> = ['admin', 'super_admin'] as const
+
+function isValidRole(role: unknown): role is User['role'] {
+  return typeof role === 'string' && (VALID_ROLES as readonly string[]).includes(role)
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+async function mapAdminDoc(firebaseUser: FirebaseUser, adminDocSnap: FirebaseFirestoreTypes.DocumentSnapshot<FirebaseFirestoreTypes.DocumentData>): Promise<User | null> {
+  if (!adminDocSnap.exists()) return null
+
+  const adminData = adminDocSnap.data() || {}
+  const role = adminData.role
+
+  if (!isValidRole(role)) {
+    console.warn('[admin-auth] user', firebaseUser.uid, 'has invalid role:', role)
+    return null
+  }
+
+  if (adminData.disabled === true || adminData.status === 'suspended') {
+    console.warn('[admin-auth] user', firebaseUser.uid, 'is suspended')
+    return null
+  }
+
+  try {
+    await setDoc(doc(db, 'admin_users', firebaseUser.uid), {
+      lastLoginAt: serverTimestamp(),
+    }, { merge: true })
+  } catch (_) {}
+
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    displayName: firebaseUser.displayName || adminData.displayName || adminData.name || null,
+    role,
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -31,68 +67,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const adminDocRef = doc(db, "admin_users", firebaseUser.uid);
-        const adminDocSnap = await getDoc(adminDocRef);
-
-        if (adminDocSnap.exists()) {
-          const adminData = adminDocSnap.data();
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            role: adminData.role // Assuming 'role' field exists in admin_users document
-          });
+      try {
+        if (firebaseUser && firebaseUser.emailVerified !== false) {
+          const adminDocRef = doc(db, 'admin_users', firebaseUser.uid)
+          const adminDocSnap = await getDoc(adminDocRef)
+          const mapped = await mapAdminDoc(firebaseUser, adminDocSnap)
+          if (mapped) {
+            setUser(mapped)
+          } else {
+            await signOut(auth)
+            setUser(null)
+          }
         } else {
-          // Not an admin user, log them out or handle appropriately
-          await signOut(auth);
-          setUser(null);
+          setUser(null)
         }
-      } else {
-        setUser(null);
+      } catch (err) {
+        console.error('[admin-auth] onAuthStateChanged error:', err)
+        try { await signOut(auth) } catch (_) {}
+        setUser(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    })
+    return () => unsubscribe()
+  }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
+      setLoading(true)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const firebaseUser = userCredential.user
+      if (!firebaseUser) return false
 
-      const adminDocRef = doc(db, "admin_users", firebaseUser.uid);
-      const adminDocSnap = await getDoc(adminDocRef);
+      const adminDocRef = doc(db, 'admin_users', firebaseUser.uid)
+      const adminDocSnap = await getDoc(adminDocRef)
+      const mapped = await mapAdminDoc(firebaseUser, adminDocSnap)
 
-      if (adminDocSnap.exists()) {
-        const adminData = adminDocSnap.data();
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          role: adminData.role
-        });
-        setLoading(false);
-        return true;
-      } else {
-        // Not an admin user
-        await signOut(auth);
-        setUser(null);
-        setLoading(false);
-        return false;
+      if (!mapped) {
+        await signOut(auth)
+        setUser(null)
+        return false
       }
+
+      setUser(mapped)
+      return true
     } catch (error) {
-      console.error('Login error:', error);
-      setLoading(false);
-      return false;
+      console.error('[admin-auth] Login error:', error)
+      setUser(null)
+      return false
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-  };
+    try {
+      await signOut(auth)
+    } catch (_) {}
+    setUser(null)
+  }
 
   const value = {
     user,

@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Image,
 } from 'react-native';
-import { Menu, ArrowLeft, User } from 'lucide-react-native';
+import { Menu, ArrowLeft, User } from '../lib/icons';
 
 const BLUE = '#1E88E5';
 

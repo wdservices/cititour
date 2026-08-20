@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Modal, KeyboardAvoidingView, Platform, Alert, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Store, ShoppingBag, Home, Calendar, ChevronRight, X, Loader2, Plus, Camera } from 'lucide-react-native';
+import { ArrowLeft, Store, ShoppingBag, Home, Calendar, ChevronRight, X, Loader2, Plus, Camera } from '../lib/icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';

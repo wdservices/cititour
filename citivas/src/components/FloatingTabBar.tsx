@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Compass, CalendarDays, Bookmark, MessageCircle, User,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 
 const iconMap: Record<string, React.ComponentType<any>> = {

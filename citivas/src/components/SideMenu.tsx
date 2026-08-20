@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight, Compass, Building2, Calendar, ShoppingBag, LayoutDashboard,
   Bookmark, Wallet, MessageCircle, Share2, MessageSquare, Settings, Headphones,
-} from 'lucide-react-native';
+} from '../lib/icons';
 
 const DRAWER_W = Math.min(Dimensions.get('window').width * 0.82, 320);
 const BLUE = '#1E88E5';

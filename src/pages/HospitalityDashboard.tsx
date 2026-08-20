@@ -83,7 +83,8 @@ export default function HospitalityDashboard() {
     () => allHouseListings.filter((l: any) => l.ownerId === user?.id || l.userId === user?.id),
     [allHouseListings, user?.id]
   );
-  const primaryProperty = myProperties[0] as any;
+  const publishedMiniSite = myProperties.find((p: any) => p.miniSiteActive === true || p.status === 'Published' || p.status === 'Approved') as any;
+  const primaryProperty = publishedMiniSite || (myProperties[0] as any);
 
   const propertyName = primaryProperty?.title || "Your Property";
   const propertySlug = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
@@ -951,6 +952,43 @@ const handleCopy = () => {
       </div>
     </div>
   );
+
+  if (user == null) {
+    navigate("/auth");
+    return null;
+  }
+
+  if (!publishedMiniSite) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card border border-border rounded-2xl shadow-sm p-8 md:p-10 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Hotel className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-3">
+            Your hospitality dashboard isn't live yet.
+          </h1>
+          <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+            Publish a property mini-site first, then you can manage bookings, inventory, rates and reports from here.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate("/mini-site-wizard")}
+              className="w-full py-3 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors active:scale-95 shadow-sm"
+            >
+              Create your first mini-site
+            </button>
+            <button
+              onClick={() => navigate("/profile/dashboard?tab=listings")}
+              className="w-full py-3 px-6 rounded-lg border border-border bg-card text-muted-foreground text-sm font-semibold hover:bg-muted transition-colors"
+            >
+              Back to My Listings
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

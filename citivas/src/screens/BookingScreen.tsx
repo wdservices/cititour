@@ -4,7 +4,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, ChevronLeft, ChevronRight, Users, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, ChevronLeft, ChevronRight, Users, CheckCircle2 } from '../lib/icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePropertyDetail, RoomCategory } from '../lib/usePropertyDetail';

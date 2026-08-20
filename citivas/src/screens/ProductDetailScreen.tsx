@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft, MapPin, Heart, ShoppingCart, MessageCircle,
   ShieldCheck, Truck, RefreshCcw, Store, ChevronRight, Share, Star,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

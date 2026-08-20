@@ -2,7 +2,7 @@ import React from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Pressable,
 } from 'react-native';
-import { MapPin, Star, Heart, ChevronRight, ArrowRight } from 'lucide-react-native';
+import { MapPin, Star, Heart, ChevronRight, ArrowRight } from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { ExploreListing } from '../lib/useExploreData';
 import { getMockImage } from '../lib/mockImages';

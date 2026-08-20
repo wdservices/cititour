@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, RefreshControl, Alert, Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, MapPin, CreditCard as Edit3, Trash2, Package, ArrowLeft } from 'lucide-react-native';
+import { Plus, MapPin, Edit3, Trash2, Package, ArrowLeft } from '../lib/icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

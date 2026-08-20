@@ -181,7 +181,7 @@ const ProfileDashboard = () => {
   const myEvents = (listingsData?.events || []) as ListingItem[];
 
   // ── Hospitality mini-site check ──
-  const hasMiniSite = myBusinesses.some((b: any) => b.miniSiteActive === true);
+  const hasMiniSite = myProperties.some((p: any) => p.miniSiteActive === true || p.status === 'Published' || p.status === 'Approved');
 
   // ── Children of selected business ──
   const { data: bizChildren, isLoading: loadingBizChildren } = useBusinessChildren(selectedBusinessId);
@@ -1431,19 +1431,21 @@ const ProfileDashboard = () => {
             </div>
 
             {/* Hospitality Entry Card */}
-            <button
-              onClick={() => navigate("/hospitality-dashboard")}
-              className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
-            >
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Hotel className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">Property Dashboard</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Manage reservations, revenue, rooms & bookings</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-            </button>
+            {hasMiniSite && (
+              <button
+                onClick={() => navigate("/hospitality-dashboard")}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+              >
+                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Hotel className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm">Property Dashboard</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Manage reservations, revenue, rooms & bookings</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </button>
+            )}
 
             <Card className="border-border/50">
               <CardContent className="p-5">

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions, Animated,
 } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 
 const { width: W } = Dimensions.get('window');

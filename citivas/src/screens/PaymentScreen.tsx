@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft, User, Lock, CreditCard, ShieldCheck, Check, MapPin, Users, Calendar,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

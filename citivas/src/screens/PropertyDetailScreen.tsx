@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft, Phone, Mail, MapPin, Camera, ChevronLeft, ChevronRight, Share,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePropertyDetail, RoomCategory } from '../lib/usePropertyDetail';

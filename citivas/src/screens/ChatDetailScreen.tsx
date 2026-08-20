@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Send, ChevronLeft } from 'lucide-react-native';
+import { Send, ChevronLeft } from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { sendMessage, listenToMessages, markThreadRead, ChatMessage } from '../lib/chat';

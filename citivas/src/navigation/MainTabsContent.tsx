@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { Compass, Building2, Calendar, ShoppingBag, LayoutDashboard, Bookmark, Wallet, MessageCircle, Share2, MessageSquare, Settings, Headphones } from 'lucide-react-native';
+import { Compass, Building2, Calendar, ShoppingBag, LayoutDashboard, Bookmark, Wallet, MessageCircle, Share2, MessageSquare, Settings, Headphones } from '../lib/icons';
 import { Share, Linking, Platform } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

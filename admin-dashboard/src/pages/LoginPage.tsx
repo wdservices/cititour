@@ -16,9 +16,9 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const success = await login(email, password)
+      const success = await login(email.trim(), password)
       if (!success) {
-        setError('Invalid email or password')
+        setError('Invalid email or password, or account is not an admin.')
       }
     } catch (error) {
       setError('An error occurred during login')
@@ -28,14 +28,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all duration-300 hover:scale-105">
+    <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 border border-gray-200">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">TourPH Admin</h1>
-          <p className="text-gray-600 text-lg">Sign in to access the dashboard</p>
+          <div className="w-14 h-14 rounded-xl bg-[#1E88E5] flex items-center justify-center mx-auto mb-4">
+            <svg viewBox="0 0 24 24" className="w-7 h-7 text-white fill-current">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Citivas Admin</h1>
+          <p className="text-gray-600 text-base">Sign in with your admin account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -43,10 +48,11 @@ export default function LoginPage() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-              placeholder="admin@tourph.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent transition"
+              placeholder="name@citivas.ng"
               required
             />
           </div>
@@ -59,9 +65,10 @@ export default function LoginPage() {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 pr-10"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E88E5] focus:border-transparent transition pr-10"
                 placeholder="Enter your password"
                 required
               />
@@ -69,6 +76,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -76,7 +84,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -84,17 +92,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+            className="w-full bg-[#1E88E5] text-white py-3 rounded-lg font-semibold hover:bg-[#1976D2] focus:outline-none focus:ring-2 focus:ring-[#1E88E5] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg text-center">
-          <p className="text-sm text-gray-700 mb-2">Demo Credentials:</p>
-          <p className="text-xs text-gray-600">Email: {import.meta.env.VITE_ADMIN_DEMO_EMAIL || 'admin@tourph.com'}</p>
-          <p className="text-xs text-gray-600">Password: admin123</p>
-        </div>
       </div>
     </div>
   )

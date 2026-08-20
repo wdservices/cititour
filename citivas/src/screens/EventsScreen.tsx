@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapPin, Ticket, ArrowLeft } from 'lucide-react-native';
+import { MapPin, Ticket, ArrowLeft } from '../lib/icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMainNavigation } from '../contexts/MainNavigationContext';

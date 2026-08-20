@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MessageCircle, ArrowLeft } from 'lucide-react-native';
+import { MessageCircle, ArrowLeft } from '../lib/icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMainNavigation } from '../contexts/MainNavigationContext';

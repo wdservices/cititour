@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Sun, Moon, ChevronRight, LogOut, ArrowLeft, User, Shield, HelpCircle, CreditCard, Bell, Building2, ShoppingBag, Home, Wallet } from 'lucide-react-native';
+import { Sun, Moon, ChevronRight, LogOut, ArrowLeft, User, Shield, HelpCircle, CreditCard, Bell, Building2, ShoppingBag, Home, Wallet } from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMainNavigation } from '../contexts/MainNavigationContext';
 import { useAuth } from '../contexts/AuthContext';

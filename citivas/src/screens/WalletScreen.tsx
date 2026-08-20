@@ -4,7 +4,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowDown, ArrowUp, Plus, Minus, ArrowLeft, X, Loader2 } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Plus, Minus, ArrowLeft, X, Loader2 } from '../lib/icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

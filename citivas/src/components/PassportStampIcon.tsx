@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import {
   Hotel, UtensilsCrossed, CalendarDays, MapPin,
   ShoppingBag, Heart, ShoppingCart, Smile,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { radius } from '../theme/theme';
 

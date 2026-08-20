@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Linking } from 'react-native';
-import { MapPin } from 'lucide-react-native';
+import { MapPin } from '../lib/icons';
 
 interface ReadOnlyMapProps {
   lat: number;

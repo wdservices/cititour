@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, RefreshControl, Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, Menu, User } from 'lucide-react-native';
+import { Search, Menu, User } from '../lib/icons';
 import * as Location from 'expo-location';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

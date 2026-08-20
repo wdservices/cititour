@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Star, MapPin, Phone, MessageCircle, Sparkles, ArrowLeft,
   Calendar, Clock, Ticket, Users, Minus, Plus, ChevronRight, Share,
-} from 'lucide-react-native';
+} from '../lib/icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';

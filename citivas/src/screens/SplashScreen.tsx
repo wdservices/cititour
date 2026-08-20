@@ -1,8 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, Image, Animated, Text } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-
-const { width: W, height: H } = Dimensions.get('window');
+import React, { useEffect, useRef, useCallback } from 'react';
+import { View, StyleSheet, Image, Animated, Text } from 'react-native';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -12,58 +9,48 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
-  const [videoHasError, setVideoHasError] = useState(false);
   const finishedRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const finishOnce = useCallback(() => {
-    if (!finishedRef.current) {
+    if (!finishedRef.current && mountedRef.current) {
       finishedRef.current = true;
-      onFinish();
+      try {
+        onFinish();
+      } catch (e) {
+        console.warn('[Splash] onFinish error:', e);
+        onFinish();
+      }
     }
   }, [onFinish]);
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.delay(400),
-      Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, friction: 4, tension: 50, useNativeDriver: true }),
-        Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-      ]),
-      Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-    ]).start();
+    mountedRef.current = true;
+    try {
+      Animated.sequence([
+        Animated.delay(300),
+        Animated.parallel([
+          Animated.spring(logoScale, { toValue: 1, friction: 4, tension: 50, useNativeDriver: true }),
+          Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        ]),
+        Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]).start();
+    } catch (e) {
+      console.warn('[Splash] animation start error:', e);
+    }
 
-    const timer = setTimeout(() => finishOnce(), 3500);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => finishOnce(), 2800);
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timer);
+    };
   }, [finishOnce, logoScale, logoOpacity, textOpacity]);
-
-  const handlePlaybackStatusUpdate = useCallback((status: any) => {
-    if (status && status.didJustFinish) finishOnce();
-  }, [finishOnce]);
-
-  const handleVideoError = useCallback(() => {
-    setVideoHasError(true);
-  }, []);
 
   return (
     <View style={styles.container}>
-      {videoHasError ? (
-        <View style={styles.staticBackground} />
-      ) : (
-        <Video
-          source={require('../../assets/citivas-splashscreen.mp4')}
-          style={StyleSheet.absoluteFillObject}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay
-          isLooping={false}
-          useNativeControls={false}
-          isMuted
-          onError={handleVideoError}
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        />
-      )}
-
+      <View style={styles.staticBackground} />
       <View style={styles.logoOverlay}>
-        <Animated.View style={{ alignItems: 'center', opacity: logoOpacity, transform: [{ scale: logoScale }] }}>
+        <Animated.View style={{ alignItems: 'center', opacity: logoOpacity, transform: [{ scale: logoScale }]}}>
           <Image
             source={require('../../assets/citivas-logo.png')}
             style={styles.logo}

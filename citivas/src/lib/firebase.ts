@@ -20,24 +20,46 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-const existingApps = getApps();
-if (existingApps.length > 0) {
-  app = existingApps[0];
-} else {
+try {
+  const existingApps = getApps();
+  if (existingApps.length > 0) {
+    app = existingApps[0];
+  } else {
+    app = initializeApp(firebaseConfig);
+  }
+} catch (err) {
+  console.warn('[firebase] app init failed, falling back:', err);
   app = initializeApp(firebaseConfig);
 }
 
 let auth: Auth;
 try {
   if (Platform.OS === 'web') {
-    auth = initializeAuth(app, { persistence: browserLocalPersistence });
+    try {
+      auth = initializeAuth(app, { persistence: browserLocalPersistence });
+    } catch (_) {
+      auth = getAuth(app);
+    }
   } else {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    });
+    try {
+      const persistence = getReactNativePersistence
+        ? getReactNativePersistence(AsyncStorage)
+        : undefined;
+      if (persistence) {
+        auth = initializeAuth(app, { persistence });
+      } else {
+        auth = getAuth(app);
+      }
+    } catch (_) {
+      auth = getAuth(app);
+    }
   }
 } catch (e) {
-  auth = getAuth(app);
+  try {
+    auth = getAuth(app);
+  } catch (__) {
+    auth = initializeAuth(app, {});
+  }
 }
 
 export { auth };
