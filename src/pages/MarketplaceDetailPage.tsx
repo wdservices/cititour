@@ -18,6 +18,7 @@ import {
 import SEO from "@/components/SEO";
 import { AddressPicker } from "@/components/AddressPicker";
 import { getMockImage } from "@/lib/mockImages";
+import { ChatWidget } from "@/components/ChatWidget";
 
 type ProductData = {
   id: string;
@@ -70,6 +71,7 @@ const MarketplaceDetailPage = () => {
   const [liked, setLiked] = useState(false);
   const [mainImageIdx, setMainImageIdx] = useState(0);
   const [parentBusiness, setParentBusiness] = useState<{ id: string; title: string; image: string; category: string; location: string } | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Review form
   const [reviewRating, setReviewRating] = useState(5);
@@ -365,7 +367,17 @@ const MarketplaceDetailPage = () => {
               <Button className="w-full h-12 font-bold rounded-full bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
                 <ShoppingCart className="w-5 h-5" /> Buy Now
               </Button>
-              <Button variant="outline" className="w-full h-12 font-bold rounded-full border-2 gap-2">
+              <Button
+                variant="outline"
+                className="w-full h-12 font-bold rounded-full border-2 gap-2"
+                onClick={() => {
+                  if (!user) {
+                    navigate("/auth");
+                    return;
+                  }
+                  setChatOpen(true);
+                }}
+              >
                 <MessageCircle className="w-5 h-5" /> Contact Seller
               </Button>
             </div>
@@ -451,6 +463,29 @@ const MarketplaceDetailPage = () => {
           )}
         </section>
       </main>
+
+      {/* Chat Widget - contact seller */}
+      {user && product && !parentBusiness && product.ownerId !== user.id && (
+        <ChatWidget
+          businessId={product.businessId || ''}
+          businessName={parentBusiness?.title || ''}
+          businessAvatar={parentBusiness?.image || ''}
+          sellerId={product.ownerId}
+          sellerName={parentBusiness?.title || 'Seller'}
+          sellerPhoto={parentBusiness?.image || product.image}
+          isOpen={chatOpen}
+          onOpenChange={setChatOpen}
+        />
+      )}
+      {user && product && parentBusiness && product.ownerId !== user.id && (
+        <ChatWidget
+          businessId={parentBusiness.id}
+          businessName={parentBusiness.title}
+          businessAvatar={parentBusiness.image}
+          isOpen={chatOpen}
+          onOpenChange={setChatOpen}
+        />
+      )}
     </div>
   );
 };
