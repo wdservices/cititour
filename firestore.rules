@@ -2,20 +2,62 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Admin helpers ──
+    // An admin is any signed-in user with a doc in `admin_users`.
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Bootstrap allow-list: these emails may self-provision their own
+    // `admin_users` document on first sign-in. Add more emails to the
+    // `admin_allowlist` collection (doc id = email) instead of editing this.
+    function isAllowlistedAdminEmail() {
+      return request.auth != null && (
+        request.auth.token.email in ['admin@tourph.com'] ||
+        exists(/databases/$(database)/documents/admin_allowlist/$(request.auth.token.email))
+      );
+    }
+
+    // ── Admin accounts ──
+    match /admin_users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid && isAllowlistedAdminEmail();
+      allow update, delete: if isAdmin();
+    }
+
+    match /admin_allowlist/{email} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // ── Deleted account archive (audit log kept forever) ──
+    match /deleted_accounts_log/{entryId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+
+      match /items/{itemId} {
+        allow read: if isAdmin();
+        allow create: if isAdmin();
+        allow update, delete: if false;
+      }
+    }
+
     // ── Users ──
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // ── Businesses (also used for Events with category="Event") ──
     match /businesses/{businessId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
 
       // ── Business activity log (chat notifications, etc.) ──
       // Only the business owner can read their own activity feed. Writes
@@ -85,24 +127,24 @@ service cloud.firestore {
     match /marketplace/{productId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // ── House Listings / Properties ──
     match /house_listings/{listingId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // ── Events ──
     match /events/{eventId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // ── Favourites ──
@@ -142,8 +184,8 @@ service cloud.firestore {
     match /ads/{adId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // ── Feedback ──
@@ -183,8 +225,8 @@ service cloud.firestore {
         resource.data.guestEmail == request.auth.token.email
       );
       allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // ── Activity Logs ──
