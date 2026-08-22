@@ -25,6 +25,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const [isWorking, setIsWorking] = useState(false);
   const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,6 +39,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
+
+  // Debug: log auth state changes
+  useEffect(() => {
+    console.log('[AuthPage] auth state:', { isAuthenticated, isLoading, isAdminLoading, isAdmin, forceLogin });
+  }, [isAuthenticated, isLoading, isAdminLoading, isAdmin, forceLogin]);
 
   useEffect(() => {
     try {
@@ -61,19 +67,22 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formError) setFormError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('[AuthPage] handleSubmit called, isSignUp:', isSignUp);
     e.preventDefault();
+    setFormError(null);
 
     if (isSignUp && !acceptTerms) {
+      const msg = "Please accept the Terms of Service to create an account.";
+      setFormError(msg);
       toast({
         title: "Terms Required",
-        description: "Please accept the Terms of Service to create an account.",
+        description: msg,
         variant: "destructive",
       });
       return;
@@ -84,15 +93,19 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     try {
       const email = formData.email.trim();
       const password = formData.password;
+      console.log('[AuthPage] attempting login with email:', email);
       if (!email || !password) {
+        const msg = "Please enter your email and password.";
+        setFormError(msg);
         toast({
           title: "Missing credentials",
-          description: "Please enter your email and password.",
+          description: msg,
         });
         return;
       }
       if (isSignUp) {
         await signUpWithEmailPassword(email, password);
+        console.log('[AuthPage] signup successful');
         toast({
           title: "Account Created!",
           description: "Your account has been created successfully.",
@@ -100,6 +113,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         onAuthenticated?.();
       } else {
         await loginWithEmail(email, password);
+        console.log('[AuthPage] login successful');
         toast({
           title: "Welcome Back!",
           description: "You have successfully signed in.",
@@ -107,11 +121,14 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         onAuthenticated?.();
       }
     } catch (error: any) {
+      console.error("[auth] handleSubmit error:", error?.code, error?.message, error);
       const code = String(error?.code || '');
       if (isSignUp && code === 'auth/email-already-in-use') {
+        const msg = "Please sign in or use Forgot Password to reset.";
+        setFormError(msg);
         toast({
           title: "Email already in use",
-          description: "Please sign in or use Forgot Password to reset.",
+          description: msg,
           variant: "destructive",
         });
         setIsSignUp(false);
@@ -123,7 +140,10 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               ? 'Too many attempts. Please try again later or reset your password.'
               : code === 'auth/invalid-api-key' || code === 'auth/operation-not-allowed'
                 ? 'Email/password sign-in is not configured for this project.'
-                : error?.message || 'Please check your credentials and try again.';
+                : code === 'auth/network-request-failed'
+                  ? 'Network error — check your connection and try again.'
+                  : error?.message || 'Please check your credentials and try again.';
+        setFormError(description);
         toast({
           title: 'Authentication Failed',
           description,
@@ -136,26 +156,33 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('[AuthPage] Google sign-in clicked');
     setIsWorking(true);
+    setFormError(null);
     try {
       await loginWithGoogle();
+      console.log('[AuthPage] Google sign-in successful');
       toast({
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
       });
       onAuthenticated?.();
     } catch (error: any) {
+      console.error("[auth] Google sign-in error:", error?.code, error?.message, error);
       const code = String(error?.code || '');
       if (code === 'auth/popup-closed-by-user') {
+        const msg = 'You closed the sign-in window. Please try again.';
+        setFormError(msg);
         toast({
           title: 'Popup closed',
-          description: 'You closed the sign-in window. Please try again.',
+          description: msg,
         });
       } else {
         const description =
           code === 'auth/network-request-failed'
             ? 'Network issue during Google sign-in. Check your connection and try again.'
             : error?.message || 'Please try again.';
+        setFormError(description);
         toast({
           title: 'Google Sign-In Failed',
           description,
@@ -173,6 +200,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
     setIsSignUp(!isSignUp);
     setFormData({ name: '', email: '', password: '' });
     setAcceptTerms(false);
+    setFormError(null);
   };
 
   const handleResetPassword = async () => {
@@ -313,7 +341,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              {formError && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-2" role="alert">
+                  {formError}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 {isSignUp && (
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -402,6 +435,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 <Button
                   type="submit"
                   disabled={isWorking}
+                  onClick={(e) => { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); }}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all"
                 >
                   {isWorking ? (

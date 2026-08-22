@@ -52,10 +52,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
+  const userRef = React.useRef<User | null>(null);
+  React.useEffect(() => { userRef.current = user; }, [user]);
+
   const resetInactivityTimer = React.useCallback(() => {
     if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
     logoutTimerRef.current = setTimeout(() => {
-      logActivity({ userId: user?.id || "", userEmail: user?.email || "", userName: user?.name || "", action: "sign_out", targetType: "auth", details: "Auto-logout: 5 min inactivity" });
+      const u = userRef.current;
+      logActivity({ userId: u?.id || "", userEmail: u?.email || "", userName: u?.name || "", action: "sign_out", targetType: "auth", details: "Auto-logout: 5 min inactivity" });
       logOut().catch(() => {});
       setUser(null);
     }, INACTIVITY_TIMEOUT);
@@ -103,10 +107,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAdminStatus = async (uid: string): Promise<boolean> => {
     try {
+      console.log('[auth] checkAdminStatus for:', uid);
       const adminDocRef = doc(db, 'admin_users', uid);
       const adminDocSnap = await getDoc(adminDocRef);
+      console.log('[auth] admin doc exists:', adminDocSnap.exists());
       if (!adminDocSnap.exists()) return false;
       const adminData = adminDocSnap.data() || {};
+      console.log('[auth] admin data:', adminData);
       const role = adminData.role;
       if (typeof role !== 'string' || !VALID_ADMIN_ROLES.includes(role)) {
         console.warn('[admin-auth] user', uid, 'has invalid role:', role);
@@ -125,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen for authentication state changes
   useEffect(() => {
-    // Handle redirect result first
+    // Handle redirect result first — always clear loading even when there's no redirect
     handleRedirectResult().then(async (result) => {
       if (result) {
         const fbUser = result.user;
@@ -134,7 +141,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsAdmin(adminStatus);
         setIsAdminLoading(false);
         mirrorUserToFirestore(fbUser);
-        setIsLoading(false);
+      }
+      setIsLoading(false);
+      // If there was no redirect result, isAdminLoading will be cleared by onAuthStateChange below
+      // but ensure it doesn't stay true forever if that listener is slow
+      if (!result) {
+        // leave isAdminLoading to be resolved by onAuthStateChange; don't override here
       }
     }).catch((error) => {
       console.error('Redirect result error:', error);
@@ -142,9 +154,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     });
 
+    // Safety: ensure isAdminLoading doesn't stay true forever if onAuthStateChange is delayed
+    const adminLoadingTimeout = setTimeout(() => {
+      setIsAdminLoading(false);
+    }, 5000);
+
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+      console.log('[auth] onAuthStateChange:', firebaseUser ? firebaseUser.uid : 'null');
       if (firebaseUser) {
         const adminStatus = await checkAdminStatus(firebaseUser.uid);
+        console.log('[auth] adminStatus:', adminStatus);
         setUser({ ...convertFirebaseUser(firebaseUser), isAdmin: adminStatus });
         setIsAdmin(adminStatus);
         setIsAdminLoading(false);
@@ -159,16 +178,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     });
 
-    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    const handleActivity = () => { if (user) resetInactivityTimer(); };
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
+    const handleActivity = () => { if (userRef.current) resetInactivityTimer(); };
     activityEvents.forEach((e) => document.addEventListener(e, handleActivity));
 
     return () => {
       unsubscribe();
+      clearTimeout(adminLoadingTimeout);
       activityEvents.forEach((e) => document.removeEventListener(e, handleActivity));
       if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
     };
-  }, []);
+  }, [resetInactivityTimer]);
 
   const loginWithEmail = async (email: string, password: string): Promise<void> => {
     try {

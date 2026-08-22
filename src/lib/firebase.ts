@@ -36,7 +36,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Use local persistence — auth survives page reload, but times out after 5 min inactivity
-setPersistence(auth, browserLocalPersistence);
+// Fall back to session persistence if localStorage is blocked (e.g. Tracking Prevention, private mode)
+setPersistence(auth, browserLocalPersistence)
+  .catch((e) => {
+    console.warn("[firebase] localPersistence failed, falling back to sessionPersistence:", e?.code || e?.message || e);
+    return setPersistence(auth, browserSessionPersistence);
+  })
+  .catch((e) => {
+    console.error("[firebase] sessionPersistence also failed:", e?.code || e?.message || e);
+  });
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
@@ -57,24 +65,8 @@ facebookProvider.addScope('public_profile');
 
 // Authentication functions
 export const signInWithGoogle = async () => {
-  try {
-    return await signInWithPopup(auth, googleProvider);
-  } catch (error: any) {
-    // If popup is blocked or CORS issues, fallback to redirect
-    const msg = String(error?.message || '');
-    const shouldRedirect = (
-      error.code === 'auth/popup-blocked' ||
-      error.code === 'auth/cancelled-popup-request' ||
-      error.code === 'auth/network-request-failed' ||
-      // Some environments (Safari/iOS, strict privacy settings) report popup-closed when cookies are blocked
-      error.code === 'auth/popup-closed-by-user' ||
-      /Failed to fetch/i.test(msg)
-    );
-    if (shouldRedirect) {
-      return signInWithRedirect(auth, googleProvider);
-    }
-    throw error;
-  }
+  // Force redirect mode to avoid COOP/Tracking Prevention blocking popups
+  return signInWithRedirect(auth, googleProvider);
 };
 
 export const signInWithFacebook = async () => {
