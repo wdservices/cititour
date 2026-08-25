@@ -73,14 +73,8 @@ export const signInWithGoogle = async () => {
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
-    const msg = String(error?.message || '');
-    const shouldRedirect = (
-      error?.code === 'auth/popup-blocked' ||
-      error?.code === 'auth/cancelled-popup-request' ||
-      error?.code === 'auth/network-request-failed' ||
-      /Failed to fetch/i.test(msg)
-    );
-    if (shouldRedirect) {
+    // Only attempt redirect if popup is blocked by browser
+    if (error?.code === 'auth/popup-blocked') {
       return signInWithRedirect(auth, googleProvider);
     }
     throw error;
@@ -91,15 +85,7 @@ export const signInWithFacebook = async () => {
   try {
     return await signInWithPopup(auth, facebookProvider);
   } catch (error: any) {
-    // If popup is blocked or CORS issues, fallback to redirect
-    const msg = String(error?.message || '');
-    const shouldRedirect = (
-      error.code === 'auth/popup-blocked' ||
-      error.code === 'auth/cancelled-popup-request' ||
-      error.code === 'auth/network-request-failed' ||
-      /Failed to fetch/i.test(msg)
-    );
-    if (shouldRedirect) {
+    if (error?.code === 'auth/popup-blocked') {
       return signInWithRedirect(auth, facebookProvider);
     }
     throw error;

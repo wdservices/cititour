@@ -132,57 +132,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen for authentication state changes
   useEffect(() => {
-    // Handle redirect result first — always clear loading even when there's no redirect
-    handleRedirectResult().then(async (result) => {
-      if (result) {
-        const fbUser = result.user;
-        const adminStatus = await checkAdminStatus(fbUser.uid);
-        setUser({ ...convertFirebaseUser(fbUser), isAdmin: adminStatus });
-        setIsAdmin(adminStatus);
-        setIsAdminLoading(false);
-        mirrorUserToFirestore(fbUser);
-      }
-      setIsLoading(false);
-      // If there was no redirect result, isAdminLoading will be cleared by onAuthStateChange below
-      // but ensure it doesn't stay true forever if that listener is slow
-      if (!result) {
-        // leave isAdminLoading to be resolved by onAuthStateChange; don't override here
-      }
-    }).catch((error) => {
-      console.error('Redirect result error:', error);
-      setIsAdminLoading(false);
-      setIsLoading(false);
-    });
-
-    // Safety: ensure isAdminLoading doesn't stay true forever if onAuthStateChange is delayed
-    const adminLoadingTimeout = setTimeout(() => {
-      setIsAdminLoading(false);
-    }, 5000);
+    let isMounted = true;
 
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
       console.log('[auth] onAuthStateChange:', firebaseUser ? firebaseUser.uid : 'null');
       if (firebaseUser) {
-        const adminStatus = await checkAdminStatus(firebaseUser.uid);
-        console.log('[auth] adminStatus:', adminStatus);
-        setUser({ ...convertFirebaseUser(firebaseUser), isAdmin: adminStatus });
-        setIsAdmin(adminStatus);
-        setIsAdminLoading(false);
+        let adminStatus = false;
+        try {
+          adminStatus = await checkAdminStatus(firebaseUser.uid);
+        } catch (e) {
+          console.error('[auth] checkAdminStatus error:', e);
+        }
+        if (isMounted) {
+          setUser({ ...convertFirebaseUser(firebaseUser), isAdmin: adminStatus });
+          setIsAdmin(adminStatus);
+          setIsAdminLoading(false);
+          setIsLoading(false);
+        }
         mirrorUserToFirestore(firebaseUser);
         resetInactivityTimer();
       } else {
-        setUser(null);
-        setIsAdmin(false);
-        setIsAdminLoading(false);
+        if (isMounted) {
+          setUser(null);
+          setIsAdmin(false);
+          setIsAdminLoading(false);
+          setIsLoading(false);
+        }
         if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       }
-      setIsLoading(false);
     });
+
+    // Check redirect result for cases where redirect flow was used
+    handleRedirectResult().then(async (result) => {
+      if (result && result.user && isMounted) {
+        const fbUser = result.user;
+        let adminStatus = false;
+        try {
+          adminStatus = await checkAdminStatus(fbUser.uid);
+        } catch (e) {
+          console.error('[auth] redirect checkAdminStatus error:', e);
+        }
+        if (isMounted) {
+          setUser({ ...convertFirebaseUser(fbUser), isAdmin: adminStatus });
+          setIsAdmin(adminStatus);
+          setIsAdminLoading(false);
+          setIsLoading(false);
+        }
+        mirrorUserToFirestore(fbUser);
+      }
+    }).catch((error) => {
+      console.error('Redirect result error:', error);
+    });
+
+    // Fallback safety timeout in case auth takes too long to respond
+    const adminLoadingTimeout = setTimeout(() => {
+      if (isMounted) {
+        setIsLoading(false);
+        setIsAdminLoading(false);
+      }
+    }, 4000);
 
     const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
     const handleActivity = () => { if (userRef.current) resetInactivityTimer(); };
     activityEvents.forEach((e) => document.addEventListener(e, handleActivity));
 
     return () => {
+      isMounted = false;
       unsubscribe();
       clearTimeout(adminLoadingTimeout);
       activityEvents.forEach((e) => document.removeEventListener(e, handleActivity));
@@ -192,8 +207,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithEmail = async (email: string, password: string): Promise<void> => {
     try {
-      await signInWithEmail(email, password);
-      logActivity({ userId: "", userEmail: email, userName: "", action: "sign_in", targetType: "auth", details: "Signed in with email: " + email });
+      const cred = await signInWithEmail(email, password);
+      if (cred?.user) {
+        const adminStatus = await checkAdminStatus(cred.user.uid);
+        setUser({ ...convertFirebaseUser(cred.user), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
+        setIsLoading(false);
+        mirrorUserToFirestore(cred.user);
+      }
+      logActivity({ userId: cred?.user?.uid || "", userEmail: email, userName: cred?.user?.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with email: " + email });
     } catch (error: any) {
       console.error('Email login error:', error);
       // Re-throw the original Firebase error so callers can inspect error.code
@@ -203,8 +226,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signUpWithEmailPassword = async (email: string, password: string): Promise<void> => {
     try {
-      await signUpWithEmail(email, password);
-      logActivity({ userId: "", userEmail: email, userName: "", action: "sign_up", targetType: "auth", details: "Signed up with email: " + email });
+      const cred = await signUpWithEmail(email, password);
+      if (cred?.user) {
+        const adminStatus = await checkAdminStatus(cred.user.uid);
+        setUser({ ...convertFirebaseUser(cred.user), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
+        setIsLoading(false);
+        mirrorUserToFirestore(cred.user);
+      }
+      logActivity({ userId: cred?.user?.uid || "", userEmail: email, userName: cred?.user?.displayName || "", action: "sign_up", targetType: "auth", details: "Signed up with email: " + email });
     } catch (error: any) {
       console.error('Email signup error:', error);
       throw error;
@@ -213,7 +244,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithGoogle = async (): Promise<void> => {
     try {
-      await signInWithGoogle();
+      const cred = await signInWithGoogle();
+      if (cred && 'user' in cred && cred.user) {
+        const adminStatus = await checkAdminStatus(cred.user.uid);
+        setUser({ ...convertFirebaseUser(cred.user), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
+        setIsLoading(false);
+        mirrorUserToFirestore(cred.user);
+        logActivity({ userId: cred.user.uid, userEmail: cred.user.email || "", userName: cred.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Google" });
+      }
     } catch (error: any) {
       console.error('Google login error:', error);
       throw error;
@@ -222,7 +262,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithFacebook = async (): Promise<void> => {
     try {
-      await signInWithFacebook();
+      const cred = await signInWithFacebook();
+      if (cred && 'user' in cred && cred.user) {
+        const adminStatus = await checkAdminStatus(cred.user.uid);
+        setUser({ ...convertFirebaseUser(cred.user), isAdmin: adminStatus });
+        setIsAdmin(adminStatus);
+        setIsAdminLoading(false);
+        setIsLoading(false);
+        mirrorUserToFirestore(cred.user);
+        logActivity({ userId: cred.user.uid, userEmail: cred.user.email || "", userName: cred.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Facebook" });
+      }
     } catch (error: any) {
       console.error('Facebook login error:', error);
       throw error;
@@ -240,6 +289,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
+      setUser(null);
+      setIsAdmin(false);
       await logOut();
       logActivity({ userId: "", userEmail: user?.email || "", userName: user?.name || "", action: "sign_out", targetType: "auth", details: "Signed out" });
     } catch (error: any) {

@@ -40,9 +40,13 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const forceLogin = searchParams.get('force') === 'true';
 
   const navigateToDestination = React.useCallback(() => {
+    if (isAdmin) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     const redirectUrl = searchParams.get('redirect') || searchParams.get('from') || '/explore';
     navigate(redirectUrl, { replace: true });
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, isAdmin]);
 
   // Debug: log auth state changes
   useEffect(() => {
@@ -51,10 +55,10 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
 
   // Auto-redirect if already logged in (unless forceLogin is requested)
   useEffect(() => {
-    if (isAuthenticated && !isLoading && !forceLogin) {
+    if (isAuthenticated && !isLoading && !isAdminLoading && !forceLogin) {
       navigateToDestination();
     }
-  }, [isAuthenticated, isLoading, forceLogin, navigateToDestination]);
+  }, [isAuthenticated, isLoading, isAdminLoading, forceLogin, navigateToDestination]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -132,9 +136,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               ? 'Too many attempts. Please try again later or reset your password.'
               : code === 'auth/invalid-api-key' || code === 'auth/operation-not-allowed'
                 ? 'Email/password sign-in is not configured for this project.'
-                : code === 'auth/network-request-failed'
-                  ? 'Network error — check your connection and try again.'
-                  : error?.message || 'Please check your credentials and try again.';
+                : code === 'auth/unauthorized-domain'
+                  ? 'Domain not authorized in Firebase. Please ensure localhost is added in Firebase Auth authorized domains.'
+                  : code === 'auth/network-request-failed'
+                    ? 'Network error — check your connection and try again.'
+                    : error?.message || 'Please check your credentials and try again.';
         setFormError(description);
         toast({
           title: 'Authentication Failed',
@@ -169,6 +175,22 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         toast({
           title: 'Popup closed',
           description: msg,
+        });
+      } else if (code === 'auth/popup-blocked') {
+        const msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+        setFormError(msg);
+        toast({
+          title: 'Popup Blocked',
+          description: msg,
+          variant: 'destructive',
+        });
+      } else if (code === 'auth/unauthorized-domain') {
+        const msg = 'Domain not authorized in Firebase Authentication. Please check Firebase Console authorized domains.';
+        setFormError(msg);
+        toast({
+          title: 'Unauthorized Domain',
+          description: msg,
+          variant: 'destructive',
         });
       } else {
         const description =
@@ -222,16 +244,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
       setIsWorking(false);
     }
   };
-
-  useEffect(() => {
-    if (!forceLogin && !isLoading && !isAdminLoading && isAuthenticated) {
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/explore', { replace: true });
-      }
-    }
-  }, [forceLogin, isAuthenticated, isLoading, isAdmin, isAdminLoading, navigate]);
 
   const features = [
     { icon: MapPin, title: 'Discover Places', color: 'text-primary' },
