@@ -102,7 +102,7 @@ export default function MarketplaceScreen() {
                 <View style={[s.productImage, { backgroundColor: colors.muted }]}>
                   <Image
                     source={{ uri: item.image || getMockImage(item.category) }}
-                    style={StyleSheet.absoluteFill}
+                    style={StyleSheet.absoluteFillObject}
                     resizeMode="cover"
                   />
                   {isRecentlyListed(item.createdAt) ? (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRegion } from "@/contexts/RegionContext";
 import { useMyListings, useCreateDoc, useUpdateDoc } from "@/lib/useFirestore";
 import { PROPERTY_AMENITIES, NIGERIAN_STATES } from "@/lib/nigerianStates";
 import { CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
@@ -54,16 +55,18 @@ export default function MiniSiteWizard() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [initialized, setInitialized] = useState(false);
 
+  const { state: regionState, locationName: regionCity, userAddress } = useRegion();
+
   // Step 0: Details
   const [selectedBizId, setSelectedBizId] = useState("");
   const [title, setTitle] = useState("");
   const [propertyType, setPropertyType] = useState("VILLA");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+  const [city, setCity] = useState(regionCity || "");
+  const [state, setState] = useState(regionState || "");
 
   // Step 1: About (now includes check-in/out)
   const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(userAddress || regionCity || "");
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");

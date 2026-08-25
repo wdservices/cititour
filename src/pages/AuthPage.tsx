@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Eye, EyeOff, Mail, Lock, User, ArrowRight, 
@@ -23,7 +23,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
-  const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -39,38 +38,23 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || null;
 
-  const redirectAfterAuth = useCallback((adminFlag: boolean) => {
-    const target = from || (adminFlag ? '/admin' : '/explore');
-    navigate(target, { replace: true });
-  }, [from, navigate]);
+  const navigateToDestination = React.useCallback(() => {
+    const redirectUrl = searchParams.get('redirect') || searchParams.get('from') || '/explore';
+    navigate(redirectUrl, { replace: true });
+  }, [navigate, searchParams]);
 
   // Debug: log auth state changes
   useEffect(() => {
     console.log('[AuthPage] auth state:', { isAuthenticated, isLoading, isAdminLoading, isAdmin, forceLogin });
   }, [isAuthenticated, isLoading, isAdminLoading, isAdmin, forceLogin]);
 
+  // Auto-redirect if already logged in (unless forceLogin is requested)
   useEffect(() => {
-    try {
-      const opts = (auth.app.options || {}) as { authDomain?: string; apiKey?: string };
-      const authDomain = opts.authDomain;
-      const apiKey = opts.apiKey;
-      if (!authDomain || !apiKey) return;
-      const url = `https://${authDomain}/__/auth/iframe?apiKey=${encodeURIComponent(apiKey)}&appName=%5BDEFAULT%5D&v=12.3.0`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-
-      fetch(url, { method: 'GET', mode: 'no-cors', signal: controller.signal })
-        .then(() => setGoogleUnavailable(false))
-        .catch(() => setGoogleUnavailable(true))
-        .finally(() => clearTimeout(timeout));
-
-      return () => clearTimeout(timeout);
-    } catch {
-      setGoogleUnavailable(false);
+    if (isAuthenticated && !isLoading && !forceLogin) {
+      navigateToDestination();
     }
-  }, []);
+  }, [isAuthenticated, isLoading, forceLogin, navigateToDestination]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,7 +101,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "Your account has been created successfully.",
         });
         onAuthenticated?.();
-        setTimeout(() => redirectAfterAuth(false), 100);
+        navigateToDestination();
       } else {
         await loginWithEmail(email, password);
         console.log('[AuthPage] login successful');
@@ -126,10 +110,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "You have successfully signed in.",
         });
         onAuthenticated?.();
-        setTimeout(() => {
-          const adminFlag = Boolean((window as any).__AUTH_ADMIN_FLAG__);
-          redirectAfterAuth(adminFlag);
-        }, 100);
+        navigateToDestination();
       }
     } catch (error: any) {
       console.error("[auth] handleSubmit error:", error?.code, error?.message, error);
@@ -178,11 +159,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         description: "You have successfully signed in with Google.",
       });
       onAuthenticated?.();
-      const adminFlag = Boolean((window as any).__AUTH_ADMIN_FLAG__);
-      setTimeout(() => redirectAfterAuth(adminFlag), 100);
+      navigateToDestination();
     } catch (error: any) {
       console.error("[auth] Google sign-in error:", error?.code, error?.message, error);
-      setIsWorking(false);
       const code = String(error?.code || '');
       if (code === 'auth/popup-closed-by-user') {
         const msg = 'You closed the sign-in window. Please try again.';
@@ -203,8 +182,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           variant: 'destructive',
         });
       }
+    } finally {
+      setIsWorking(false);
     }
   };
+
+
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
@@ -241,17 +224,14 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   };
 
   useEffect(() => {
-    if (!forceLogin && !isLoading && isAuthenticated) {
-      if (!isAdminLoading) {
-        redirectAfterAuth(isAdmin);
+    if (!forceLogin && !isLoading && !isAdminLoading && isAuthenticated) {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
       } else {
-        const waitTimer = setTimeout(() => {
-          redirectAfterAuth(false);
-        }, 3000);
-        return () => clearTimeout(waitTimer);
+        navigate('/explore', { replace: true });
       }
     }
-  }, [forceLogin, isAuthenticated, isLoading, isAdmin, isAdminLoading, redirectAfterAuth]);
+  }, [forceLogin, isAuthenticated, isLoading, isAdmin, isAdminLoading, navigate]);
 
   const features = [
     { icon: MapPin, title: 'Discover Places', color: 'text-primary' },
@@ -448,6 +428,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 <Button
                   type="submit"
                   disabled={isWorking}
+                  onClick={(e) => { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); }}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all"
                 >
                   {isWorking ? (
@@ -474,11 +455,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
               </div>
 
               <div className="mt-8">
-                {googleUnavailable && (
-                  <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 mb-4">
-                    Google sign-in is unavailable on this network. Allowlist `*.web.app`, `*.firebaseapp.com`, and `apis.google.com`, or use email sign-in above.
-                  </div>
-                )}
                 <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border"></div>
@@ -491,7 +467,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 <div className="w-full">
                   <button
                     onClick={handleGoogleSignIn}
-                    disabled={isWorking || googleUnavailable}
+                    disabled={isWorking}
                     className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl border border-border bg-background hover:bg-muted transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed gap-2"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">

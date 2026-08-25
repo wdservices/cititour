@@ -70,7 +70,11 @@ export default function AdminPropertiesPage() {
       const next = new Set(deletedMockIds)
       next.add(listing.id)
       setDeletedMockIds(next)
-      try { localStorage.setItem(DELETED_MOCKS_KEY, JSON.stringify(Array.from(next))) } catch {}
+      try {
+        localStorage.setItem(DELETED_MOCKS_KEY, JSON.stringify(Array.from(next)))
+      } catch (err) {
+        console.warn('Could not persist deleted mock ID', err)
+      }
     } else {
       await deleteHouseListing(listing.id)
     }

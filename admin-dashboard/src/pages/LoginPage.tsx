@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff } from 'lucide-react'
-import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -9,31 +8,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login, isAuthenticated, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/dashboard'
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate(from, { replace: true })
-    }
-  }, [isAuthenticated, authLoading, navigate, from])
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-[#1E88E5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-500">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to={from} replace />
-  }
+  const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,23 +17,11 @@ export default function LoginPage() {
 
     try {
       const success = await login(email.trim(), password)
-      if (success) {
-        navigate(from, { replace: true })
-      } else {
+      if (!success) {
         setError('Invalid email or password, or account is not an admin.')
       }
-    } catch (err: any) {
-      console.error('[admin-login] Unexpected error:', err)
-      const code = String(err?.code || '')
-      const description =
-        code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential'
-          ? 'Incorrect email or password.'
-          : code === 'auth/too-many-requests'
-            ? 'Too many attempts. Please try again later.'
-            : code === 'auth/network-request-failed'
-              ? 'Network error — check your connection and try again.'
-              : err?.message || 'An error occurred during login.'
-      setError(description)
+    } catch (error) {
+      setError('An error occurred during login')
     } finally {
       setLoading(false)
     }

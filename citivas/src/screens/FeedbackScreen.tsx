@@ -181,8 +181,8 @@ const s = StyleSheet.create({
   successBtn: { borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, marginTop: 16 },
   successBtnText: { fontSize: 15, fontWeight: '700' },
 
-  modalOverlay: { ...StyleSheet.absoluteFill, zIndex: 1000 },
-  modalBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 1000 },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32 },
   modalTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
   modalItem: { paddingVertical: 14, paddingHorizontal: 12, borderRadius: 10, marginBottom: 4 },

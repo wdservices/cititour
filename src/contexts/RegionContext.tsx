@@ -1,14 +1,23 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { REGION_COORDINATES, reverseGeocode } from '@/lib/geocode'
 
 type RegionCode = 'LAG' | 'RIV' | 'ABJ' | 'KAN' | 'OWR' | 'KAD'
+
+interface UserCoords {
+  lat: number
+  lon: number
+}
 
 interface RegionContextType {
   region: RegionCode
   brandName: string
   locationName: string
   state: string
+  userCoords: UserCoords | null
+  userAddress: string | null
+  isLocating: boolean
   setRegion: (code: RegionCode) => void
-  detectRegion: () => Promise<void>
+  detectRegion: () => Promise<UserCoords | null>
 }
 
 const RegionContext = createContext<RegionContextType | undefined>(undefined)
@@ -17,6 +26,18 @@ const DEFAULT_REGION: RegionCode = 'RIV'
 
 export function RegionProvider({ children }: { children: React.ReactNode }) {
   const [region, setRegion] = useState<RegionCode>(DEFAULT_REGION)
+  const [userCoords, setUserCoords] = useState<UserCoords | null>(() => {
+    try {
+      const saved = localStorage.getItem('app_user_coords')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+  const [userAddress, setUserAddress] = useState<string | null>(() => {
+    return localStorage.getItem('app_user_address') || null
+  })
+  const [isLocating, setIsLocating] = useState<boolean>(false)
 
   const brandName = useMemo(() => {
     switch (region) {
@@ -66,39 +87,63 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [region])
 
-  // Attempt lightweight geolocation detection; fallback to stored or default
-  const detectRegion = async () => {
-    try {
-      if (!('geolocation' in navigator)) return
-      await new Promise<void>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords
-            // Simple heuristic mapping; replace with reverse geocoding for production
-            // Lagos approx: 6.5244, 3.3792 | Abuja approx: 9.0765, 7.3986 | Port Harcourt approx: 4.8156, 7.0498
-            // Kano approx: 12.0022, 8.5920 | Kaduna approx: 10.5105, 7.4165 | Owerri approx: 5.4836, 7.0333
-            if (latitude > 11.5 && longitude > 7.5 && longitude < 9.5) {
-              setRegion('KAN')
-            } else if (latitude > 10.0 && longitude > 6.5 && longitude < 8.5) {
-              setRegion('KAD')
-            } else if (latitude > 8.0 && longitude > 6.5) {
-              setRegion('ABJ')
-            } else if (latitude > 5.0 && latitude <= 6.0 && longitude > 6.5 && longitude < 7.5) {
-              setRegion('OWR')
-            } else if (latitude > 6.0 && longitude > 3.0 && longitude < 4.5) {
-              setRegion('LAG')
-            } else {
-              setRegion('RIV')
+  // Geolocation detection; records coordinates, detects region & performs reverse geocoding
+  const detectRegion = async (): Promise<UserCoords | null> => {
+    if (!('geolocation' in navigator)) return null
+    setIsLocating(true)
+
+    return new Promise<UserCoords | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords
+          const coords: UserCoords = { lat: latitude, lon: longitude }
+          setUserCoords(coords)
+          try {
+            localStorage.setItem('app_user_coords', JSON.stringify(coords))
+          } catch {
+            // Ignore
+          }
+
+          // Heuristic region mapping
+          let detectedReg: RegionCode = 'RIV'
+          if (latitude > 11.5 && longitude > 7.5 && longitude < 9.5) {
+            detectedReg = 'KAN'
+          } else if (latitude > 10.0 && longitude > 6.5 && longitude < 8.5) {
+            detectedReg = 'KAD'
+          } else if (latitude > 8.0 && longitude > 6.5) {
+            detectedReg = 'ABJ'
+          } else if (latitude > 5.0 && latitude <= 6.0 && longitude > 6.5 && longitude < 7.5) {
+            detectedReg = 'OWR'
+          } else if (latitude > 6.0 && longitude > 3.0 && longitude < 4.5) {
+            detectedReg = 'LAG'
+          } else {
+            detectedReg = 'RIV'
+          }
+
+          setRegion(detectedReg)
+
+          // Reverse geocode to get a clean address string
+          try {
+            const addr = await reverseGeocode(latitude, longitude)
+            if (addr) {
+              setUserAddress(addr)
+              localStorage.setItem('app_user_address', addr)
             }
-            resolve()
-          },
-          () => resolve(),
-          { enableHighAccuracy: false, timeout: 3000 }
-        )
-      })
-    } catch {
-      // Ignore detection errors
-    }
+          } catch (e) {
+            console.warn('Reverse geocode error:', e)
+          }
+
+          setIsLocating(false)
+          resolve(coords)
+        },
+        (err) => {
+          console.warn('Geolocation denied or failed:', err.message)
+          setIsLocating(false)
+          resolve(null)
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      )
+    })
   }
 
   useEffect(() => {
@@ -106,9 +151,9 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem('app_region') as RegionCode | null
     if (stored) {
       setRegion(stored)
-    } else {
-      detectRegion()
     }
+    // Automatically trigger detectRegion if user hasn't stored coordinates or to refresh
+    detectRegion()
   }, [])
 
   useEffect(() => {
@@ -120,6 +165,9 @@ export function RegionProvider({ children }: { children: React.ReactNode }) {
     brandName,
     locationName,
     state,
+    userCoords: userCoords || (REGION_COORDINATES[region] ? { lat: REGION_COORDINATES[region][0], lon: REGION_COORDINATES[region][1] } : null),
+    userAddress,
+    isLocating,
     setRegion,
     detectRegion,
   }

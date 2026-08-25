@@ -145,7 +145,7 @@ export default function ProductDetailScreen({ route }: any) {
             <View style={[s.storeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[s.storeImage, { backgroundColor: colors.muted }]}>
                 {parentBusiness.image ? (
-                  <Image source={{ uri: parentBusiness.image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                  <Image source={{ uri: parentBusiness.image }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
                 ) : (
                   <Store size={24} color={colors.mutedForeground} strokeWidth={1.5} />
                 )}
@@ -217,8 +217,8 @@ export default function ProductDetailScreen({ route }: any) {
 const s = StyleSheet.create({
   container: { flex: 1 },
   heroContainer: { width: SCREEN_WIDTH, position: 'relative', overflow: 'hidden' },
-  heroImage: { ...StyleSheet.absoluteFill },
-  heroOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)' },
+  heroImage: { ...StyleSheet.absoluteFillObject },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
   topBar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   circleBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
   topRightBtns: { flexDirection: 'row', gap: 10 },

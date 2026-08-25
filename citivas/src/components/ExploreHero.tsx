@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
   hero: { height: HERO_H, borderRadius: 20, overflow: 'hidden', backgroundColor: '#1a1a1a' },
   image: { flex: 1, justifyContent: 'flex-end' },
   imageRadius: { borderRadius: 20 },
-  overlayTop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.15)' },
-  overlayBottom: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.55)', top: '40%' },
+  overlayTop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
+  overlayBottom: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)', top: '40%' },
   content: { padding: 20, zIndex: 2 },
   eyebrow: {
     color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '700',

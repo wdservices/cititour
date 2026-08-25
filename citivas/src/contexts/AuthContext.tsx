@@ -17,11 +17,7 @@ import { auth, db } from '../lib/firebase';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 
-try {
-  WebBrowser.maybeCompleteAuthSession();
-} catch (e) {
-  console.warn('[auth] WebBrowser.maybeCompleteAuthSession error:', e);
-}
+WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_WEB_CLIENT_ID = '748964654953-k0sofgba1q6fop33epabb0a7loo10nd2.apps.googleusercontent.com';
 
@@ -80,46 +76,36 @@ async function mirrorUserToFirestore(firebaseUser: FirebaseUser) {
 }
 
 async function nativeGoogleSignIn(): Promise<string | null> {
-  try {
-    const redirectUri = AuthSession.makeRedirectUri({ scheme: 'citivas' });
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'citivas' });
 
-    const request = new AuthSession.AuthRequest({
-      clientId: GOOGLE_WEB_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.Code,
-      extraParams: {
-        prompt: 'select_account',
-      },
-    });
+  const request = new AuthSession.AuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+    redirectUri,
+    responseType: AuthSession.ResponseType.Code,
+    extraParams: {
+      prompt: 'select_account',
+    },
+  });
 
-    const result = await request.promptAsync(discovery);
+      const result = await request.promptAsync(discovery);
 
-    if (result.type === 'success' && result.params.code) {
-      const tokenResult = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: GOOGLE_WEB_CLIENT_ID,
-          code: result.params.code,
-          redirectUri,
-          extraParams: {
-            code_verifier: request.codeVerifier || '',
-          },
+  if (result.type === 'success' && result.params.code) {
+    const tokenResult = await AuthSession.exchangeCodeAsync(
+      {
+        clientId: GOOGLE_WEB_CLIENT_ID,
+        code: result.params.code,
+        redirectUri,
+        extraParams: {
+          code_verifier: request.codeVerifier || '',
         },
-        discovery
-      );
-      return tokenResult.idToken || null;
-    }
-
-    if (result.type === 'cancel' || result.type === 'dismiss') {
-      return null;
-    }
-
-    console.warn('[nativeGoogleSignIn] non-success result type:', result.type, (result as any)?.errorCode, (result as any)?.error?.message);
-    return null;
-  } catch (e: any) {
-    console.error('[nativeGoogleSignIn] failed:', e?.message || e);
-    throw e;
+      },
+      discovery
+    );
+    return tokenResult.idToken;
   }
+
+  return null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -127,87 +113,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-    let unsubscribe: (() => void) | undefined;
-    try {
-      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (cancelled) return;
-        setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
-        setIsLoading(false);
-        if (firebaseUser) {
-          mirrorUserToFirestore(firebaseUser).catch((e) =>
-            console.warn('[auth] mirrorUserToFirestore warning:', e?.message || e)
-          );
-        }
-      });
-    } catch (e: any) {
-      console.error('[auth] onAuthStateChanged setup failed:', e?.message || e);
-      if (!cancelled) setIsLoading(false);
-    }
-    return () => {
-      cancelled = true;
-      try {
-        if (unsubscribe) unsubscribe();
-      } catch (_) {}
-    };
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
+      setIsLoading(false);
+      if (firebaseUser) mirrorUserToFirestore(firebaseUser);
+    });
+    return unsubscribe;
   }, []);
 
   const loginWithEmail = async (email: string, password: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (e) {
-      throw e;
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signUpWithEmailPassword = async (email: string, password: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (e) {
-      throw e;
-    }
+    await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (e) {
-      throw e;
-    }
+    await sendPasswordResetEmail(auth, email);
   };
 
   const loginWithGoogle = async () => {
     if (Platform.OS === 'web') {
-      try {
-        const provider = new GoogleAuthProvider();
-        provider.addScope('profile');
-        provider.addScope('email');
-        await signInWithPopup(auth, provider, browserPopupRedirectResolver);
-      } catch (e) {
-        throw e;
-      }
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      await signInWithPopup(auth, provider, browserPopupRedirectResolver);
     } else {
       const idToken = await nativeGoogleSignIn();
-      if (!idToken) {
-        const err: any = new Error('Google sign-in was cancelled');
-        err.code = 'auth/cancelled';
-        throw err;
-      }
-      try {
-        const credential = GoogleAuthProvider.credential(idToken);
-        await signInWithCredential(auth, credential);
-      } catch (e) {
-        throw e;
-      }
+      if (!idToken) throw new Error('Google sign-in was cancelled');
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
     }
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (e) {
-      console.warn('[auth] logout error:', e);
-    }
+    await signOut(auth);
   };
 
   return (

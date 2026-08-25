@@ -1,0 +1,10 @@
+{
+  "name": "Citivas",
+  "description": "Discover Nigeria's best places, events, and experiences. Book hotels, explore restaurants, split bills, and list businesses across Lagos, Abuja, Port Harcourt and beyond.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

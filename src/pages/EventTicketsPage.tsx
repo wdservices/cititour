@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { useRegion } from "@/contexts/RegionContext";
 import { db } from "@/lib/firebase";
 import { uploadImageToCloudinary, CLOUDINARY_FOLDERS, collectPublicIdsForListing, deleteImagesFromCloudinary } from "@/lib/cloudinary";
 import { logActivity } from "@/lib/activityLog";
@@ -59,17 +60,39 @@ const EventTicketsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { state: regionState, locationName: regionCity, userCoords, userAddress } = useRegion();
   const [category, setCategory] = useState("Music");
   const [description, setDescription] = useState("");
   const [venue, setVenue] = useState("");
-  const [location, setLocation] = useState("");
-  const [address, setAddress] = useState("");
-const [mapLat, setMapLat] = useState<number | undefined>();
-  const [mapLon, setMapLon] = useState<number | undefined>();
-  const [selectedState, setSelectedState] = useState<NigerianState | "">("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [location, setLocation] = useState(userAddress || regionCity || "");
+  const [address, setAddress] = useState(userAddress || regionCity || "");
+  const [mapLat, setMapLat] = useState<number | undefined>(userCoords?.lat);
+  const [mapLon, setMapLon] = useState<number | undefined>(userCoords?.lon);
+  const [selectedState, setSelectedState] = useState<NigerianState | "">((regionState as NigerianState) || "");
+  const [selectedCity, setSelectedCity] = useState(regionCity || "");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  // Sync region data whenever create modal opens if fields are unpopulated
+  useEffect(() => {
+    if (createOpen) {
+      if (!selectedState && regionState) {
+        setSelectedState(regionState as NigerianState);
+      }
+      if (!selectedCity && regionCity) {
+        setSelectedCity(regionCity);
+      }
+      if (!address && (userAddress || regionCity)) {
+        const defaultAddr = userAddress || `${regionCity}, ${regionState}`;
+        setAddress(defaultAddr);
+        setLocation(defaultAddr);
+      }
+      if (!mapLat && userCoords?.lat) {
+        setMapLat(userCoords.lat);
+        setMapLon(userCoords.lon);
+      }
+    }
+  }, [createOpen, regionState, regionCity, userAddress, userCoords, selectedState, selectedCity, address, mapLat]);
   
   const [editOpen, setEditOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<TicketItem | null>(null);

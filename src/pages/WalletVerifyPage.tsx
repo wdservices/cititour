@@ -13,7 +13,7 @@ const WalletVerifyPage: React.FC = () => {
   const { user } = useAuth();
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'failed'>('idle');
   const [message, setMessage] = useState<string>('');
-  const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || 'http://localhost:4000';
+  const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || '';
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

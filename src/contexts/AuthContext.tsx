@@ -192,14 +192,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithEmail = async (email: string, password: string): Promise<void> => {
     try {
-      const cred = await signInWithEmail(email, password);
-      const uid = cred?.user?.uid;
-      let isAdmin = false;
-      if (uid) isAdmin = await checkAdminStatus(uid);
-      (window as any).__AUTH_ADMIN_FLAG__ = isAdmin;
+      await signInWithEmail(email, password);
       logActivity({ userId: "", userEmail: email, userName: "", action: "sign_in", targetType: "auth", details: "Signed in with email: " + email });
     } catch (error: any) {
       console.error('Email login error:', error);
+      // Re-throw the original Firebase error so callers can inspect error.code
       throw error;
     }
   };
@@ -207,7 +204,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signUpWithEmailPassword = async (email: string, password: string): Promise<void> => {
     try {
       await signUpWithEmail(email, password);
-      (window as any).__AUTH_ADMIN_FLAG__ = false;
       logActivity({ userId: "", userEmail: email, userName: "", action: "sign_up", targetType: "auth", details: "Signed up with email: " + email });
     } catch (error: any) {
       console.error('Email signup error:', error);
@@ -217,12 +213,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithGoogle = async (): Promise<void> => {
     try {
-      const result = await signInWithGoogle();
-      if (result && result.user) {
-        const isAdmin = await checkAdminStatus(result.user.uid);
-        (window as any).__AUTH_ADMIN_FLAG__ = isAdmin;
-        logActivity({ userId: "", userEmail: result.user.email || "", userName: result.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Google: " + (result.user.email || "") });
-      }
+      await signInWithGoogle();
     } catch (error: any) {
       console.error('Google login error:', error);
       throw error;
@@ -231,12 +222,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithFacebook = async (): Promise<void> => {
     try {
-      const result = await signInWithFacebook();
-      if (result && result.user) {
-        const isAdmin = await checkAdminStatus(result.user.uid);
-        (window as any).__AUTH_ADMIN_FLAG__ = isAdmin;
-        logActivity({ userId: "", userEmail: result.user.email || "", userName: result.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Facebook: " + (result.user.email || "") });
-      }
+      await signInWithFacebook();
     } catch (error: any) {
       console.error('Facebook login error:', error);
       throw error;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRegion } from "@/contexts/RegionContext";
 import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import SEO from "@/components/SEO";
 import { uploadImageToCloudinary, CLOUDINARY_FOLDERS } from "@/lib/cloudinary";
 import ImageUpload from "@/components/ImageUpload";
+import { AddressPicker } from "@/components/AddressPicker";
 import { X } from "lucide-react";
 import StampIcon from "@/components/StampIcon";
 import { logActivity } from "@/lib/activityLog";
@@ -28,15 +30,18 @@ const BusinessListingPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { state: regionState, locationName: regionCity, userCoords, userAddress } = useRegion();
 
   // Form state
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState<string>("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
-  const [address, setAddress] = useState("");
-  const [selectedState, setSelectedState] = useState<NigerianState | "">("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [address, setAddress] = useState(userAddress || regionCity || "");
+  const [mapLat, setMapLat] = useState<number | undefined>(userCoords?.lat);
+  const [mapLon, setMapLon] = useState<number | undefined>(userCoords?.lon);
+  const [selectedState, setSelectedState] = useState<NigerianState | "">((regionState as NigerianState) || "");
+  const [selectedCity, setSelectedCity] = useState(regionCity || "");
   const [hours, setHours] = useState("");
   const [priceRange, setPriceRange] = useState<string>("");
   const [email, setEmail] = useState("");
@@ -47,6 +52,22 @@ const BusinessListingPage = () => {
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+
+  useEffect(() => {
+    if (!selectedState && regionState) {
+      setSelectedState(regionState as NigerianState);
+    }
+    if (!selectedCity && regionCity) {
+      setSelectedCity(regionCity);
+    }
+    if (!address && (userAddress || regionCity)) {
+      setAddress(userAddress || `${regionCity}, ${regionState}`);
+    }
+    if (!mapLat && userCoords?.lat) {
+      setMapLat(userCoords.lat);
+      setMapLon(userCoords.lon);
+    }
+  }, [regionState, regionCity, userAddress, userCoords]);
 
   const handleSubmit = async () => {
     // Basic validation
@@ -92,6 +113,8 @@ const BusinessListingPage = () => {
         rating: 0,
         price: priceRange || "",
         location: address,
+        lat: mapLat || null,
+        lng: mapLon || null,
         state: selectedState,
         city: selectedCity,
         phone,
@@ -213,13 +236,16 @@ const BusinessListingPage = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <Label className="font-medium" htmlFor="address">Address *</Label>
-                    <Input
-                      id="address"
-                      placeholder="Enter your business address"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="bg-background border border-border"
+                    <Label className="font-medium mb-2 block" htmlFor="address">Address & Location Pin *</Label>
+                    <AddressPicker
+                      onLocationConfirmed={(data) => {
+                        setAddress(data.address);
+                        setMapLat(data.lat);
+                        setMapLon(data.lon);
+                      }}
+                      initialAddress={address}
+                      initialLat={mapLat}
+                      initialLon={mapLon}
                     />
                   </div>
 

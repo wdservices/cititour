@@ -48,25 +48,15 @@ export function mapBusiness(b: Record<string, unknown> & { id: string }): Explor
       }))
     : undefined;
 
-  const safeName =
-    fmt(b.title) ||
-    fmt(b.name) ||
-    (b.email && typeof b.email === 'string' ? b.email.split('@')[0] : 'Listing');
-
   return {
     id: b.id,
-    title: safeName,
-    description: fmt(b.description) || '',
-    image:
-      fmt(b.image) ||
-      fmt(b.imageUrl) ||
-      fmt(b.coverImage) ||
-      (Array.isArray(b.images) && b.images[0] ? fmt(b.images[0]) : '') ||
-      (Array.isArray(b.gallery) && b.gallery[0] ? fmt(b.gallery[0]) : ''),
-    category: fmt(b.category) || 'General',
+    title: fmt(b.title) || fmt(b.name),
+    description: fmt(b.description),
+    image: fmt(b.image) || fmt(b.imageUrl) || (Array.isArray(b.images) && b.images[0] ? fmt(b.images[0]) : ''),
+    category: fmt(b.category),
     rating: typeof b.rating === 'number' ? b.rating : Number(b.rating) || 0,
-    location: fmt(b.location) || fmt(b.city) || '',
-    price: fmt(b.price) || '',
+    location: fmt(b.location) || fmt(b.city),
+    price: fmt(b.price),
     promoPrice: fmt(b.promoPrice) || undefined,
     condition: fmt(b.condition) || undefined,
     businessId: fmt(b.businessId) || undefined,
@@ -85,14 +75,12 @@ export function mapBusiness(b: Record<string, unknown> & { id: string }): Explor
     createdAt: (() => {
       const v = b.createdAt;
       if (!v) return undefined;
-      try {
-        if (typeof v === 'string') return v;
-        if (typeof v === 'number') return new Date(v).toISOString();
-        if (v && typeof v === 'object' && 'seconds' in v) {
-          return new Date((v as any).seconds * 1000).toISOString();
-        }
-        return fmt(v) || undefined;
-      } catch (_) { return undefined; }
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number') return new Date(v).toISOString();
+      if (v && typeof v === 'object' && 'seconds' in v) {
+        return new Date((v as any).seconds * 1000).toISOString();
+      }
+      return fmt(v) || undefined;
     })(),
     kind: 'business',
   };
@@ -125,9 +113,6 @@ export function useExploreData() {
     setLoading(true);
     setError(null);
     try {
-      if (!db) {
-        throw new Error('Firestore not initialized');
-      }
       const [bizSnap, evtSnap, mktSnap, propSnap] = await Promise.all([
         getDocs(collection(db, 'businesses')),
         getDocs(collection(db, 'events')),
@@ -135,39 +120,23 @@ export function useExploreData() {
         getDocs(collection(db, 'house_listings')),
       ]);
 
-      let allBiz: ExploreListing[] = [];
-      try { allBiz = bizSnap.docs.map((d) => mapBusiness({ id: d.id, ...d.data() })); }
-      catch (e) { console.warn('[useExploreData] mapBusiness(biz) failed:', e); allBiz = []; }
-
+      const allBiz = bizSnap.docs.map((d) => mapBusiness({ id: d.id, ...d.data() }));
       const biz = allBiz.filter((b) => b.category !== 'Event' && b.category !== 'Events');
-      let evt: ExploreListing[] = [];
-      try {
-        evt = evtSnap.docs.map((d) => ({
-          ...mapBusiness({ id: d.id, ...d.data() }),
-          kind: 'event' as const,
-        }));
-      } catch (e) { console.warn('[useExploreData] map events failed:', e); evt = []; }
+      const evt = evtSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'event' as const,
+      }));
+      const mkt = mktSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'marketplace' as const,
+      }));
+      const prop = propSnap.docs.map((d) => ({
+        ...mapBusiness({ id: d.id, ...d.data() }),
+        kind: 'property' as const,
+        category: fmt(d.data().category) || 'Property',
+      }));
 
-      let mkt: ExploreListing[] = [];
-      try {
-        mkt = mktSnap.docs.map((d) => ({
-          ...mapBusiness({ id: d.id, ...d.data() }),
-          kind: 'marketplace' as const,
-        }));
-      } catch (e) { console.warn('[useExploreData] map marketplace failed:', e); mkt = []; }
-
-      let prop: ExploreListing[] = [];
-      try {
-        prop = propSnap.docs.map((d) => ({
-          ...mapBusiness({ id: d.id, ...d.data() }),
-          kind: 'property' as const,
-          category: fmt(d.data().category) || 'Property',
-        }));
-      } catch (e) { console.warn('[useExploreData] map properties failed:', e); prop = []; }
-
-      try {
-        dataCache.set<ExploreData>(EXPLORE_CACHE_KEY, { businesses: biz, events: evt, marketplace: mkt, properties: prop });
-      } catch (_) { /* cache write failure is non-fatal */ }
+      dataCache.set<ExploreData>(EXPLORE_CACHE_KEY, { businesses: biz, events: evt, marketplace: mkt, properties: prop });
 
       setBusinesses(biz);
       setEvents(evt);
@@ -175,7 +144,6 @@ export function useExploreData() {
       setProperties(prop);
       fetched.current = true;
     } catch (e) {
-      console.warn('[useExploreData] load() failed:', e);
       setError(e instanceof Error ? e.message : 'Failed to load listings');
     } finally {
       setLoading(false);
@@ -183,15 +151,7 @@ export function useExploreData() {
   }, []);
 
   useEffect(() => {
-    if (!fetched.current) {
-      try {
-        load();
-      } catch (e) {
-        console.warn('[useExploreData] useEffect load() threw:', e);
-        setLoading(false);
-        setError('Failed to load data');
-      }
-    }
+    if (!fetched.current) load();
   }, [load]);
 
   const refresh = useCallback(() => load(true), [load]);

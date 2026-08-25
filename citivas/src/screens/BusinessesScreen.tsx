@@ -57,7 +57,7 @@ export default function BusinessesScreen() {
         <View style={[s.cardImage, { backgroundColor: colors.muted }]}>
           <Image
             source={{ uri: item.image || getMockImage(item.category) }}
-            style={StyleSheet.absoluteFill}
+            style={StyleSheet.absoluteFillObject}
             resizeMode="cover"
           />
           {item.rating > 0 ? (

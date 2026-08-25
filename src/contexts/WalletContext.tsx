@@ -64,7 +64,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "http://localhost:4000";
+  const serverBase = (import.meta as any)?.env?.VITE_SERVER_URL || "";
 
   // Load wallet data and transactions from Firestore when user changes
   useEffect(() => {
