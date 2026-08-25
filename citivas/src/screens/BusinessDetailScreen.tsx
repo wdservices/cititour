@@ -524,8 +524,8 @@ export default function BusinessDetailScreen({ route }: any) {
 const s = StyleSheet.create({
   container: { flex: 1 },
   heroContainer: { width: SCREEN_WIDTH, position: 'relative', overflow: 'hidden' },
-  heroImage: { ...StyleSheet.absoluteFillObject },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  heroImage: { ...StyleSheet.absoluteFill },
+  heroOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)' },
   backBtnHero: { position: 'absolute', left: 16, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
   heroContent: { position: 'absolute', left: 16, right: 16 },
   badgeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },

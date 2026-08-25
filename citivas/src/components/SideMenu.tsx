@@ -109,12 +109,12 @@ export const SideMenu: React.FC<SideMenuProps> = ({
 
 const styles = StyleSheet.create({
   absoluteFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 999,
     elevation: 999,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(15,23,42,0.45)',
   },
   backdropPress: {

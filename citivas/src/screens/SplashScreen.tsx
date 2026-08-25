@@ -11,18 +11,21 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const textOpacity = useRef(new Animated.Value(0)).current;
   const finishedRef = useRef(false);
   const mountedRef = useRef(true);
+  const onFinishRef = useRef(onFinish);
+
+  // Keep ref updated
+  useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
   const finishOnce = useCallback(() => {
     if (!finishedRef.current && mountedRef.current) {
       finishedRef.current = true;
       try {
-        onFinish();
+        onFinishRef.current();
       } catch (e) {
         console.warn('[Splash] onFinish error:', e);
-        onFinish();
       }
     }
-  }, [onFinish]);
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -71,11 +74,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   staticBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#0A2540',
   },
   logoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

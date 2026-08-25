@@ -238,7 +238,7 @@ export default function MyDashboardScreen() {
                 <View style={[s.listingImage, { backgroundColor: colors.muted }]}>
                   <Image
                     source={{ uri: item.image || getMockImage(item.category) }}
-                    style={StyleSheet.absoluteFillObject}
+                    style={StyleSheet.absoluteFill}
                     resizeMode="cover"
                   />
                 </View>

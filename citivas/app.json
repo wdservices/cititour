@@ -3,7 +3,7 @@
     "name": "Citivas",
     "slug": "citivas",
     "scheme": "citivas",
-    "version": "2.2.0",
+    "version": "2.2.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -19,16 +19,19 @@
     ],
     "android": {
       "package": "com.bwtng.citivas",
-      "versionCode": 6,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E88E5"
       },
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -50,8 +53,10 @@
             "enableProguardInReleaseBuilds": false,
             "enableShrinkResourcesInReleaseBuilds": false,
             "newArchEnabled": false,
+            "minSdkVersion": 24,
             "kotlinVersion": "2.1.20",
-            "extraMavenRepos": []
+            "extraMavenRepos": [],
+            "enableMinifyInReleaseBuilds": false
           },
           "ios": {
             "newArchEnabled": false
@@ -76,10 +81,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "bb31c674-f685-4af0-a223-20246cfefb9e"
+        "projectId": "8f3ebcf5-6057-4900-86fa-ac2d81cf2557"
       }
     },
-    "owner": "spellz49",
+    "owner": "bluewaves_tech",
     "experiments": {
       "tsconfigPaths": true
     }

@@ -11,6 +11,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 interface IconProps {
   size?: number;
   color?: string;
+  fill?: string;
   strokeWidth?: number;
   style?: StyleProp<ViewStyle>;
 }
@@ -64,7 +65,15 @@ export const Wallet: IconComp = makeIon('wallet');
 export const MessageCircle: IconComp = makeFeather('message-circle');
 export const MessageSquare: IconComp = makeFeather('message-square');
 export const Share2: IconComp = makeFeather('share-2');
+export const Share: IconComp = makeFeather('share-2');
+export const Phone: IconComp = makeFeather('phone');
+export const Sparkles: IconComp = makeIon('sparkles');
+export const Clock: IconComp = makeFeather('clock');
 export const Settings: IconComp = makeIon('settings');
+export const ShieldCheck: IconComp = makeMaterialCommunity('shield-check');
+export const Check: IconComp = makeFeather('check');
+export const Truck: IconComp = makeMaterialCommunity('truck-delivery');
+export const RefreshCcw: IconComp = makeFeather('refresh-cw');
 export const Headphones: IconComp = makeIon('headset');
 export const Hotel: IconComp = makeMaterial('hotel');
 export const UtensilsCrossed: IconComp = makeMaterialCommunity('silverware-fork-knife');
@@ -110,4 +119,5 @@ export default {
   Star, Ticket, Store, Home, X, Loader2, Plus, Camera, Trash2,
   Send, Mail, Lock, Eye, EyeOff, Sun, Moon, LogOut, Shield,
   HelpCircle, CreditCard, Bell, ArrowDown, ArrowUp, Minus, Package, Edit3,
+  Phone, Sparkles, Clock, Share, ShieldCheck, Check, Truck, RefreshCcw,
 };

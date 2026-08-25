@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Dimensions,
-  ActivityIndicator, Linking, FlatList, Modal,
+  ActivityIndicator, Linking, FlatList, Modal, Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft, Phone, Mail, MapPin, Camera, ChevronLeft, ChevronRight, Share,
 } from '../lib/icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePropertyDetail, RoomCategory } from '../lib/usePropertyDetail';
 
@@ -43,16 +43,20 @@ function formatTime(t: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-interface Props {
-  route: { params: { propertyId: string } };
-}
-
-export default function PropertyDetailScreen({ route }: Props) {
-  const { propertyId } = route.params;
+export default function PropertyDetailScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { loading, property } = usePropertyDetail(propertyId);
+  const route = useRoute<any>();
+  const propertyId = route.params?.propertyId;
+
+  useEffect(() => {
+    if (!propertyId) {
+      Alert.alert('Error', 'Property ID not provided', [{ text: 'Go Back', onPress: () => navigation.goBack() }]);
+    }
+  }, [propertyId, navigation]);
+
+  const { loading, property } = usePropertyDetail(propertyId || '');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const scrollRef = useRef<FlatList>(null);
@@ -65,7 +69,7 @@ export default function PropertyDetailScreen({ route }: Props) {
     );
   }
 
-  if (!property) {
+  if (!property || !propertyId) {
     return (
       <View style={[s.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <View style={[s.header, { borderBottomColor: colors.border }]}>

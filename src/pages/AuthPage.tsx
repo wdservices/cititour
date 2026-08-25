@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Eye, EyeOff, Mail, Lock, User, ArrowRight, 
@@ -39,6 +39,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const forceLogin = searchParams.get('force') === 'true';
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || null;
+
+  const redirectAfterAuth = useCallback((adminFlag: boolean) => {
+    const target = from || (adminFlag ? '/admin' : '/explore');
+    navigate(target, { replace: true });
+  }, [from, navigate]);
 
   // Debug: log auth state changes
   useEffect(() => {
@@ -111,6 +117,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "Your account has been created successfully.",
         });
         onAuthenticated?.();
+        setTimeout(() => redirectAfterAuth(false), 100);
       } else {
         await loginWithEmail(email, password);
         console.log('[AuthPage] login successful');
@@ -119,6 +126,10 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           description: "You have successfully signed in.",
         });
         onAuthenticated?.();
+        setTimeout(() => {
+          const adminFlag = Boolean((window as any).__AUTH_ADMIN_FLAG__);
+          redirectAfterAuth(adminFlag);
+        }, 100);
       }
     } catch (error: any) {
       console.error("[auth] handleSubmit error:", error?.code, error?.message, error);
@@ -167,8 +178,11 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
         description: "You have successfully signed in with Google.",
       });
       onAuthenticated?.();
+      const adminFlag = Boolean((window as any).__AUTH_ADMIN_FLAG__);
+      setTimeout(() => redirectAfterAuth(adminFlag), 100);
     } catch (error: any) {
       console.error("[auth] Google sign-in error:", error?.code, error?.message, error);
+      setIsWorking(false);
       const code = String(error?.code || '');
       if (code === 'auth/popup-closed-by-user') {
         const msg = 'You closed the sign-in window. Please try again.';
@@ -189,12 +203,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
           variant: 'destructive',
         });
       }
-    } finally {
-      setIsWorking(false);
     }
   };
-
-
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
@@ -231,14 +241,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   };
 
   useEffect(() => {
-    if (!forceLogin && !isLoading && !isAdminLoading && isAuthenticated) {
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
+    if (!forceLogin && !isLoading && isAuthenticated) {
+      if (!isAdminLoading) {
+        redirectAfterAuth(isAdmin);
       } else {
-        navigate('/explore', { replace: true });
+        const waitTimer = setTimeout(() => {
+          redirectAfterAuth(false);
+        }, 3000);
+        return () => clearTimeout(waitTimer);
       }
     }
-  }, [forceLogin, isAuthenticated, isLoading, isAdmin, isAdminLoading, navigate]);
+  }, [forceLogin, isAuthenticated, isLoading, isAdmin, isAdminLoading, redirectAfterAuth]);
 
   const features = [
     { icon: MapPin, title: 'Discover Places', color: 'text-primary' },
@@ -435,7 +448,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 <Button
                   type="submit"
                   disabled={isWorking}
-                  onClick={(e) => { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); }}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all"
                 >
                   {isWorking ? (

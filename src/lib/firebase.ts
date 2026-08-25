@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import {
@@ -15,11 +15,12 @@ import {
   sendPasswordResetEmail,
   setPersistence,
   browserLocalPersistence,
-  User
+  browserSessionPersistence,
+  inMemoryPersistence,
+  User,
+  Auth
 } from 'firebase/auth';
 
-// Firebase configuration
-// You'll need to replace these with your actual Firebase config values
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -29,75 +30,135 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app: FirebaseApp;
+let auth: Auth;
+let db: ReturnType<typeof getFirestore>;
+let storage: ReturnType<typeof getStorage>;
+let persistenceReady: Promise<void> = Promise.resolve();
+let initError: Error | null = null;
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+try {
+  const existingApps = getApps();
+  if (existingApps.length > 0) {
+    app = existingApps[0];
+  } else {
+    app = initializeApp(firebaseConfig);
+  }
 
-// Use local persistence — auth survives page reload, but times out after 5 min inactivity
-// Fall back to session persistence if localStorage is blocked (e.g. Tracking Prevention, private mode)
-setPersistence(auth, browserLocalPersistence)
-  .catch((e) => {
-    console.warn("[firebase] localPersistence failed, falling back to sessionPersistence:", e?.code || e?.message || e);
-    return setPersistence(auth, browserSessionPersistence);
-  })
-  .catch((e) => {
-    console.error("[firebase] sessionPersistence also failed:", e?.code || e?.message || e);
-  });
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+  try {
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
 
-// Initialize providers
-export const googleProvider = new GoogleAuthProvider();
-export const facebookProvider = new FacebookAuthProvider();
+    persistenceReady = (async () => {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (e1: any) {
+        console.warn('[firebase] localPersistence failed, falling back to sessionPersistence:', e1?.code || e1?.message || e1);
+        try {
+          await setPersistence(auth, browserSessionPersistence);
+        } catch (e2: any) {
+          console.warn('[firebase] sessionPersistence also failed, falling back to inMemoryPersistence:', e2?.code || e2?.message || e2);
+          try {
+            await setPersistence(auth, inMemoryPersistence);
+          } catch (e3: any) {
+            console.error('[firebase] inMemoryPersistence also failed (continuing with default persistence):', e3?.code || e3?.message || e3);
+          }
+        }
+      }
+    })();
+  } catch (innerError: any) {
+    console.error('[firebase] Failed to initialize auth/firestore/storage:', innerError?.code || innerError?.message || innerError);
+    initError = innerError;
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  }
+} catch (topLevelError: any) {
+  console.error('[firebase] CRITICAL: Firebase initialization failed:', topLevelError?.code || topLevelError?.message || topLevelError);
+  initError = topLevelError;
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+}
 
-// Configure Google provider
+export { app, auth, db, storage, persistenceReady, initError };
+
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-// Configure Facebook provider
 facebookProvider.addScope('email');
 facebookProvider.addScope('public_profile');
 
-// Authentication functions
-export const signInWithGoogle = async () => {
-  // Force redirect mode to avoid COOP/Tracking Prevention blocking popups
-  return signInWithRedirect(auth, googleProvider);
-};
+export { googleProvider, facebookProvider };
 
-export const signInWithFacebook = async () => {
+export const signInWithGoogle = async () => {
+  await persistenceReady;
   try {
-    return await signInWithPopup(auth, facebookProvider);
+    return await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
-    // If popup is blocked or CORS issues, fallback to redirect
     const msg = String(error?.message || '');
+    const code = String(error?.code || '');
     const shouldRedirect = (
-      error.code === 'auth/popup-blocked' ||
-      error.code === 'auth/cancelled-popup-request' ||
-      error.code === 'auth/network-request-failed' ||
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/network-request-failed' ||
+      code === 'auth/popup-closed-by-user' ||
       /Failed to fetch/i.test(msg)
     );
     if (shouldRedirect) {
+      console.log('[firebase] Google popup blocked or failed, falling back to redirect mode.');
+      return signInWithRedirect(auth, googleProvider);
+    }
+    throw error;
+  }
+};
+
+export const signInWithFacebook = async () => {
+  await persistenceReady;
+  try {
+    return await signInWithPopup(auth, facebookProvider);
+  } catch (error: any) {
+    const msg = String(error?.message || '');
+    const code = String(error?.code || '');
+    const shouldRedirect = (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/network-request-failed' ||
+      code === 'auth/popup-closed-by-user' ||
+      /Failed to fetch/i.test(msg)
+    );
+    if (shouldRedirect) {
+      console.log('[firebase] Facebook popup blocked or failed, falling back to redirect mode.');
       return signInWithRedirect(auth, facebookProvider);
     }
     throw error;
   }
 };
 
-// Handle redirect result
-export const handleRedirectResult = () => {
-  return getRedirectResult(auth);
+export const handleRedirectResult = async () => {
+  try {
+    await persistenceReady;
+    const result = await getRedirectResult(auth);
+    return result;
+  } catch (e: any) {
+    console.error('[firebase] handleRedirectResult error:', e?.code || e?.message || e);
+    throw e;
+  }
 };
 
-export const signInWithEmail = (email: string, password: string) => {
+export const signInWithEmail = async (email: string, password: string) => {
+  await persistenceReady;
   return signInWithEmailAndPassword(auth, email, password);
 };
 
-export const signUpWithEmail = (email: string, password: string) => {
+export const signUpWithEmail = async (email: string, password: string) => {
+  await persistenceReady;
   return createUserWithEmailAndPassword(auth, email, password);
 };
 
@@ -113,7 +174,6 @@ export const resetPassword = (email: string) => {
   return sendPasswordResetEmail(auth, email);
 };
 
-// User profile helpers (Firestore)
 export const getUserProfile = async (uid: string) => {
   const ref = doc(db, 'users', uid);
   const snap = await getDoc(ref);

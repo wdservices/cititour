@@ -104,7 +104,7 @@ export default function FavouritesScreen() {
                 <View style={[s.favImage, { backgroundColor: colors.muted }]}>
                   <Image
                     source={{ uri: item.image || getMockImage(item.category) }}
-                    style={StyleSheet.absoluteFillObject}
+                    style={StyleSheet.absoluteFill}
                     resizeMode="cover"
                   />
                 </View>

@@ -1,9 +1,39 @@
-import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import React, { Component, ReactNode } from 'react';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+
+class NavErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: any) {
+    console.error('[NavErrorBoundary]', error?.message || error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={navEb.fallback}>
+          <Text style={navEb.title}>Navigation failed to load</Text>
+          <Text style={navEb.subtitle}>Please close and reopen the app.</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const navEb = StyleSheet.create({
+  fallback: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#0A2540' },
+  title: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 6 },
+  subtitle: { color: 'rgba(255,255,255,0.75)', fontSize: 14 },
+});
 
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -117,26 +147,36 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <>
-            <RootStack.Screen name="MainTabs" component={MainTabs} />
-            <RootStack.Screen name="BusinessesList" component={BusinessesScreen} />
-            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} />
-            <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} />
-            <RootStack.Screen name="CreateListing" component={CreateListingScreen} />
-            <RootStack.Screen name="Feedback" component={FeedbackScreen} />
-            <RootStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
-            <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
-            <RootStack.Screen name="Booking" component={BookingScreen} />
-            <RootStack.Screen name="Payment" component={PaymentScreen} />
-            <RootStack.Screen name="Favourites" component={FavouritesScreen} />
-          </>
-        ) : (
-          <RootStack.Screen name="Login" component={LoginScreen} />
-        )}
-      </RootStack.Navigator>
-    </NavigationContainer>
+    <NavErrorBoundary>
+      <NavigationContainer
+        onStateChange={(state) => console.debug('[nav] state:', state?.index)}
+        onReady={() => console.info('[nav] NavigationContainer ready')}
+        fallback={
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0A2540' }}>
+            <ActivityIndicator size="large" color="#1E88E5" />
+          </View>
+        }
+      >
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          {isAuthenticated ? (
+            <>
+              <RootStack.Screen name="MainTabs" component={MainTabs} />
+              <RootStack.Screen name="BusinessesList" component={BusinessesScreen} />
+              <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} />
+              <RootStack.Screen name="MyDashboard" component={MyDashboardScreen} />
+              <RootStack.Screen name="CreateListing" component={CreateListingScreen} />
+              <RootStack.Screen name="Feedback" component={FeedbackScreen} />
+              <RootStack.Screen name="BusinessDetail" component={BusinessDetailScreen} />
+              <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} />
+              <RootStack.Screen name="Booking" component={BookingScreen} />
+              <RootStack.Screen name="Payment" component={PaymentScreen} />
+              <RootStack.Screen name="Favourites" component={FavouritesScreen} />
+            </>
+          ) : (
+            <RootStack.Screen name="Login" component={LoginScreen} />
+          )}
+        </RootStack.Navigator>
+      </NavigationContainer>
+    </NavErrorBoundary>
   );
 }

@@ -88,7 +88,7 @@ export default function EventsScreen() {
               <View style={[s.eventImage, { backgroundColor: colors.muted }]}>
                 <Image
                   source={{ uri: item.image || getMockImage('Event') }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                   resizeMode="cover"
                 />
                 <View style={[s.priceBadge, { backgroundColor: colors.card }]}>

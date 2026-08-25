@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-        if (firebaseUser && firebaseUser.emailVerified !== false) {
+        if (firebaseUser) {
           const adminDocRef = doc(db, 'admin_users', firebaseUser.uid)
           const adminDocSnap = await getDoc(adminDocRef)
           const mapped = await mapAdminDoc(firebaseUser, adminDocSnap)
