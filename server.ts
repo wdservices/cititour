@@ -18,11 +18,12 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Security headers (relaxed for Vite dev scripts)
+  // Security headers (relaxed for Vite dev scripts & OAuth popups)
   app.use(
     helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
     })
   );
 
