@@ -16,6 +16,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  inMemoryPersistence,
   User
 } from 'firebase/auth';
 import firebaseAppletConfig from '../../firebase-applet-config.json';
@@ -38,14 +39,18 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Use local persistence — auth survives page reload, but times out after 5 min inactivity
-// Fall back to session persistence if localStorage is blocked (e.g. Tracking Prevention, private mode)
+// Fall back to session or in-memory persistence if storage is blocked (e.g. Edge Tracking Prevention, private mode)
 setPersistence(auth, browserLocalPersistence)
   .catch((e) => {
     console.warn("[firebase] localPersistence failed, falling back to sessionPersistence:", e?.code || e?.message || e);
     return setPersistence(auth, browserSessionPersistence);
   })
   .catch((e) => {
-    console.error("[firebase] sessionPersistence also failed:", e?.code || e?.message || e);
+    console.warn("[firebase] sessionPersistence also failed, falling back to inMemoryPersistence:", e?.code || e?.message || e);
+    return setPersistence(auth, inMemoryPersistence);
+  })
+  .catch((e) => {
+    console.error("[firebase] all persistence modes failed:", e?.code || e?.message || e);
   });
 
 // Select database ID: if using AI Studio project, use the named databaseId; otherwise use default or configured DB ID
@@ -78,8 +83,15 @@ export const signInWithGoogle = async () => {
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
-    // Only attempt redirect if popup is blocked by browser
-    if (error?.code === 'auth/popup-blocked') {
+    // Popup is unreliable with Edge strict Tracking Prevention / storage blocked / popup closed.
+    // Fall back to redirect which works even when localStorage is blocked.
+    if (
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request' ||
+      error?.code === 'auth/internal-error'
+    ) {
+      console.warn('[firebase] popup failed (' + error?.code + '), falling back to redirect');
       return signInWithRedirect(auth, googleProvider);
     }
     throw error;
@@ -90,7 +102,13 @@ export const signInWithFacebook = async () => {
   try {
     return await signInWithPopup(auth, facebookProvider);
   } catch (error: any) {
-    if (error?.code === 'auth/popup-blocked') {
+    if (
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request' ||
+      error?.code === 'auth/internal-error'
+    ) {
+      console.warn('[firebase] popup failed (' + error?.code + '), falling back to redirect');
       return signInWithRedirect(auth, facebookProvider);
     }
     throw error;

@@ -65,7 +65,11 @@ async function startServer() {
   app.use('/api/wallet', paymentLimiter, walletRoutes);
   app.use('/api/uploads', uploadRoutes);
 
-  // Favicon handler
+  // Static assets — ensure public files (citivas-logo.png, etc.) are served in both dev and prod
+  // In dev, vite middlwares also serves public, but explicit static guarantees correct MIME and avoids SPA fallback returning HTML for images
+  app.use(express.static(path.join(process.cwd(), 'public')));
+
+  // Favicon handler (kept for explicit cache control)
   app.get('/favicon.ico', (req, res, next) => {
     const faviconPath = path.join(process.cwd(), 'public', 'favicon.ico');
     res.sendFile(faviconPath, (err) => {
