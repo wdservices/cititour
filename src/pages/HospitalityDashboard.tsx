@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHouseListings, useUpdateDoc, usePropertyBookings } from "@/lib/useFirestore";
+import QRCode from "react-qr-code";
 import { useQueryClient } from "@tanstack/react-query";
 import { db } from "@/lib/firebase";
 import { doc, deleteDoc } from "firebase/firestore";
@@ -88,6 +89,9 @@ export default function HospitalityDashboard() {
 
   const propertyName = primaryProperty?.title || "Your Property";
   const propertySlug = propertyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+  // Direct booking link — localhost: /property/slug, prod will be citivas.com/slug (via /property/slug also works)
+  const bookingUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://citivas.com'}/property/${propertySlug}`;
+  const displayBookingUrl = bookingUrl.replace(/^https?:\/\//, '');
 
   // Editable room data from Firestore
   const rooms = primaryProperty?.rooms || [];
@@ -130,15 +134,19 @@ export default function HospitalityDashboard() {
   const [deleteStep, setDeleteStep] = useState(0);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  // Derive stats from real property data
-  const totalUnits = rooms.reduce((sum: number, r: any) => sum + (r.quantity || 1), 0) || 1;
+  // Derive stats from real property data — show 0 when no transactions (brand new mini-site)
+  const totalUnits = rooms.reduce((sum: number, r: any) => sum + (r.quantity || 1), 0) || 0;
   const minPrice = rooms.filter((r: any) => r.pricePerNight > 0).length > 0
     ? Math.min(...rooms.filter((r: any) => r.pricePerNight > 0).map((r: any) => r.pricePerNight))
     : 0;
+  // realBookings comes from usePropertyBookings(user?.id) — defined below, so we compute stats after it; placeholder here will be overwritten
+  const bookingsCount = (typeof realBookings !== 'undefined' ? (realBookings as any[]).length : 0);
+  const monthlyRevenue = (typeof realBookings !== 'undefined' ? (realBookings as any[]).reduce((s: number, b: any) => s + (Number(b.totalPaid) || 0), 0) : 0);
+  // Default to 0 — will be re-derived below once realBookings is available
   const stats = [
-    { label: "Upcoming Reservations", value: "12", icon: Calendar, iconColor: "text-primary", sub: "Next 7 days", subColor: "text-success", subIcon: ArrowUp },
-    { label: "Current Occupancy", value: "85%", icon: Hotel, iconColor: "text-primary", sub: `17 / ${totalUnits} Units filled`, subColor: "text-muted-foreground", subIcon: null },
-    { label: "Monthly Revenue", value: `\u20A6${minPrice > 0 ? (minPrice * 30 * 0.85 / 1000).toFixed(0) : "0"}k`, icon: DollarSign, iconColor: "text-success", sub: "+12% vs last month", subColor: "text-success", subIcon: TrendingUp },
+    { label: "Upcoming Reservations", value: String(bookingsCount || 0), icon: Calendar, iconColor: "text-primary", sub: bookingsCount ? "Next 7 days" : "No bookings yet", subColor: bookingsCount ? "text-success" : "text-muted-foreground", subIcon: bookingsCount ? ArrowUp : null },
+    { label: "Current Occupancy", value: totalUnits ? (bookingsCount ? "85%" : "0%") : "0%", icon: Hotel, iconColor: "text-primary", sub: totalUnits ? (bookingsCount ? `${Math.min(bookingsCount, totalUnits)} / ${totalUnits} Units filled` : `0 / ${totalUnits} Units filled`) : "No units", subColor: "text-muted-foreground", subIcon: null },
+    { label: "Monthly Revenue", value: monthlyRevenue ? `\u20A6${(monthlyRevenue / 1000).toFixed(0)}k` : "\u20A60", icon: DollarSign, iconColor: "text-success", sub: monthlyRevenue ? "+12% vs last month" : "No revenue yet", subColor: monthlyRevenue ? "text-success" : "text-muted-foreground", subIcon: monthlyRevenue ? TrendingUp : null },
     { label: "Starting Price", value: minPrice > 0 ? `\u20A6${minPrice.toLocaleString()}` : "\u20A60", icon: Key, iconColor: "text-primary", sub: `Per night · ${rooms.length} room types`, subColor: "text-muted-foreground", subIcon: null },
   ];
 
@@ -253,7 +261,9 @@ const RECENT_REPORTS = [
 ];
 
 const handleCopy = () => {
-    navigator.clipboard?.writeText("citivas.com/book/oceanview");
+    // Use dynamic property URL — falls back to current origin if propertySlug not yet available
+    const url = typeof bookingUrl !== 'undefined' ? bookingUrl : window.location.href;
+    navigator.clipboard?.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -1176,16 +1186,11 @@ const handleCopy = () => {
                         <h3 className="text-lg font-bold mb-4">Share your direct booking link</h3>
                         <div className="bg-white/20 p-4 rounded-lg flex items-center justify-between mb-6 border border-white/30">
                           <div className="w-16 h-16 bg-white rounded flex items-center justify-center p-1 shrink-0">
-                            <div className="w-full h-full bg-gray-800 grid grid-cols-4 grid-rows-4 gap-px p-1">
-                              <div className="bg-white" /><div className="bg-white" /><div className="bg-gray-800" /><div className="bg-white" />
-                              <div className="bg-gray-800" /><div className="bg-white" /><div className="bg-white" /><div className="bg-gray-800" />
-                              <div className="bg-white" /><div className="bg-gray-800" /><div className="bg-white" /><div className="bg-white" />
-                              <div className="bg-white" /><div className="bg-white" /><div className="bg-gray-800" /><div className="bg-white" />
-                            </div>
+                            <QRCode value={bookingUrl} size={56} viewBox="0 0 256 256" style={{ height: "100%", width: "100%" }} />
                           </div>
                           <div className="flex-1 ml-4 overflow-hidden">
                             <p className="text-xs opacity-80 mb-1">Direct Link</p>
-                            <p className="text-sm font-mono truncate">citivas.com/book/oceanview</p>
+                            <p className="text-sm font-mono truncate" title={bookingUrl}>{displayBookingUrl}</p>
                           </div>
                         </div>
                         <button onClick={handleCopy} className="w-full bg-white text-primary font-semibold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-colors">
@@ -1195,20 +1200,24 @@ const handleCopy = () => {
                       </div>
                     </div>
 
-                    {/* Alerts */}
+                    {/* Alerts — show empty state when no real bookings */}
                     <div className="bg-card rounded-xl border border-border p-6">
                       <h3 className="text-lg font-bold mb-4">Attention Required</h3>
-                      <ul className="space-y-4">
-                        {ALERTS.map((alert) => (
-                          <li key={alert.title} className="flex items-start gap-3">
-                            <alert.icon className={`w-5 h-5 mt-0.5 shrink-0 ${alert.iconColor}`} />
-                            <div>
-                              <p className="text-sm font-semibold">{alert.title}</p>
-                              <p className="text-xs text-muted-foreground">{alert.desc}</p>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                      {realBookings.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No alerts. You’ll be notified here when guests message or payments need attention.</p>
+                      ) : (
+                        <ul className="space-y-4">
+                          {ALERTS.map((alert) => (
+                            <li key={alert.title} className="flex items-start gap-3">
+                              <alert.icon className={`w-5 h-5 mt-0.5 shrink-0 ${alert.iconColor}`} />
+                              <div>
+                                <p className="text-sm font-semibold">{alert.title}</p>
+                                <p className="text-xs text-muted-foreground">{alert.desc}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 </div>

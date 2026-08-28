@@ -703,18 +703,22 @@ export default function MiniSiteWizard() {
                 </div>
 
                 {/* Rooms */}
-                {rooms.filter(r => r.name).length > 0 && (
-                  <div className="px-3 pb-2.5">
-                    <h4 className="text-[10px] font-bold text-gray-800 mb-1.5">Featured Rooms</h4>
-                    <div className="space-y-1.5">
-                      {rooms.filter(r => r.name).slice(0, 2).map((room) => (
-                        <div key={room.id} className="flex items-center gap-2 p-1.5 rounded-lg bg-gray-50">
-                          {room.images[0] && <img src={room.images[0]} alt="" className="w-10 h-8 object-cover rounded" />}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[9px] font-semibold text-gray-700 truncate">{room.name}</p>
-                            <p className="text-[7px] text-gray-400">{room.bedType}</p>
+            {rooms.filter(r => r.name).length > 0 && (
+              <div className="px-3 pb-2.5">
+                <h4 className="text-[10px] font-bold text-gray-800 mb-1.5">Featured Rooms</h4>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {rooms.filter(r => r.name).slice(0, 4).map((room) => (
+                    <div key={room.id} className="flex flex-col gap-1 p-1.5 rounded-lg bg-gray-50">
+                          {room.images[0] ? (
+                            <img src={room.images[0]} alt="" className="w-full h-14 object-cover rounded" />
+                          ) : (
+                            <div className="w-full h-14 rounded bg-gray-100" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-[8px] font-semibold text-gray-700 truncate">{room.name}</p>
+                            <p className="text-[7px] text-gray-400 truncate">{room.bedType}</p>
+                            {room.pricePerNight > 0 && <p className="text-[7px] font-bold text-[#1a56db]">\u20A6{room.pricePerNight.toLocaleString()}</p>}
                           </div>
-                          {room.pricePerNight > 0 && <p className="text-[8px] font-bold text-[#1a56db] whitespace-nowrap">\u20A6{room.pricePerNight.toLocaleString()}</p>}
                         </div>
                       ))}
                     </div>
@@ -912,25 +916,27 @@ export default function MiniSiteWizard() {
               <div className="px-5 pb-4">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-[#1a56db] mb-1 text-center">Availability</p>
                 <h4 className="text-[14px] font-extrabold text-gray-800 mb-3 text-center">Featured Rooms</h4>
-                <div className="space-y-2">
-                  {rooms.filter(r => r.name).slice(0, 3).map((room) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {rooms.filter(r => r.name).slice(0, 4).map((room) => (
                     <div key={room.id} className="rounded-xl border border-gray-200 overflow-hidden">
-                      {room.images[0] && (
-                        <div className="h-24 bg-gray-100">
+                      {room.images[0] ? (
+                        <div className="h-20 bg-gray-100">
                           <img src={room.images[0]} alt="" className="w-full h-full object-cover" />
                         </div>
-                      )}
-                      <div className="p-2.5">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[11px] font-bold text-gray-800">{room.name}</p>
-                          {room.pricePerNight > 0 && <p className="text-[11px] font-bold text-[#1a56db]">\u20A6{room.pricePerNight.toLocaleString()}</p>}
+                      ) : (
+                        <div className="h-20 bg-gray-100 flex items-center justify-center">
+                          <span className="text-[10px] text-gray-400">No image</span>
                         </div>
-                        <p className="text-[9px] text-gray-400 mt-0.5">{room.bedType} · {room.bathrooms} bath · {room.maxOccupancy} guests</p>
+                      )}
+                      <div className="p-2">
+                        <p className="text-[10px] font-bold text-gray-800 truncate">{room.name}</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5 truncate">{room.bedType} · {room.maxOccupancy} guests</p>
+                        {room.pricePerNight > 0 && <p className="text-[10px] font-bold text-[#1a56db] mt-1">\u20A6{room.pricePerNight.toLocaleString()}</p>}
                       </div>
                     </div>
                   ))}
-                  {rooms.filter(r => r.name).length > 3 && (
-                    <p className="text-[10px] text-gray-400 text-center">+{rooms.filter(r => r.name).length - 3} more</p>
+                  {rooms.filter(r => r.name).length > 4 && (
+                    <p className="col-span-2 text-[10px] text-gray-400 text-center">+{rooms.filter(r => r.name).length - 4} more</p>
                   )}
                 </div>
               </div>

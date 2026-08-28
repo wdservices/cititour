@@ -70,70 +70,108 @@ export default function BookingPayment() {
 
   const [bookingRef] = useState(generateRef);
 
-  const handlePay = () => {
-    if (!firstName || !lastName || !email || !phone) return;
+  const handlePay = async () => {
+    if (!firstName || !lastName || !email || !phone) {
+      setError("Please fill all guest details.");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     if (!window.PaystackPop) {
       setError("Payment system not loaded. Please refresh the page and try again.");
       return;
     }
+
+    // Resolve Paystack public key — check client env first, then server /api/wallet/config fallback (like WalletContext)
+    let publicKey = (import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined)?.trim();
+    if (!publicKey || publicKey === "pk_test_xxxxx") {
+      try {
+        const cfgResp = await fetch("/api/wallet/config");
+        const cfg = await cfgResp.json();
+        if (cfg?.status && (cfg?.public_key || cfg?.publicKey)) {
+          publicKey = String(cfg.public_key || cfg.publicKey).trim();
+        }
+      } catch {}
+    }
+    if (!publicKey || publicKey === "pk_test_xxxxx") {
+      setError("Payment not configured: Missing VITE_PAYSTACK_PUBLIC_KEY. Add your Paystack public key to .env and restart the server.");
+      return;
+    }
+    if (!totalWithTax || totalWithTax <= 0) {
+      setError("Invalid amount.");
+      return;
+    }
+
     setIsProcessing(true);
     setError("");
 
-    const handler = window.PaystackPop.setup({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxx",
-      email,
-      amount: totalWithTax * 100,
-      currency: "NGN",
-      ref: bookingRef,
-      metadata: {
-        booking_ref: bookingRef,
-        guest_name: `${firstName} ${lastName}`,
-        property: state.propertyTitle,
-        room: state.roomName,
-        custom_fields: [
-          { display_name: "Phone", variable_name: "phone", value: phone },
-        ],
-      },
-      callback: function(response: any) {
-        addDoc(collection(db, "property_bookings"), {
-          bookingRef,
-          propertyId: state.propertyId,
-          propertyTitle: state.propertyTitle,
-          propertyLocation: state.propertyLocation,
-          ownerId: state.ownerId,
-          roomName: state.roomName,
-          roomImage: state.roomImage,
-          pricePerNight: state.pricePerNight,
-          nights: state.nights,
-          checkIn: state.checkIn,
-          checkOut: state.checkOut,
-          guests: state.guests,
-          roomRate,
-          vatEnabled,
-          vatRate,
-          taxes,
-          totalPaid: totalWithTax,
-          guestFirstName: firstName,
-          guestLastName: lastName,
-          guestEmail: email,
-          guestPhone: phone,
-          payerId: user?.id || "",
-          paystackRef: response.reference,
-          status: "Confirmed",
-          createdAt: serverTimestamp(),
-        }).then(() => {
-          setIsPaid(true);
-        }).catch((e: any) => {
-          setError("Payment verified but saving failed. Contact support with ref: " + response.reference);
+    try {
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: email.trim(),
+        amount: Math.round(totalWithTax * 100),
+        currency: "NGN",
+        ref: bookingRef,
+        metadata: {
+          booking_ref: bookingRef,
+          guest_name: `${firstName} ${lastName}`,
+          property: state.propertyTitle,
+          room: state.roomName,
+          custom_fields: [
+            { display_name: "Phone", variable_name: "phone", value: phone },
+          ],
+        },
+        callback: function(response: any) {
+          addDoc(collection(db, "property_bookings"), {
+            bookingRef,
+            propertyId: state.propertyId,
+            propertyTitle: state.propertyTitle,
+            propertyLocation: state.propertyLocation,
+            ownerId: state.ownerId,
+            roomName: state.roomName,
+            roomImage: state.roomImage,
+            pricePerNight: state.pricePerNight,
+            nights: state.nights,
+            checkIn: state.checkIn,
+            checkOut: state.checkOut,
+            guests: state.guests,
+            roomRate,
+            vatEnabled,
+            vatRate,
+            taxes,
+            totalPaid: totalWithTax,
+            guestFirstName: firstName,
+            guestLastName: lastName,
+            guestEmail: email,
+            guestPhone: phone,
+            payerId: user?.id || "",
+            paystackRef: response.reference,
+            status: "Confirmed",
+            createdAt: serverTimestamp(),
+          }).then(() => {
+            setIsPaid(true);
+            setIsProcessing(false);
+          }).catch((e: any) => {
+            setError("Payment verified but saving failed. Contact support with ref: " + response.reference);
+            setIsProcessing(false);
+          });
+        },
+        onClose: function() {
           setIsProcessing(false);
-        });
-      },
-      onClose: function() {
-        setIsProcessing(false);
-        setError("Payment cancelled. You were not charged.");
-      },
-    });
-    handler.openIframe();
+          // Only show cancelled if not already paid — Paystack fires onClose even after success in some cases
+          setError((prev) => (prev ? prev : "Payment cancelled. You were not charged."));
+        },
+      });
+      handler.openIframe();
+    } catch (err: any) {
+      console.error("Paystack setup error:", err);
+      // vendor-CfoPn2uT.js 400 is AxiosError from Paystack inline — usually invalid key / amount / email
+      const msg = err?.message || err?.response?.data?.message || "Failed to open payment modal. Check Paystack key and try again.";
+      setError(msg);
+      setIsProcessing(false);
+    }
   };
 
   if (isPaid) {

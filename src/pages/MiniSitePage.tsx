@@ -277,7 +277,7 @@ const MiniSitePage = () => {
                 <p className="mt-1 text-xs text-muted-foreground/70">Contact the host directly for availability.</p>
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
                 {displayRooms.map((room, idx) => (
                   <div key={idx}
                     className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft hover:shadow-card hover:border-primary/30 transition-all cursor-pointer group"
@@ -288,37 +288,37 @@ const MiniSitePage = () => {
                       navigate(`/book/${bookingSlug}`, { state: { preSelectedRoom: idx } });
                     }}
                   >
-                    <div className="relative h-52 w-full bg-muted overflow-hidden">
+                    <div className="relative h-32 sm:h-52 w-full bg-muted overflow-hidden">
                       {room.images?.[0] ? (
                         <img src={room.images[0]} alt={room.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="h-full w-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                          <BedDouble className="h-8 w-8 text-muted-foreground/30" />
+                          <BedDouble className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
                         </div>
                       )}
                       {room.quantity > 0 && room.quantity <= 3 && (
-                        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-accent/90 px-2.5 py-1 text-[11px] font-bold text-accent-foreground backdrop-blur-sm">
+                        <span className="absolute top-2 left-2 sm:top-3 sm:left-3 inline-flex items-center gap-1 rounded-full bg-accent/90 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[11px] font-bold text-accent-foreground backdrop-blur-sm">
                           {room.quantity} left
                         </span>
                       )}
                     </div>
-                    <div className="p-5">
-                      <h3 className="text-lg font-bold text-foreground">{room.name || `Room ${idx + 1}`}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                    <div className="p-3 sm:p-5">
+                      <h3 className="text-sm sm:text-lg font-bold text-foreground truncate">{room.name || `Room ${idx + 1}`}</h3>
+                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground truncate">
                         {room.bedType} · {room.bathrooms} bath{room.bathrooms !== 1 ? "s" : ""}
                       </p>
-                      <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4" /> {room.maxOccupancy} guests</span>
-                        <span className="inline-flex items-center gap-1.5"><Wifi className="h-4 w-4" /> WiFi</span>
+                      <div className="mt-2 sm:mt-3 flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 sm:gap-1.5"><Users className="h-3 w-3 sm:h-4 sm:w-4" /> {room.maxOccupancy} guests</span>
+                        <span className="inline-flex items-center gap-1 sm:gap-1.5"><Wifi className="h-3 w-3 sm:h-4 sm:w-4" /> WiFi</span>
                       </div>
-                      <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                        <div>
-                          <span className="text-xl font-extrabold text-foreground">
+                      <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:gap-0 sm:flex-row sm:items-center sm:justify-between border-t border-border pt-3 sm:pt-4">
+                        <div className="min-w-0">
+                          <span className="text-base sm:text-xl font-extrabold text-foreground">
                             {room.pricePerNight > 0 ? formatNaira(room.pricePerNight) : "TBD"}
                           </span>
-                          <span className="text-sm text-muted-foreground"> /night</span>
+                          <span className="text-xs sm:text-sm text-muted-foreground"> /night</span>
                         </div>
-                        <Button size="sm" className="h-9 rounded-full px-5 text-sm">
+                        <Button size="sm" className="h-8 sm:h-9 w-full sm:w-auto rounded-full px-4 sm:px-5 text-xs sm:text-sm shrink-0">
                           Select
                         </Button>
                       </div>
