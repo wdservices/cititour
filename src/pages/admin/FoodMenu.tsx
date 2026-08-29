@@ -233,7 +233,7 @@ export default function AdminFoodMenu({ rooms = [], bookings = [] }: AdminFoodMe
             </Select>
             <div className="flex gap-2 ml-auto">
               <Button variant="outline" size="sm" onClick={() => setAddCatOpen(true)}>Add Category</Button>
-              <FoodItemDialog categories={categories} onSaved={reload} />
+              <FoodItemDialog onSaved={reload} />
             </div>
           </div>
 
@@ -306,7 +306,7 @@ export default function AdminFoodMenu({ rooms = [], bookings = [] }: AdminFoodMe
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <FoodItemDialog item={item} categories={categories} onSaved={reload}
+                              <FoodItemDialog item={item} onSaved={reload}
                                 trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>}
                               />
                               <DropdownMenuItem onClick={() => handleDuplicate(item)}>

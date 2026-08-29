@@ -109,7 +109,7 @@ export async function deleteFoodItem(id: string): Promise<void> {
 
 export async function getFoodItems(): Promise<FoodItem[]> {
   const snap = await getDocs(
-    query(collection(db, "foodItems"), orderBy("displayOrder", "asc"), orderBy("createdAt", "desc"))
+    query(collection(db, "foodItems"), where("available", "==", true), orderBy("displayOrder", "asc"), orderBy("createdAt", "desc"))
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodItem));
 }

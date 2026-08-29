@@ -3,61 +3,45 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
-  type FoodItem, type FoodCategory, addFoodItem, updateFoodItem,
+  type FoodItem, addFoodItem, updateFoodItem,
   slugify, isSlugTaken, uploadToCloudinary,
 } from "@/lib/foodMenu";
 
 interface Props {
   onSaved: () => void;
   item?: FoodItem;
-  categories: FoodCategory[];
   trigger?: React.ReactNode;
 }
 
-const SPICE_LEVELS = ["none", "mild", "medium", "hot", "extra-hot"] as const;
-
-export default function FoodItemDialog({ onSaved, item, categories, trigger }: Props) {
+export default function FoodItemDialog({ onSaved, item, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
-    name: "", slug: "", description: "", price: 0, discountPrice: null as number | null,
-    image: "", categoryId: "", ingredients: "", preparationTime: 0, calories: 0,
-    spiceLevel: "none" as FoodItem["spiceLevel"],
-    vegetarian: false, vegan: false, containsNuts: false, containsDairy: false,
-    containsSeafood: false, featured: false, available: true, displayOrder: "0",
+    name: "", slug: "", description: "", price: 0,
+    image: "", featured: false, available: true, displayOrder: "0",
   });
 
   useEffect(() => {
     if (item && open) {
       setForm({
         name: item.name, slug: item.slug, description: item.description,
-        price: item.price, discountPrice: item.discountPrice ?? null,
-        image: item.image, categoryId: item.categoryId,
-        ingredients: item.ingredients || "", preparationTime: item.preparationTime || 0,
-        calories: item.calories || 0, spiceLevel: item.spiceLevel || "none",
-        vegetarian: item.vegetarian || false, vegan: item.vegan || false,
-        containsNuts: item.containsNuts || false, containsDairy: item.containsDairy || false,
-        containsSeafood: item.containsSeafood || false, featured: item.featured || false,
-        available: item.available, displayOrder: String(item.displayOrder || 0),
+        price: item.price, image: item.image,
+        featured: item.featured || false, available: item.available, displayOrder: String(item.displayOrder || 0),
       });
     } else if (open) {
       setForm({
-        name: "", slug: "", description: "", price: 0, discountPrice: null,
-        image: "", categoryId: "", ingredients: "", preparationTime: 0, calories: 0,
-        spiceLevel: "none", vegetarian: false, vegan: false, containsNuts: false,
-        containsDairy: false, containsSeafood: false, featured: false, available: true,
-        displayOrder: "0",
+        name: "", slug: "", description: "", price: 0,
+        image: "", featured: false, available: true, displayOrder: "0",
       });
     }
   }, [item, open]);
@@ -93,7 +77,6 @@ export default function FoodItemDialog({ onSaved, item, categories, trigger }: P
   const handleSubmit = async () => {
     if (!form.name.trim()) return toast.error("Name is required");
     if (!form.description.trim()) return toast.error("Description is required");
-    if (!form.categoryId) return toast.error("Category is required");
     if (form.price <= 0 && !form.featured) return toast.error("Price must be greater than 0");
     if (!form.image) return toast.error("Image is required");
     if (!form.slug) {
@@ -104,25 +87,14 @@ export default function FoodItemDialog({ onSaved, item, categories, trigger }: P
 
     setLoading(true);
     try {
-      const cat = categories.find((c) => c.id === form.categoryId);
       const data: Omit<FoodItem, "id" | "createdAt" | "updatedAt"> = {
         name: form.name.trim(),
         slug: form.slug,
         description: form.description.trim(),
         price: form.price,
-        discountPrice: form.discountPrice,
         image: form.image,
-        categoryId: form.categoryId,
-        categoryName: cat?.name || "",
-        ingredients: form.ingredients,
-        preparationTime: form.preparationTime,
-        calories: form.calories,
-        spiceLevel: form.spiceLevel,
-        vegetarian: form.vegetarian,
-        vegan: form.vegan,
-        containsNuts: form.containsNuts,
-        containsDairy: form.containsDairy,
-        containsSeafood: form.containsSeafood,
+        categoryId: "",
+        categoryName: "",
         featured: form.featured,
         complimentary: form.price === 0,
         available: form.available,
@@ -223,77 +195,9 @@ export default function FoodItemDialog({ onSaved, item, categories, trigger }: P
             />
           </div>
           <div>
-            <Label>Category *</Label>
-            <Select value={form.categoryId} onValueChange={(v) => setForm((p) => ({ ...p, categoryId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-              <SelectContent>
-                {categories.length === 0 ? (
-                  <SelectItem value="none" disabled>No categories yet</SelectItem>
-                ) : categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id!}>
-                    {c.icon ? `${c.icon} ` : ""}{c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
             <Label>Price (NGN) *</Label>
             <Input type="number" min="0" value={form.price || ""} onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))} placeholder="e.g. 8500" />
           </div>
-          <div>
-            <Label>Discount Price</Label>
-            <Input type="number" min="0" value={form.discountPrice ?? ""} onChange={(e) => setForm((p) => ({ ...p, discountPrice: e.target.value ? Number(e.target.value) : null }))} placeholder="e.g. 6500" />
-          </div>
-          <div>
-            <Label>Display Order</Label>
-            <Input type="number" min="0" value={form.displayOrder} onChange={(e) => setForm((p) => ({ ...p, displayOrder: e.target.value }))} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Ingredients</Label>
-            <Textarea
-              value={form.ingredients} onChange={(e) => setForm((p) => ({ ...p, ingredients: e.target.value }))}
-              placeholder="Rice, tomato, chicken, pepper..." rows={2}
-            />
-          </div>
-          <div>
-            <Label>Prep Time (min)</Label>
-            <Input type="number" min="0" value={form.preparationTime || ""} onChange={(e) => setForm((p) => ({ ...p, preparationTime: Number(e.target.value) }))} />
-          </div>
-          <div>
-            <Label>Calories</Label>
-            <Input type="number" min="0" value={form.calories || ""} onChange={(e) => setForm((p) => ({ ...p, calories: Number(e.target.value) }))} />
-          </div>
-          <div>
-            <Label>Spice Level</Label>
-            <Select value={form.spiceLevel} onValueChange={(v: any) => setForm((p) => ({ ...p, spiceLevel: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {SPICE_LEVELS.map((s) => (
-                  <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Dietary Info */}
-        <div className="rounded-lg border p-4 mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[
-            { key: "vegetarian", label: "Vegetarian" },
-            { key: "vegan", label: "Vegan" },
-            { key: "containsNuts", label: "Contains Nuts" },
-            { key: "containsDairy", label: "Contains Dairy" },
-            { key: "containsSeafood", label: "Contains Seafood" },
-          ].map((d) => (
-            <label key={d.key} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={(form as any)[d.key]}
-                onCheckedChange={(c) => setForm((p) => ({ ...p, [d.key]: !!c }))}
-              />
-              <span className="text-sm">{d.label}</span>
-            </label>
-          ))}
         </div>
 
         {/* Bottom Checkboxes */}

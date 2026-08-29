@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, SlidersHorizontal, Star, Utensils, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, SlidersHorizontal, Utensils, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type FoodItem, type FoodCategory, getFoodItems, getFoodCategories } from "@/lib/foodMenu";
 import { Loader2 } from "lucide-react";
@@ -19,7 +18,7 @@ export default function FoodMenu() {
     (async () => {
       try {
         const [fi, cat] = await Promise.all([getFoodItems(), getFoodCategories()]);
-        setItems(fi.filter((i) => i.available));
+        setItems(fi);
         setCategories(cat.filter((c) => c.active).sort((a, b) => a.displayOrder - b.displayOrder));
       } catch { /* silent */ }
       finally { setLoading(false); }
@@ -196,49 +195,17 @@ export default function FoodMenu() {
                       <Utensils className="h-12 w-12 text-amber-300" />
                     </div>
                   )}
-                  {item.featured && (
-                    <Badge className="absolute top-3 left-3 bg-amber-500 hover:bg-amber-500 text-white border-0 shadow-md">
-                      <Star className="h-3 w-3 mr-1" /> Chef's Special
-                    </Badge>
-                  )}
-                  {item.complimentary && (
-                    <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-500 text-white border-0 shadow-md">
-                      Complimentary
-                    </Badge>
-                  )}
-                  {item.spicyLevel && item.spicyLevel !== "none" && (
-                    <Badge className="absolute top-3 right-3 bg-red-500 hover:bg-red-500 text-white border-0 shadow-md">
-                      {item.spicyLevel === "mild" ? "🌶️" : item.spicyLevel === "medium" ? "🌶️🌶️" : "🌶️🌶️🌶️"}
-                    </Badge>
-                  )}
                 </div>
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-semibold text-lg leading-tight">{item.name}</h3>
-                    <span className="text-amber-700 font-bold text-lg whitespace-nowrap">
-                      {item.complimentary || item.price === 0
-                        ? "Free"
-                        : item.discountPrice
-                          ? `₦${item.discountPrice.toLocaleString()}`
-                          : `₦${item.price.toLocaleString()}`
-                      }
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description}</p>
-                  {item.portionSize && (
-                    <Badge variant="outline" className="text-xs font-normal border-amber-200">
-                      {item.portionSize}
-                    </Badge>
-                  )}
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {item.tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs bg-amber-50 text-amber-700 border-amber-100">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-amber-700 font-bold text-lg whitespace-nowrap">
+                    {item.complimentary || item.price === 0
+                      ? "Free"
+                      : item.discountPrice
+                        ? `₦${item.discountPrice.toLocaleString()}`
+                        : `₦${item.price.toLocaleString()}`
+                    }
+                  </span>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                 </CardContent>
               </Card>
             ))}

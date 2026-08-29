@@ -209,6 +209,18 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // ── Food Items ──
+    match /foodItems/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // ── Food Categories ──
+    match /foodCategories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
     // ── Catch-all: deny everything else ──
     match /{document=**} {
       allow read, write: if false;

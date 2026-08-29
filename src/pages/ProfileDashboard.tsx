@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Building2, ShoppingBag, Home, Calendar, Megaphone,
   Plus, LayoutDashboard, MapPin, Trash2, Edit3, Ticket, Store,
-  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon, Hotel
+  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon, Hotel, UtensilsCrossed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,7 +58,7 @@ const ProfileDashboard = () => {
   // Wizard state
   const [createOpen, setCreateOpen] = useState(searchParams.get("action") === "create");
   const [wizardStep, setWizardStep] = useState(1);
-  const [listingType, setListingType] = useState<"business" | "product" | "property" | "event" | "">("");
+  const [listingType, setListingType] = useState<"business" | "product" | "property" | "event" | "restaurant">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Delete confirmation ──
@@ -115,6 +115,9 @@ const ProfileDashboard = () => {
   const [bizCategory, setBizCategory] = useState("");
   const [bizImages, setBizImages] = useState<string[]>([]);
   const [bizImagePublicIds, setBizImagePublicIds] = useState<string[]>([]);
+
+  // ── Restaurant-specific ──
+  const [cuisineType, setCuisineType] = useState("");
 
   // ── Product-specific ──
   const [listAsBizId, setListAsBizId] = useState("individual");
@@ -1884,6 +1887,7 @@ const ProfileDashboard = () => {
                   { type: "product" as const, icon: ShoppingBag, title: "Post a Product/Service", desc: "Sell a physical item, deal, package, or service" },
                   { type: "property" as const, icon: Home, title: "List a Property", desc: "List a shortlet, apartment, land, or house" },
                   { type: "event" as const, icon: Calendar, title: "Create an Event", desc: "Publish a concert, festival, or meetup" },
+                  { type: "restaurant" as const, icon: UtensilsCrossed, title: "Register Restaurant", desc: "Set up your restaurant with a food menu" },
                 ].map((opt) => (
                   <button
                     key={opt.type}
@@ -1910,6 +1914,7 @@ const ProfileDashboard = () => {
                   {listingType === "product" && "Post a Product/Service"}
                   {listingType === "property" && "List a Property"}
                   {listingType === "event" && "Create an Event"}
+                  {listingType === "restaurant" && "Register Restaurant"}
                 </DialogTitle>
                 <DialogDescription>All fields with * are required</DialogDescription>
               </DialogHeader>
@@ -1917,7 +1922,8 @@ const ProfileDashboard = () => {
               {listingType === "business" && renderBusinessForm()}
               {listingType === "product" && renderProductForm()}
               {listingType === "property" && renderPropertyForm()}
-              {listingType === "event" && renderEventForm()}
+               {listingType === "event" && renderEventForm()}
+               {listingType === "restaurant" && renderRestaurantForm()}
 
               <div className="flex gap-3 pt-4 border-t border-border">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setWizardStep(1)}>Back</Button>
