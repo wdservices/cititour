@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Eye, EyeOff, Mail, Lock, User, ArrowRight, 
   MapPin, Calendar, ShoppingBag, Utensils, 
-  Star, Shield, Users
+  Star, Shield, Users, AlertCircle, Copy, Check, ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
   const [isWorking, setIsWorking] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [unauthorizedDomain, setUnauthorizedDomain] = useState<string | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -167,42 +169,47 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
       onAuthenticated?.();
       navigateToDestination();
     } catch (error: any) {
-      console.error("[auth] Google sign-in error:", error?.code, error?.message, error);
       const code = String(error?.code || '');
-      if (code === 'auth/popup-closed-by-user') {
-        const msg = 'You closed the sign-in window. Please try again.';
+      if (code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.hostname;
+        console.warn("[auth] Google sign-in domain not authorized in Firebase Console:", currentDomain);
+        setUnauthorizedDomain(currentDomain);
+        const msg = `Google Sign-In blocked: Domain "${currentDomain}" is not yet in your Firebase Authorized Domains whitelist.`;
         setFormError(msg);
         toast({
-          title: 'Popup closed',
-          description: msg,
-        });
-      } else if (code === 'auth/popup-blocked') {
-        const msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
-        setFormError(msg);
-        toast({
-          title: 'Popup Blocked',
-          description: msg,
-          variant: 'destructive',
-        });
-      } else if (code === 'auth/unauthorized-domain') {
-        const msg = 'Domain not authorized in Firebase Authentication. Please check Firebase Console authorized domains.';
-        setFormError(msg);
-        toast({
-          title: 'Unauthorized Domain',
-          description: msg,
+          title: 'Google OAuth Domain Authorization Required',
+          description: `Add ${currentDomain} to Firebase Authentication > Settings > Authorized domains.`,
           variant: 'destructive',
         });
       } else {
-        const description =
-          code === 'auth/network-request-failed'
-            ? 'Network issue during Google sign-in. Check your connection and try again.'
-            : error?.message || 'Please try again.';
-        setFormError(description);
-        toast({
-          title: 'Google Sign-In Failed',
-          description,
-          variant: 'destructive',
-        });
+        console.error("[auth] Google sign-in error:", error?.code, error?.message, error);
+        if (code === 'auth/popup-closed-by-user') {
+          const msg = 'You closed the sign-in window. Please try again.';
+          setFormError(msg);
+          toast({
+            title: 'Popup closed',
+            description: msg,
+          });
+        } else if (code === 'auth/popup-blocked') {
+          const msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+          setFormError(msg);
+          toast({
+            title: 'Popup Blocked',
+            description: msg,
+            variant: 'destructive',
+          });
+        } else {
+          const description =
+            code === 'auth/network-request-failed'
+              ? 'Network issue during Google sign-in. Check your connection and try again.'
+              : error?.message || 'Please try again.';
+          setFormError(description);
+          toast({
+            title: 'Google Sign-In Failed',
+            description,
+            variant: 'destructive',
+          });
+        }
       }
     } finally {
       setIsWorking(false);
@@ -440,7 +447,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                 <Button
                   type="submit"
                   disabled={isWorking}
-                  onClick={(e) => { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); }}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all"
                 >
                   {isWorking ? (
@@ -490,6 +496,89 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated }) => {
                     </svg>
                     Continue with Google
                   </button>
+
+                  {unauthorizedDomain && (
+                    <div className="mt-4 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200 text-sm space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-semibold text-sm">Google Sign-In Domain Check</p>
+                          <p className="text-xs text-amber-900/80 dark:text-amber-300">
+                            Firebase Auth for <strong>citivas-5489a.firebaseapp.com</strong> requires the web preview host to be added to Authorized Domains in your Firebase Console before Google OAuth popups are accepted.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 p-2 bg-background/95 rounded-lg border border-border">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">Dev Domain</span>
+                            <code className="text-xs font-mono select-all truncate block text-foreground">
+                              {unauthorizedDomain}
+                            </code>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2.5 gap-1 shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(unauthorizedDomain);
+                              setCopiedDomain(unauthorizedDomain);
+                              setTimeout(() => setCopiedDomain(null), 2000);
+                            }}
+                          >
+                            {copiedDomain === unauthorizedDomain ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedDomain === unauthorizedDomain ? 'Copied' : 'Copy'}
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center gap-2 p-2 bg-background/95 rounded-lg border border-border">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] uppercase font-semibold text-muted-foreground block">Shared / Preview Domain</span>
+                            <code className="text-xs font-mono select-all truncate block text-foreground">
+                              ais-pre-wsbtip4vsisi43utye3lxm-369425955094.europe-west2.run.app
+                            </code>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2.5 gap-1 shrink-0"
+                            onClick={() => {
+                              const preDomain = 'ais-pre-wsbtip4vsisi43utye3lxm-369425955094.europe-west2.run.app';
+                              navigator.clipboard.writeText(preDomain);
+                              setCopiedDomain(preDomain);
+                              setTimeout(() => setCopiedDomain(null), 2000);
+                            }}
+                          >
+                            {copiedDomain === 'ais-pre-wsbtip4vsisi43utye3lxm-369425955094.europe-west2.run.app' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedDomain === 'ais-pre-wsbtip4vsisi43utye3lxm-369425955094.europe-west2.run.app' ? 'Copied' : 'Copy'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="pt-1 flex flex-wrap items-center justify-between gap-2 border-t border-amber-500/20">
+                        <a
+                          href="https://console.firebase.google.com/project/citivas-5489a/authentication/settings"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                        >
+                          Open Firebase Console Settings <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, email: 'Spellz49@gmail.com' }));
+                          }}
+                          className="text-xs text-primary font-semibold hover:underline"
+                        >
+                          Fill my email (Spellz49@gmail.com)
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

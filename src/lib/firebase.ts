@@ -21,15 +21,14 @@ import {
 } from 'firebase/auth';
 import firebaseAppletConfig from '../../firebase-applet-config.json';
 
-// Firebase configuration: allows custom .env overrides when running locally or on external hosts,
-// falling back to the provisioned firebaseAppletConfig.
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig?.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig?.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig?.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig?.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig?.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig?.appId,
+  apiKey: "AIzaSyDzI8Hz3fCdJQdHcNlOdiJh-bKwxqE3294",
+  authDomain: "citivas-5489a.firebaseapp.com",
+  projectId: "citivas-5489a",
+  storageBucket: "citivas-5489a.firebasestorage.app",
+  messagingSenderId: "802907376648",
+  appId: "1:802907376648:web:49c266c1a6db01655a95bd"
 };
 
 // Initialize Firebase
@@ -53,13 +52,13 @@ setPersistence(auth, browserLocalPersistence)
     console.error("[firebase] all persistence modes failed:", e?.code || e?.message || e);
   });
 
-// Select database ID: if using AI Studio project, use the named databaseId; otherwise use default or configured DB ID
+// Select database ID: if using a named custom database ID, pass it; otherwise use default database
 const customDbId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID;
 const activeProjectId = firebaseConfig.projectId;
 const appletDbId = activeProjectId === firebaseAppletConfig?.projectId ? firebaseAppletConfig?.firestoreDatabaseId : undefined;
 const resolvedDbId = customDbId || appletDbId;
 
-export const db = resolvedDbId ? getFirestore(app, resolvedDbId) : getFirestore(app);
+export const db = (resolvedDbId && resolvedDbId !== "(default)") ? getFirestore(app, resolvedDbId) : getFirestore(app);
 
 export const storage = getStorage(app);
 

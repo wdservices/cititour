@@ -65,8 +65,13 @@ export default function LoginScreen() {
     try {
       await loginWithGoogle();
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      setErrorMessage('Google sign-in failed. Please try again.');
+      if (error?.code === 'auth/unauthorized-domain') {
+        console.warn('Google sign-in domain not authorized:', error);
+        setErrorMessage('Domain not authorized in Firebase Console. Please add it to Authorized Domains in Firebase Authentication settings.');
+      } else {
+        console.error('Google sign-in error:', error);
+        setErrorMessage('Google sign-in failed. Please try again.');
+      }
     } finally {
       setIsWorking(false);
     }

@@ -1,12 +1,12 @@
 {
-  "projectId": "gen-lang-client-0673593899",
-  "appId": "1:720668670502:web:917c82634645c698a144e7",
-  "apiKey": "AIzaSyCmDqN115StB-amvgPV7WhKrzHOitTrTjw",
-  "authDomain": "gen-lang-client-0673593899.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-cititour-a99762e8-bacc-4ec4-907e-a7c9b3c6f723",
-  "storageBucket": "gen-lang-client-0673593899.firebasestorage.app",
-  "messagingSenderId": "720668670502",
+  "projectId": "citivas-5489a",
+  "appId": "1:802907376648:web:49c266c1a6db01655a95bd",
+  "apiKey": "AIzaSyDzI8Hz3fCdJQdHcNlOdiJh-bKwxqE3294",
+  "authDomain": "citivas-5489a.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "citivas-5489a.firebasestorage.app",
+  "messagingSenderId": "802907376648",
   "measurementId": "",
-  "oAuthClientId": "720668670502-smjjpu8hbo7mrgksc6f1hpg0ml4sgthh.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

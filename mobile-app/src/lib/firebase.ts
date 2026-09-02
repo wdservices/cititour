@@ -4,12 +4,12 @@ import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDfHE4dRgE5SILVzTls_5UPPpncA1NBQaI",
-  authDomain: "tourph-4d6b8.web.app",
-  projectId: "tourph-4d6b8",
-  storageBucket: "tourph-4d6b8.appspot.com",
-  messagingSenderId: "748964654953",
-  appId: "1:748964654953:web:d69e5fe44e705c6b2657f8",
+  apiKey: "AIzaSyDzI8Hz3fCdJQdHcNlOdiJh-bKwxqE3294",
+  authDomain: "citivas-5489a.firebaseapp.com",
+  projectId: "citivas-5489a",
+  storageBucket: "citivas-5489a.firebasestorage.app",
+  messagingSenderId: "802907376648",
+  appId: "1:802907376648:web:49c266c1a6db01655a95bd",
 };
 
 const app = initializeApp(firebaseConfig);

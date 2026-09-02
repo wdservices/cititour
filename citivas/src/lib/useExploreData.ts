@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { fmt } from './fmt';
 import { dataCache, cacheKey } from './cache';
@@ -113,28 +113,55 @@ export function useExploreData() {
     setLoading(true);
     setError(null);
     try {
-      const [bizSnap, evtSnap, mktSnap, propSnap] = await Promise.all([
+      const [bizSnap, evtGroupSnap, evtSnap, mktGroupSnap, mktSnap, propGroupSnap, propSnap] = await Promise.all([
         getDocs(collection(db, 'businesses')),
-        getDocs(collection(db, 'events')),
-        getDocs(collection(db, 'marketplace')),
-        getDocs(collection(db, 'house_listings')),
+        getDocs(collectionGroup(db, 'events')).catch(() => ({ docs: [] })),
+        getDocs(collection(db, 'events')).catch(() => ({ docs: [] })),
+        getDocs(collectionGroup(db, 'products')).catch(() => ({ docs: [] })),
+        getDocs(collection(db, 'marketplace')).catch(() => ({ docs: [] })),
+        getDocs(collectionGroup(db, 'properties')).catch(() => ({ docs: [] })),
+        getDocs(collection(db, 'house_listings')).catch(() => ({ docs: [] })),
       ]);
 
       const allBiz = bizSnap.docs.map((d) => mapBusiness({ id: d.id, ...d.data() }));
       const biz = allBiz.filter((b) => b.category !== 'Event' && b.category !== 'Events');
-      const evt = evtSnap.docs.map((d) => ({
-        ...mapBusiness({ id: d.id, ...d.data() }),
-        kind: 'event' as const,
-      }));
-      const mkt = mktSnap.docs.map((d) => ({
-        ...mapBusiness({ id: d.id, ...d.data() }),
-        kind: 'marketplace' as const,
-      }));
-      const prop = propSnap.docs.map((d) => ({
-        ...mapBusiness({ id: d.id, ...d.data() }),
-        kind: 'property' as const,
-        category: fmt(d.data().category) || 'Property',
-      }));
+
+      const seenEvt = new Set<string>();
+      const evt: (ExploreListing & { kind: 'event' })[] = [];
+      [...evtGroupSnap.docs, ...evtSnap.docs].forEach((d) => {
+        if (!seenEvt.has(d.id)) {
+          seenEvt.add(d.id);
+          evt.push({
+            ...mapBusiness({ id: d.id, ...d.data() }),
+            kind: 'event' as const,
+          });
+        }
+      });
+
+      const seenMkt = new Set<string>();
+      const mkt: (ExploreListing & { kind: 'marketplace' })[] = [];
+      [...mktGroupSnap.docs, ...mktSnap.docs].forEach((d) => {
+        if (!seenMkt.has(d.id)) {
+          seenMkt.add(d.id);
+          mkt.push({
+            ...mapBusiness({ id: d.id, ...d.data() }),
+            kind: 'marketplace' as const,
+          });
+        }
+      });
+
+      const seenProp = new Set<string>();
+      const prop: (ExploreListing & { kind: 'property' })[] = [];
+      [...propGroupSnap.docs, ...propSnap.docs].forEach((d) => {
+        if (!seenProp.has(d.id)) {
+          seenProp.add(d.id);
+          prop.push({
+            ...mapBusiness({ id: d.id, ...d.data() }),
+            kind: 'property' as const,
+            category: fmt(d.data().category || d.data().type) || 'Property',
+          });
+        }
+      });
 
       dataCache.set<ExploreData>(EXPLORE_CACHE_KEY, { businesses: biz, events: evt, marketplace: mkt, properties: prop });
 

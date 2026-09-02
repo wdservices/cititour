@@ -1,0 +1,145 @@
+{
+  "entities": {
+    "Business": {
+      "title": "Business",
+      "description": "A registered business, company, restaurant, hotel, real estate agency or organizer on Citivas",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "website": { "type": "string" },
+        "rating": { "type": "number" },
+        "totalReviews": { "type": "number" },
+        "status": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "isFeatured": { "type": "boolean" },
+        "ownerId": { "type": "string" },
+        "images": { "type": "array" },
+        "amenities": { "type": "array" }
+      },
+      "required": ["name", "category", "city", "state"]
+    },
+    "Property": {
+      "title": "Property",
+      "description": "A property listed under a business (For Rent, Shortlet & Hotel, Land, Commercial)",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "businessId": { "type": "string" },
+        "businessName": { "type": "string" },
+        "propertySubType": { "type": "string", "enum": ["rent", "shortlet", "hotel", "land", "commercial", "sale"] },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "string" },
+        "pricePerNight": { "type": "number" },
+        "pricePerMonth": { "type": "number" },
+        "priceTotal": { "type": "number" },
+        "currency": { "type": "string" },
+        "bedrooms": { "type": "number" },
+        "bathrooms": { "type": "number" },
+        "guests": { "type": "number" },
+        "location": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "amenities": { "type": "array" },
+        "images": { "type": "array" },
+        "gallery": { "type": "array" },
+        "status": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["title", "businessId", "propertySubType"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A product or service listed under a business in marketplace",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "businessId": { "type": "string" },
+        "businessName": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "currency": { "type": "string" },
+        "images": { "type": "array" },
+        "condition": { "type": "string" },
+        "status": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["title", "businessId", "price"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "An event organized and listed under a business",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "businessId": { "type": "string" },
+        "businessName": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "venue": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "time": { "type": "string" },
+        "price": { "type": "number" },
+        "currency": { "type": "string" },
+        "images": { "type": "array" },
+        "status": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["title", "businessId", "venue"]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "A menu item or dish listed under a restaurant business",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "businessId": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "image": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "spicy": { "type": "boolean" },
+        "popular": { "type": "boolean" }
+      },
+      "required": ["name", "businessId", "price"]
+    }
+  },
+  "firestore": {
+    "/businesses/{businessId}": {
+      "schema": "Business",
+      "description": "Primary business entity"
+    },
+    "/businesses/{businessId}/properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Properties listed by this business (Rent, Shortlet/Hotel, Land, Commercial)"
+    },
+    "/businesses/{businessId}/products/{productId}": {
+      "schema": "Product",
+      "description": "Products & services sold by this business"
+    },
+    "/businesses/{businessId}/events/{eventId}": {
+      "schema": "Event",
+      "description": "Events organized by this business"
+    },
+    "/businesses/{businessId}/menu/{menuItemId}": {
+      "schema": "MenuItem",
+      "description": "Digital menu items for restaurant businesses"
+    }
+  }
+}

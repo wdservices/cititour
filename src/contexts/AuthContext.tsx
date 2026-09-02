@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await setDoc(
         userRef,
         {
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '') || 'User',
           email: firebaseUser.email || '',
           photoURL: firebaseUser.photoURL || null,
           lastSeenAt: serverTimestamp(),
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
     return {
       id: firebaseUser.uid,
-      name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+      name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '') || 'User',
       email: firebaseUser.email || '',
       photoURL: firebaseUser.photoURL || undefined,
     };
@@ -255,7 +255,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logActivity({ userId: cred.user.uid, userEmail: cred.user.email || "", userName: cred.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Google" });
       }
     } catch (error: any) {
-      console.error('Google login error:', error);
+      if (error?.code === 'auth/unauthorized-domain') {
+        console.warn('[Firebase Auth] Domain not authorized in Firebase Console:', window.location.hostname);
+      } else {
+        console.error('Google login error:', error);
+      }
       throw error;
     }
   };
@@ -273,7 +277,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logActivity({ userId: cred.user.uid, userEmail: cred.user.email || "", userName: cred.user.displayName || "", action: "sign_in", targetType: "auth", details: "Signed in with Facebook" });
       }
     } catch (error: any) {
-      console.error('Facebook login error:', error);
+      if (error?.code === 'auth/unauthorized-domain') {
+        console.warn('[Firebase Auth] Domain not authorized in Firebase Console:', window.location.hostname);
+      } else {
+        console.error('Facebook login error:', error);
+      }
       throw error;
     }
   };

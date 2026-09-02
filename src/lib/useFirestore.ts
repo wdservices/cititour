@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   collection, getDocs, getDoc, query, where, doc,
   addDoc, updateDoc, deleteDoc, serverTimestamp,
-  limit as fsLimit, orderBy,
+  limit as fsLimit, orderBy, collectionGroup,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -22,6 +22,7 @@ const CACHE = {
   businesses: { staleTime: 5 * 60 * 1000, gcTime: 30 * 60 * 1000 },   // 5 min fresh, 30 min GC
   marketplace: { staleTime: 3 * 60 * 1000, gcTime: 15 * 60 * 1000 },  // 3 min fresh, 15 min GC
   house_listings: { staleTime: 5 * 60 * 1000, gcTime: 30 * 60 * 1000 },
+  properties: { staleTime: 5 * 60 * 1000, gcTime: 30 * 60 * 1000 },
   reviews: { staleTime: 2 * 60 * 1000, gcTime: 10 * 60 * 1000 },
   users: { staleTime: 10 * 60 * 1000, gcTime: 60 * 60 * 1000 },
 };
@@ -76,7 +77,26 @@ export function useDoc<T = any>(collectionName: string, docId: string | null) {
 // ────────────────────────────────────────────
 
 export function useMarketplaceItems() {
-  return useCollection("marketplace");
+  return useQuery({
+    queryKey: ["marketplace_all"],
+    queryFn: async () => {
+      try {
+        const [topSnap, groupSnap] = await Promise.all([
+          getDocs(collection(db, "marketplace")),
+          getDocs(collectionGroup(db, "products")),
+        ]);
+        const map = new Map<string, any>();
+        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        return Array.from(map.values());
+      } catch {
+        const topSnap = await getDocs(collection(db, "marketplace"));
+        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+    },
+    staleTime: 3 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+  });
 }
 
 export function useBusinesses(state?: string) {
@@ -85,12 +105,52 @@ export function useBusinesses(state?: string) {
 }
 
 export function useEvents() {
-  return useCollection("events");
+  return useQuery({
+    queryKey: ["events_all"],
+    queryFn: async () => {
+      try {
+        const [topSnap, groupSnap] = await Promise.all([
+          getDocs(collection(db, "events")),
+          getDocs(collectionGroup(db, "events")),
+        ]);
+        const map = new Map<string, any>();
+        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        return Array.from(map.values());
+      } catch {
+        const topSnap = await getDocs(collection(db, "events"));
+        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 }
 
 export function useHouseListings() {
-  return useCollection("house_listings");
+  return useQuery({
+    queryKey: ["house_listings_and_properties"],
+    queryFn: async () => {
+      try {
+        const [topSnap, groupSnap] = await Promise.all([
+          getDocs(collection(db, "house_listings")),
+          getDocs(collectionGroup(db, "properties")),
+        ]);
+        const map = new Map<string, any>();
+        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+        return Array.from(map.values());
+      } catch {
+        const topSnap = await getDocs(collection(db, "house_listings"));
+        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 }
+
+export const useProperties = useHouseListings;
 
 export function usePropertyBookings(ownerId: string | null) {
   return useQuery({
@@ -119,24 +179,39 @@ export function useMyPropertyBookings(userId: string | null) {
   });
 }
 
-/** Fetch products and properties belonging to a specific business */
+/** Fetch products, properties, events and menu items belonging to a specific business */
 export function useBusinessChildren(businessId: string | null) {
   return useQuery({
     queryKey: ["businessChildren", businessId],
     queryFn: async () => {
-      if (!businessId) return { products: [], properties: [] };
+      if (!businessId) return { products: [], properties: [], menu: [], events: [] };
       try {
-        const [prodSnap, propSnap] = await Promise.all([
+        const [prodSnap, propSnap, subPropSnap, subProdSnap, menuSnap, eventSnap] = await Promise.all([
           getDocs(query(collection(db, "marketplace"), where("businessId", "==", businessId))),
           getDocs(query(collection(db, "house_listings"), where("businessId", "==", businessId))),
+          getDocs(collection(db, "businesses", businessId, "properties")),
+          getDocs(collection(db, "businesses", businessId, "products")),
+          getDocs(collection(db, "businesses", businessId, "menu")),
+          getDocs(collection(db, "businesses", businessId, "events")),
         ]);
+
+        const prodMap = new Map<string, any>();
+        prodSnap.docs.forEach((d) => prodMap.set(d.id, { id: d.id, ...d.data() }));
+        subProdSnap.docs.forEach((d) => prodMap.set(d.id, { id: d.id, ...d.data() }));
+
+        const propMap = new Map<string, any>();
+        propSnap.docs.forEach((d) => propMap.set(d.id, { id: d.id, ...d.data() }));
+        subPropSnap.docs.forEach((d) => propMap.set(d.id, { id: d.id, ...d.data() }));
+
         return {
-          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          products: Array.from(prodMap.values()),
+          properties: Array.from(propMap.values()),
+          menu: menuSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          events: eventSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
         };
       } catch (error) {
         console.error("[useBusinessChildren] Error:", error);
-        return { products: [], properties: [] };
+        return { products: [], properties: [], menu: [], events: [] };
       }
     },
     enabled: !!businessId,
@@ -178,18 +253,53 @@ export function useMyListings(userId: string | null) {
       if (!userId) return { businesses: [], products: [], properties: [], events: [] };
       
       try {
-        const [bizSnap, prodSnap, propSnap, eventSnap] = await Promise.all([
+        const [bizSnap, prodTopSnap, propTopSnap, eventTopSnap, propGroupSnap, prodGroupSnap, eventGroupSnap] = await Promise.all([
           getDocs(query(collection(db, "businesses"), where("ownerId", "==", userId))),
-          getDocs(query(collection(db, "marketplace"), where("ownerId", "==", userId))),
-          getDocs(query(collection(db, "house_listings"), where("ownerId", "==", userId))),
-          getDocs(query(collection(db, "events"), where("ownerId", "==", userId))),
+          getDocs(query(collection(db, "marketplace"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
+          getDocs(query(collection(db, "house_listings"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
+          getDocs(query(collection(db, "events"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
+          getDocs(collectionGroup(db, "properties")).catch(() => ({ docs: [] })),
+          getDocs(collectionGroup(db, "products")).catch(() => ({ docs: [] })),
+          getDocs(collectionGroup(db, "events")).catch(() => ({ docs: [] })),
         ]);
+
+        const userBizIds = new Set(bizSnap.docs.map((d) => d.id));
+
+        // Deduplicate properties
+        const propMap = new Map<string, any>();
+        propTopSnap.docs.forEach((d: any) => propMap.set(d.id, { id: d.id, ...d.data() }));
+        propGroupSnap.docs.forEach((d: any) => {
+          const data = d.data();
+          if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
+            propMap.set(d.id, { id: d.id, ...data });
+          }
+        });
+
+        // Deduplicate products
+        const prodMap = new Map<string, any>();
+        prodTopSnap.docs.forEach((d: any) => prodMap.set(d.id, { id: d.id, ...d.data() }));
+        prodGroupSnap.docs.forEach((d: any) => {
+          const data = d.data();
+          if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
+            prodMap.set(d.id, { id: d.id, ...data });
+          }
+        });
+
+        // Deduplicate events
+        const eventMap = new Map<string, any>();
+        eventTopSnap.docs.forEach((d: any) => eventMap.set(d.id, { id: d.id, ...d.data() }));
+        eventGroupSnap.docs.forEach((d: any) => {
+          const data = d.data();
+          if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
+            eventMap.set(d.id, { id: d.id, ...data });
+          }
+        });
         
         return {
           businesses: bizSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)).filter((b: any) => b.category !== "Event" && b.category !== "Events"),
-          events: eventSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          events: Array.from(eventMap.values()),
+          products: Array.from(prodMap.values()),
+          properties: Array.from(propMap.values()),
         };
       } catch (error) {
         console.error("[useMyListings] Error:", error);

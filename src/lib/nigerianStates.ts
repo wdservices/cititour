@@ -156,6 +156,80 @@ export const PROPERTY_AMENITIES = [
   { id: "spa", label: "Spa", icon: "💆" },
 ] as const;
 
+export const RESTAURANT_CUISINES = [
+  "Nigerian / Local Delicacies",
+  "Afro-Fusion",
+  "Continental & Grills",
+  "Seafood & Grill",
+  "Italian & Pizza",
+  "Fast Food & Burgers",
+  "Asian, Chinese & Sushi",
+  "Bakery, Pastries & Cafe",
+  "BBQ, Suya & Shawarma",
+  "Lounge, Drinks & Cocktails",
+  "Fine Dining",
+  "Vegetarian & Healthy",
+] as const;
+
+export const RESTAURANT_TYPES = [
+  "FINE DINING",
+  "CASUAL EATERY",
+  "ROOFTOP & LOUNGE",
+  "CAFE & BAKERY",
+  "FAST CASUAL / QSR",
+  "BUKA & LOCAL KITCHEN",
+  "GRILL & BBQ BAR",
+] as const;
+
+export const RESTAURANT_PRICE_TIERS = [
+  { label: "₦ Budget (Under ₦3,000)", value: "₦" },
+  { label: "₦₦ Casual (₦3,000 - ₦10,000)", value: "₦₦" },
+  { label: "₦₦₦ Upscale (₦10,000 - ₦30,000)", value: "₦₦₦" },
+  { label: "₦₦₦₦ Fine Dining (₦30,000+)", value: "₦₦₦₦" },
+] as const;
+
+export const RESTAURANT_AMENITIES = [
+  { id: "dine_in", label: "Dine-in Service", icon: "🍽️" },
+  { id: "takeaway", label: "Takeaway / Pickup", icon: "🥡" },
+  { id: "delivery", label: "Food Delivery", icon: "🛵" },
+  { id: "outdoor_seating", label: "Outdoor Garden Seating", icon: "🌿" },
+  { id: "rooftop", label: "Rooftop / Skyline Lounge", icon: "🌆" },
+  { id: "private_dining", label: "Private Dining Room", icon: "🚪" },
+  { id: "bar_cocktails", label: "Full Bar & Cocktails", icon: "🍸" },
+  { id: "live_music", label: "Live Music / DJ", icon: "🎵" },
+  { id: "wifi", label: "High-Speed WiFi", icon: "📶" },
+  { id: "parking", label: "Free & Valet Parking", icon: "🚗" },
+  { id: "ac", label: "Air Conditioned", icon: "❄️" },
+  { id: "reservations", label: "Table Reservations", icon: "📅" },
+  { id: "kids_friendly", label: "Kids & Family Friendly", icon: "👶" },
+  { id: "shisha", label: "Shisha & Smoke Lounge", icon: "💨" },
+  { id: "pos_cards", label: "POS / Cards & Transfer", icon: "💳" },
+  { id: "halal", label: "Halal Friendly", icon: "☪️" },
+  { id: "vegetarian", label: "Vegetarian Options", icon: "🥗" },
+  { id: "security", label: "24/7 Security", icon: "🔒" },
+] as const;
+
+export const MENU_CATEGORIES = [
+  "Starters & Appetizers",
+  "Main Dishes",
+  "Soups & Swallows",
+  "Grills, BBQ & Suya",
+  "Sides & Extras",
+  "Pastries & Desserts",
+  "Cocktails & Mocktails",
+  "Wine, Beer & Spirits",
+  "Fresh Juices & Smoothies",
+  "Chef's Specials",
+] as const;
+
+export const DIETARY_TAGS = [
+  { id: "spicy", label: "Spicy 🌶️" },
+  { id: "chef_special", label: "Chef's Special ⭐" },
+  { id: "bestseller", label: "Best Seller 🔥" },
+  { id: "vegetarian", label: "Vegetarian 🥗" },
+  { id: "halal", label: "Halal ☪️" },
+] as const;
+
 export const EVENT_CATEGORIES = [
   "Food & Drink",
   "Technology",
@@ -167,3 +241,4 @@ export const EVENT_CATEGORIES = [
   "Education",
   "Other",
 ] as const;
+

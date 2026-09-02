@@ -55,6 +55,7 @@ import BlogPostPage from "./pages/BlogPostPage";
 import DocsPage from "./pages/DocsPage";
 import HospitalityDashboard from "./pages/HospitalityDashboard";
 import MiniSiteWizard from "./pages/MiniSiteWizard";
+import RestaurantWizard from "./pages/RestaurantWizard";
 import MiniSitePage from "./pages/MiniSitePage";
 import BookingEngine from "./pages/BookingEngine";
 import BookingPayment from "./pages/BookingPayment";
@@ -151,6 +152,8 @@ const ProtectedRoutes = () => {
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/mini-site-wizard" element={<MiniSiteWizard />} />
+        <Route path="/restaurant-wizard" element={<RestaurantWizard />} />
+        <Route path="/restaurant-site-wizard" element={<RestaurantWizard />} />
         <Route path="/contact-support" element={<ContactSupportPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/wallet/verify" element={<WalletVerifyPage />} />
