@@ -113,14 +113,11 @@ export function useExploreData() {
     setLoading(true);
     setError(null);
     try {
-      const [bizSnap, evtGroupSnap, evtSnap, mktGroupSnap, mktSnap, propGroupSnap, propSnap] = await Promise.all([
+      const [bizSnap, evtGroupSnap, mktGroupSnap, propGroupSnap] = await Promise.all([
         getDocs(collection(db, 'businesses')),
-        getDocs(collectionGroup(db, 'events')).catch(() => ({ docs: [] })),
-        getDocs(collection(db, 'events')).catch(() => ({ docs: [] })),
-        getDocs(collectionGroup(db, 'products')).catch(() => ({ docs: [] })),
-        getDocs(collection(db, 'marketplace')).catch(() => ({ docs: [] })),
-        getDocs(collectionGroup(db, 'properties')).catch(() => ({ docs: [] })),
-        getDocs(collection(db, 'house_listings')).catch(() => ({ docs: [] })),
+        getDocs(collectionGroup(db, 'events')).catch(() => ({ docs: [] } as any)),
+        getDocs(collectionGroup(db, 'products')).catch(() => ({ docs: [] } as any)),
+        getDocs(collectionGroup(db, 'properties')).catch(() => ({ docs: [] } as any)),
       ]);
 
       const allBiz = bizSnap.docs.map((d) => mapBusiness({ id: d.id, ...d.data() }));
@@ -128,7 +125,7 @@ export function useExploreData() {
 
       const seenEvt = new Set<string>();
       const evt: (ExploreListing & { kind: 'event' })[] = [];
-      [...evtGroupSnap.docs, ...evtSnap.docs].forEach((d) => {
+      [...evtGroupSnap.docs].forEach((d) => {
         if (!seenEvt.has(d.id)) {
           seenEvt.add(d.id);
           evt.push({
@@ -140,7 +137,7 @@ export function useExploreData() {
 
       const seenMkt = new Set<string>();
       const mkt: (ExploreListing & { kind: 'marketplace' })[] = [];
-      [...mktGroupSnap.docs, ...mktSnap.docs].forEach((d) => {
+      [...mktGroupSnap.docs].forEach((d) => {
         if (!seenMkt.has(d.id)) {
           seenMkt.add(d.id);
           mkt.push({
@@ -152,7 +149,7 @@ export function useExploreData() {
 
       const seenProp = new Set<string>();
       const prop: (ExploreListing & { kind: 'property' })[] = [];
-      [...propGroupSnap.docs, ...propSnap.docs].forEach((d) => {
+      [...propGroupSnap.docs].forEach((d) => {
         if (!seenProp.has(d.id)) {
           seenProp.add(d.id);
           prop.push({

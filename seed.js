@@ -48,7 +48,7 @@ function slugify(text) {
     .replace(/[\s\W-]+/g, '-');
 }
 
-// Counters for final reporting
+// Counters for final reporting - pure business subcollections only
 const stats = {
   businesses: 0,
   properties: 0,
@@ -58,9 +58,6 @@ const stats = {
   products: 0,
   events: 0,
   ticketTypes: 0,
-  property_index: 0,
-  product_index: 0,
-  event_index: 0,
   users: 0,
   wallets: 0,
   transactions: 0,
@@ -808,24 +805,8 @@ async function seedDatabase() {
             stats.rooms++;
           }
         }
-
-        // Flat property_index
-        const propIndexRef = db.collection('property_index').doc(propertyId);
-        await propIndexRef.set({
-          propertyId: propertyId,
-          title: prop.title,
-          type: prop.type,
-          price: prop.price,
-          state: prop.state,
-          city: prop.city,
-          coverImageUrl: (prop.photos && prop.photos[0]) || '',
-          businessId: businessId,
-          businessName: biz.businessName,
-          createdAt: serverTimestamp()
-        });
-        stats.property_index++;
       }
-      console.log(`   └─ Added ${biz.properties.length} properties & synced to property_index.`);
+      console.log(`   └─ Added ${biz.properties.length} properties under business.`);
     }
 
     // B. RESTAURANTS
@@ -884,24 +865,8 @@ async function seedDatabase() {
           createdAt: serverTimestamp()
         });
         stats.products++;
-
-        // Flat product_index
-        const prodIndexRef = db.collection('product_index').doc(productId);
-        await prodIndexRef.set({
-          productId: productId,
-          title: prod.title,
-          price: prod.price,
-          category: prod.category,
-          state: prod.state,
-          city: prod.city,
-          coverImageUrl: (prod.photos && prod.photos[0]) || '',
-          businessId: businessId,
-          businessName: biz.businessName,
-          createdAt: serverTimestamp()
-        });
-        stats.product_index++;
       }
-      console.log(`   └─ Added ${biz.products.length} product(s) & synced to product_index.`);
+      console.log(`   └─ Added ${biz.products.length} product(s) under business.`);
     }
 
     // D. EVENTS
@@ -947,32 +912,17 @@ async function seedDatabase() {
           }
         }
 
-        // Flat event_index
-        const evIndexRef = db.collection('event_index').doc(eventId);
-        await evIndexRef.set({
-          eventId: eventId,
-          title: ev.title,
-          startDate: ev.startDate,
-          state: ev.state,
-          city: ev.city,
-          coverImageUrl: ev.coverImageUrl,
-          businessId: businessId,
-          businessName: biz.businessName,
-          priceFrom: lowestTicketPrice === Infinity ? 0 : lowestTicketPrice,
-          createdAt: serverTimestamp()
-        });
-        stats.event_index++;
       }
-      console.log(`   └─ Added ${biz.events.length} event(s) with tickets & synced to event_index.`);
+      console.log(`   └─ Added ${biz.events.length} event(s) with tickets under business.`);
     }
   }
 
   console.log('\n====================================================');
   console.log('🎉 SEEDING COMPLETED SUCCESSFULLY!');
   console.log('====================================================');
-  console.log('Summary of Created Documents:');
+  console.log('Summary of Created Documents (pure business subcollections):');
   console.table(stats);
-  console.log('All nested structures and index collections are verified.');
+  console.log('All nested structures verified - all listings under businesses/*');
 }
 
 seedDatabase().catch((err) => {

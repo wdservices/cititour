@@ -77,22 +77,13 @@ export function useDoc<T = any>(collectionName: string, docId: string | null) {
 // ────────────────────────────────────────────
 
 export function useMarketplaceItems() {
+  // Business-first: products ONLY live under businesses/{businessId}/products
+  // Use collectionGroup to fetch across all businesses
   return useQuery({
     queryKey: ["marketplace_all"],
     queryFn: async () => {
-      try {
-        const [topSnap, groupSnap] = await Promise.all([
-          getDocs(collection(db, "marketplace")),
-          getDocs(collectionGroup(db, "products")),
-        ]);
-        const map = new Map<string, any>();
-        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        return Array.from(map.values());
-      } catch {
-        const topSnap = await getDocs(collection(db, "marketplace"));
-        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      }
+      const groupSnap = await getDocs(collectionGroup(db, "products"));
+      return groupSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
     staleTime: 3 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
@@ -105,22 +96,12 @@ export function useBusinesses(state?: string) {
 }
 
 export function useEvents() {
+  // Business-first: events ONLY live under businesses/{businessId}/events
   return useQuery({
     queryKey: ["events_all"],
     queryFn: async () => {
-      try {
-        const [topSnap, groupSnap] = await Promise.all([
-          getDocs(collection(db, "events")),
-          getDocs(collectionGroup(db, "events")),
-        ]);
-        const map = new Map<string, any>();
-        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        return Array.from(map.values());
-      } catch {
-        const topSnap = await getDocs(collection(db, "events"));
-        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      }
+      const groupSnap = await getDocs(collectionGroup(db, "events"));
+      return groupSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -128,22 +109,12 @@ export function useEvents() {
 }
 
 export function useHouseListings() {
+  // Business-first: properties ONLY live under businesses/{businessId}/properties
   return useQuery({
     queryKey: ["house_listings_and_properties"],
     queryFn: async () => {
-      try {
-        const [topSnap, groupSnap] = await Promise.all([
-          getDocs(collection(db, "house_listings")),
-          getDocs(collectionGroup(db, "properties")),
-        ]);
-        const map = new Map<string, any>();
-        topSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        groupSnap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-        return Array.from(map.values());
-      } catch {
-        const topSnap = await getDocs(collection(db, "house_listings"));
-        return topSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      }
+      const groupSnap = await getDocs(collectionGroup(db, "properties"));
+      return groupSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -186,26 +157,16 @@ export function useBusinessChildren(businessId: string | null) {
     queryFn: async () => {
       if (!businessId) return { products: [], properties: [], menu: [], events: [] };
       try {
-        const [prodSnap, propSnap, subPropSnap, subProdSnap, menuSnap, eventSnap] = await Promise.all([
-          getDocs(query(collection(db, "marketplace"), where("businessId", "==", businessId))),
-          getDocs(query(collection(db, "house_listings"), where("businessId", "==", businessId))),
+        const [propSnap, prodSnap, menuSnap, eventSnap] = await Promise.all([
           getDocs(collection(db, "businesses", businessId, "properties")),
           getDocs(collection(db, "businesses", businessId, "products")),
           getDocs(collection(db, "businesses", businessId, "menu")),
           getDocs(collection(db, "businesses", businessId, "events")),
         ]);
 
-        const prodMap = new Map<string, any>();
-        prodSnap.docs.forEach((d) => prodMap.set(d.id, { id: d.id, ...d.data() }));
-        subProdSnap.docs.forEach((d) => prodMap.set(d.id, { id: d.id, ...d.data() }));
-
-        const propMap = new Map<string, any>();
-        propSnap.docs.forEach((d) => propMap.set(d.id, { id: d.id, ...d.data() }));
-        subPropSnap.docs.forEach((d) => propMap.set(d.id, { id: d.id, ...d.data() }));
-
         return {
-          products: Array.from(prodMap.values()),
-          properties: Array.from(propMap.values()),
+          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
           menu: menuSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
           events: eventSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
         };
@@ -227,13 +188,16 @@ export function useBusinessesProducts(businessIds: string[]) {
     queryFn: async () => {
       if (businessIds.length === 0) return { products: [], properties: [] };
       try {
-        const [prodSnap, propSnap] = await Promise.all([
-          getDocs(query(collection(db, "marketplace"), where("businessId", "in", businessIds))),
-          getDocs(query(collection(db, "house_listings"), where("businessId", "in", businessIds))),
+        // Business-first: fetch from subcollections via collectionGroup + client filter
+        const [prodGroup, propGroup] = await Promise.all([
+          getDocs(collectionGroup(db, "products")),
+          getDocs(collectionGroup(db, "properties")),
         ]);
+        const idSet = new Set(businessIds);
         return {
-          products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
-          properties: propSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any)),
+          products: prodGroup.docs.map((d) => ({ id: d.id, ...d.data() } as any)).filter((p: any) => p.businessId && idSet.has(p.businessId) || true) // keep all, filter if businessId present
+            .filter((p: any) => !p.businessId || idSet.has(p.businessId)),
+          properties: propGroup.docs.map((d) => ({ id: d.id, ...d.data() } as any)).filter((p: any) => !p.businessId || idSet.has(p.businessId)),
         };
       } catch (error) {
         console.error("[useBusinessesProducts] Error:", error);
@@ -253,21 +217,17 @@ export function useMyListings(userId: string | null) {
       if (!userId) return { businesses: [], products: [], properties: [], events: [] };
       
       try {
-        const [bizSnap, prodTopSnap, propTopSnap, eventTopSnap, propGroupSnap, prodGroupSnap, eventGroupSnap] = await Promise.all([
+        const [bizSnap, propGroupSnap, prodGroupSnap, eventGroupSnap] = await Promise.all([
           getDocs(query(collection(db, "businesses"), where("ownerId", "==", userId))),
-          getDocs(query(collection(db, "marketplace"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
-          getDocs(query(collection(db, "house_listings"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
-          getDocs(query(collection(db, "events"), where("ownerId", "==", userId))).catch(() => ({ docs: [] })),
-          getDocs(collectionGroup(db, "properties")).catch(() => ({ docs: [] })),
-          getDocs(collectionGroup(db, "products")).catch(() => ({ docs: [] })),
-          getDocs(collectionGroup(db, "events")).catch(() => ({ docs: [] })),
+          getDocs(collectionGroup(db, "properties")).catch(() => ({ docs: [] } as any)),
+          getDocs(collectionGroup(db, "products")).catch(() => ({ docs: [] } as any)),
+          getDocs(collectionGroup(db, "events")).catch(() => ({ docs: [] } as any)),
         ]);
 
         const userBizIds = new Set(bizSnap.docs.map((d) => d.id));
 
-        // Deduplicate properties
+        // Business-first: only subcollections
         const propMap = new Map<string, any>();
-        propTopSnap.docs.forEach((d: any) => propMap.set(d.id, { id: d.id, ...d.data() }));
         propGroupSnap.docs.forEach((d: any) => {
           const data = d.data();
           if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
@@ -275,9 +235,7 @@ export function useMyListings(userId: string | null) {
           }
         });
 
-        // Deduplicate products
         const prodMap = new Map<string, any>();
-        prodTopSnap.docs.forEach((d: any) => prodMap.set(d.id, { id: d.id, ...d.data() }));
         prodGroupSnap.docs.forEach((d: any) => {
           const data = d.data();
           if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
@@ -285,9 +243,7 @@ export function useMyListings(userId: string | null) {
           }
         });
 
-        // Deduplicate events
         const eventMap = new Map<string, any>();
-        eventTopSnap.docs.forEach((d: any) => eventMap.set(d.id, { id: d.id, ...d.data() }));
         eventGroupSnap.docs.forEach((d: any) => {
           const data = d.data();
           if (data.ownerId === userId || (data.businessId && userBizIds.has(data.businessId))) {
