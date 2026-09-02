@@ -25,3 +25,9 @@ bun.lockb
 *.sln
 *.sw?
 .env
+
+# Secrets - never commit
+serviceAccountKey.json
+*serviceAccount*.json
+firebase-adminsdk*.json
+*-key.json
