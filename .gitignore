@@ -26,8 +26,17 @@ bun.lockb
 *.sw?
 .env
 
-# Secrets - never commit
+# Secrets - never commit (covers root, public/, any subfolder)
 serviceAccountKey.json
+**/serviceAccountKey.json
 *serviceAccount*.json
+**/*serviceAccount*.json
 firebase-adminsdk*.json
+**/firebase-adminsdk*.json
 *-key.json
+**/*-key.json
+google-service-account.json
+**/google-service-account.json
+.env
+.env.*
+!.env.example
