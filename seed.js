@@ -8,7 +8,8 @@
  * - Run with: node seed.js
  */
 
-import admin from 'firebase-admin';
+import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -32,12 +33,12 @@ const serviceAccount = fs.existsSync(keyPath)
   ? JSON.parse(fs.readFileSync(keyPath, 'utf8'))
   : undefined;
 
-admin.initializeApp({
-  credential: serviceAccount ? admin.credential.cert(serviceAccount) : admin.credential.applicationDefault()
+initializeApp({
+  credential: serviceAccount ? cert(serviceAccount) : applicationDefault()
 });
 
-const db = admin.firestore();
-const serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
+const db = getFirestore();
+const serverTimestamp = FieldValue.serverTimestamp;
 
 function slugify(text) {
   return text
