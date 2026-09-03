@@ -140,28 +140,33 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ── Marketplace / House Listings / Events (LEGACY top-level - DEPRECATED) ──
-    // Direct top-level writes are BLOCKED to enforce business-first flow.
-    // All new listings must be created under /businesses/{businessId}/properties or /products or /events
-    // Read remains true for backward-compat during migration; remove after migration.
+    // ── Marketplace / House Listings / Events (LEGACY top-level - TRANSITION) ──
+    // Keep read+write allowed during migration. New code should use business subcollections.
+    // TODO: after all clients migrate, change to allow create, update, delete: if false to enforce business-first only.
     match /marketplace/{productId} {
       allow read: if true;
-      allow create, update, delete: if false;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
     match /house_listings/{listingId} {
       allow read: if true;
-      allow create, update, delete: if false;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
     match /events/{eventId} {
       allow read: if true;
-      allow create, update, delete: if false;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
-    // Flat index collections (deleted) - deny all
-    match /property_index/{docId} { allow read, write: if false; }
-    match /product_index/{docId} { allow read, write: if false; }
-    match /event_index/{docId} { allow read, write: if false; }
-    match /properties/{docId} { allow read, write: if false; }
-    match /products/{docId} { allow read, write: if false; }
+    // Flat index collections (deleted) - keep read open for migration, no writes
+    match /property_index/{docId} { allow read: if true; allow write: if false; }
+    match /product_index/{docId} { allow read: if true; allow write: if false; }
+    match /event_index/{docId} { allow read: if true; allow write: if false; }
+    match /properties/{docId} { allow read: if true; allow write: if false; }
+    match /products/{docId} { allow read: if true; allow write: if false; }
 
     // ── Favourites ──
     match /favourites/{favouriteId} {
