@@ -33,10 +33,22 @@ const RestaurantsPage = () => {
         const q = query(collection(db, "businesses"));
         const querySnapshot = await getDocs(q);
         const restaurantsData = querySnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }))
+          .map(doc => {
+            const d: any = doc.data();
+            return {
+              id: doc.id,
+              title: d.title || d.businessName || "Untitled",
+              description: d.description || "",
+              image: d.image || d.logoUrl || "",
+              category: d.category,
+              rating: d.rating || 0,
+              price: d.price || "",
+              location: d.location || [d.city, d.state].filter(Boolean).join(", ") || "",
+              phone: d.phone || d.contactPhone || "",
+              website: d.website || "",
+              isOpen: d.isOpen ?? true,
+            };
+          })
           .filter((doc: any) => doc.category === "Restaurant") as Restaurant[];
         setRestaurants(restaurantsData);
       } catch (err) {
@@ -51,7 +63,7 @@ const RestaurantsPage = () => {
   }, []);
 
   const filteredRestaurants = restaurants.filter(restaurant =>
-    (restaurant.title?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+    ((restaurant as any).title?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
     (restaurant.description?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
     (restaurant.category?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false)
   );

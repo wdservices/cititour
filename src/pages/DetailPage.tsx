@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc, serverTimestamp, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, addDoc, serverTimestamp, arrayUnion, collectionGroup } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   ArrowLeft, Star, MapPin, Phone, Globe, MessageCircle,
@@ -104,22 +104,22 @@ const DetailPage = () => {
           const resolvedOwnerId = raw.ownerId || raw.userId || raw.uid || '';
           setOwnerUid(resolvedOwnerId || null);
           setData({
-            title: raw.title || "Untitled",
+            title: raw.title || raw.businessName || "Untitled",
             description: raw.description || "No description provided.",
-            image: raw.image || "",
-            images: raw.images || (raw.image ? [raw.image] : []),
+            image: raw.image || raw.logoUrl || "",
+            images: raw.images || (raw.image ? [raw.image] : raw.logoUrl ? [raw.logoUrl] : []),
             category: raw.category || categorySlug,
             rating: raw.rating,
             reviews: raw.reviews,
             price: raw.price,
-            location: raw.location,
-            address: raw.address || raw.location || "Address not provided",
-            phone: raw.phone,
-            email: raw.email,
+            location: raw.location || [raw.city, raw.state].filter(Boolean).join(", "),
+            address: raw.address || raw.location || [raw.city, raw.state].filter(Boolean).join(", ") || "Address not provided",
+            phone: raw.phone || raw.contactPhone,
+            email: raw.email || raw.contactEmail,
             website: raw.website,
             lat: raw.lat,
             lon: raw.lon,
-            whatsapp: raw.whatsapp || raw.phone,
+            whatsapp: raw.whatsapp || raw.phone || raw.contactPhone,
             latitude: raw.latitude,
             longitude: raw.longitude,
             features: raw.features || raw.tags || [],
@@ -131,12 +131,28 @@ const DetailPage = () => {
           });
 
           if (source === "businesses") {
-            const [prodSnap, propSnap] = await Promise.all([
-              getDocs(query(collection(db, "marketplace"), where("businessId", "==", id))),
-              getDocs(query(collection(db, "house_listings"), where("businessId", "==", id))),
-            ]);
-            setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-            setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+            try {
+              const [prodSnap, propSnap, restaurSnap, eventSnap] = await Promise.all([
+                getDocs(collection(db, "businesses", id, "products")),
+                getDocs(collection(db, "businesses", id, "properties")),
+                getDocs(collection(db, "businesses", id, "restaurants")),
+                getDocs(collection(db, "businesses", id, "events")),
+              ]);
+              setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+              setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+              // Restaurants/events children currently not displayed but fetched for future use
+            } catch (e) {
+              console.error("Error fetching business children (subcollections):", e);
+              // Fallback to legacy top-level for backward compat during migration
+              try {
+                const [prodSnap, propSnap] = await Promise.all([
+                  getDocs(query(collection(db, "marketplace"), where("businessId", "==", id))),
+                  getDocs(query(collection(db, "house_listings"), where("businessId", "==", id))),
+                ]);
+                setChildProducts(prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+                setChildProperties(propSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+              } catch {}
+            }
           }
         } else {
           setData(null);

@@ -546,6 +546,46 @@ const ProfileDashboard = () => {
     }
   };
 
+  const handleCreateRestaurant = async () => {
+    if (!user?.id) { navigate("/auth"); return; }
+    if (!title || !selectedState) {
+      toast({ title: "Please fill restaurant name and state", variant: "destructive" });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const fullLocation = [selectedCity, selectedState].filter(Boolean).join(", ");
+      const primaryImage = bizImages[0] || uploadedImageUrl || getMockImage("Restaurant");
+      await createBusiness.mutateAsync({
+        title,
+        description: description || `Restaurant: ${title} - ${cuisineType || "Nigerian cuisine"}`,
+        category: "Restaurant",
+        cuisineType: cuisineType || "Nigerian / Local Delicacies",
+        location: fullLocation,
+        state: selectedState,
+        city: selectedCity,
+        streetAddress,
+        phone,
+        image: primaryImage,
+        images: bizImages.length > 0 ? bizImages : [primaryImage],
+        imagePublicIds: bizImagePublicIds,
+        ownerId: user.id,
+        isOpen: true,
+        rating: 0,
+        lat: mapLat || null,
+        lon: mapLon || null,
+      });
+      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "business", targetName: title, details: `Created restaurant: ${title}` });
+      toast({ title: "Restaurant registered! Add your menu next." });
+      resetWizard();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Failed to create restaurant", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const reloadListings = () => {
     // Mutations auto-invalidate queries, no manual reload needed
   };
@@ -1317,12 +1357,103 @@ const ProfileDashboard = () => {
     </div>
   );
 
+  const renderRestaurantForm = () => (
+    <div className="space-y-4 py-2">
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 text-xs text-amber-700">
+        This will create a <strong>Restaurant business</strong>. After creation you can add your full menu in the <strong>Restaurant Wizard</strong>.
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Restaurant Name *</Label>
+        <Input className="mt-1.5" placeholder="e.g. Terra Kulture Restaurant" value={title} onChange={(e) => setTitle(e.target.value)} />
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cuisine Type</Label>
+        <Select value={cuisineType} onValueChange={setCuisineType}>
+          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select cuisine" /></SelectTrigger>
+          <SelectContent>
+            {[
+              "Nigerian / Local Delicacies",
+              "Afro-Fusion",
+              "Continental & Grills",
+              "Seafood & Grill",
+              "Italian & Pizza",
+              "Fast Food & Burgers",
+              "Asian, Chinese & Sushi",
+              "Bakery, Pastries & Cafe",
+              "BBQ, Suya & Shawarma",
+              "Lounge, Drinks & Cocktails",
+              "Fine Dining",
+            ].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
+        <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
+          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select state" /></SelectTrigger>
+          <SelectContent>
+            {NIGERIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {selectedState && (
+        <div>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
+          <Select value={selectedCity} onValueChange={setSelectedCity}>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select area" /></SelectTrigger>
+            <SelectContent>
+              {(STATE_CITIES[selectedState] || []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Street Address</Label>
+        <AddressPicker
+          onLocationConfirmed={(data) => { setStreetAddress(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
+          initialAddress={streetAddress}
+          initialLat={mapLat}
+          initialLon={mapLon}
+        />
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number *</Label>
+        <Input className="mt-1.5" placeholder="+234 801 234 5678" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">About / Description *</Label>
+        <Textarea className="mt-1.5" placeholder="Describe your restaurant, ambiance, specialties..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
+      <div>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
+        <MultiImageUpload
+          onUploadSuccess={(r) => {
+            setBizImages((prev) => [...prev, r.secureUrl]);
+            setBizImagePublicIds((prev) => [...prev, r.publicId]);
+          }}
+          onRemove={(idx) => {
+            setBizImages((prev) => prev.filter((_, i) => i !== idx));
+            setBizImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
+          }}
+          folder={CLOUDINARY_FOLDERS.BUSINESSES}
+          currentImages={bizImages}
+          buttonText="Add Image"
+          maxImages={10}
+        />
+      </div>
+      <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+        After creating, go to <span className="font-bold">Restaurant Wizard</span> for full menu setup &rarr; <button type="button" onClick={() => navigate("/restaurant-wizard")} className="text-primary underline">Open Wizard</button>
+      </div>
+    </div>
+  );
+
   const getSubmitHandler = () => {
     switch (listingType) {
       case "business": return handleCreateBusiness;
       case "product": return handleCreateProduct;
       case "property": return handleCreateProperty;
       case "event": return handleCreateEvent;
+      case "restaurant": return handleCreateRestaurant;
       default: return () => {};
     }
   };
