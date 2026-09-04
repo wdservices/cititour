@@ -165,6 +165,14 @@ const ProtectedRoutes = () => {
         <Route path="/attractions/:id" element={<DetailPage />} />
         <Route path="/lifestyle/:id" element={<DetailPage />} />
         <Route path="/others/:id" element={<DetailPage />} />
+        {/* Inspection routes for business subcollections (business-first) */}
+        <Route path="/listing/property/:id" element={<DetailPage />} />
+        <Route path="/listing/product/:id" element={<DetailPage />} />
+        <Route path="/listing/restaurant/:id" element={<DetailPage />} />
+        <Route path="/listing/event/:id" element={<DetailPage />} />
+        <Route path="/properties" element={<HouseListingsPage />} />
+        <Route path="/properties/:id" element={<DetailPage />} />
+        <Route path="/products/:id" element={<DetailPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

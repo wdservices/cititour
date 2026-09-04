@@ -348,6 +348,25 @@ const ProfileDashboard = () => {
     setPropListAsBizId("individual");
     setPropertyType("");
     setPropertyPrice("");
+    setPropertySubType("" as any);
+    setSelectedAmenities([]);
+    setUploadedImageUrls([]);
+    setUploadedImagePublicIds([]);
+    setRentBillingPeriod("");
+    setRentBedrooms(1);
+    setRentBathrooms(1);
+    setRentFurnishing("");
+    setRentServiceCharge("");
+    setRentDeposit("");
+    setRentAvailableFrom("");
+    setLandPlotSize("");
+    setLandSizeUnit("plots");
+    setLandTitleType("");
+    setCommercialSpaceSize("");
+    setCommercialBillingPeriod("");
+    setCommercialUsages([]);
+    setBizImages([]);
+    setBizImagePublicIds([]);
     setEventStartDate("");
     setEventEndDate("");
     setEventStartTime("");
@@ -1268,42 +1287,27 @@ const ProfileDashboard = () => {
         </div>
       ) : (
         <>
-          {/* Parent Business */}
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
-            <Select value={propListAsBizId} onValueChange={setPropListAsBizId}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business" /></SelectTrigger>
-              <SelectContent>
-                {myBusinesses.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {propListAsBizId && inheritPropState && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
-              Location inherited from {selectedPropBiz?.title}: {selectedPropBiz?.location}
-            </div>
-          )}
-
-          {/* Property Sub-Type Selector */}
+          {/* Property Sub-Type Selector - matches screenshot 1 exactly */}
           {!propertySubType ? (
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">What type of property? *</Label>
-              <div className="grid grid-cols-1 gap-2">
+            <div className="space-y-3">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">WHAT TYPE OF PROPERTY?</h4>
+                <p className="text-xs text-muted-foreground mt-1">Select the category of property you want to list</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
                 {PROPERTY_SUB_TYPES.map((st) => (
                   <button
                     key={st.value}
                     type="button"
                     onClick={() => {
                       if (st.value === "shortlet_hotel") {
+                        setCreateOpen(false);
                         navigate("/mini-site-wizard");
                         return;
                       }
                       setPropertySubType(st.value);
                     }}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
+                    className="flex items-center gap-3 p-4 rounded-xl border border-border/60 hover:border-primary/50 hover:bg-primary/[0.04] transition-all text-left bg-card"
                   >
                     <span className="text-2xl">{st.icon}</span>
                     <div>
@@ -1325,6 +1329,28 @@ const ProfileDashboard = () => {
                 </Badge>
                 <button type="button" onClick={() => setPropertySubType("")} className="text-xs text-primary hover:underline">Change</button>
               </div>
+
+              {/* Parent Business - shown AFTER type selection to enforce business-first but not block type UI */}
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
+                <Select value={propListAsBizId} onValueChange={setPropListAsBizId}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business" /></SelectTrigger>
+                  <SelectContent>
+                    {myBusinesses.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {myBusinesses.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1.5">No business found — <button type="button" onClick={() => { setWizardStep(1); setListingType("business"); }} className="underline font-bold">Register Business first</button></p>
+                )}
+              </div>
+
+              {propListAsBizId && inheritPropState && (
+                <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
+                  Location inherited from {selectedPropBiz?.title}: {selectedPropBiz?.location}
+                </div>
+              )}
 
               {/* Common fields */}
               <div>
@@ -2504,6 +2530,12 @@ const ProfileDashboard = () => {
                         navigate("/restaurant-wizard");
                         return;
                       }
+                      if (opt.type === "property") {
+                        setPropertySubType("" as any);
+                      }
+                      if (opt.type === "business") {
+                        setBizCategory("");
+                      }
                       setListingType(opt.type);
                       setWizardStep(2);
                     }}
@@ -2545,7 +2577,13 @@ const ProfileDashboard = () => {
               {listingType === "restaurant" && renderRestaurantForm()}
 
               <div className="flex gap-3 pt-4 border-t border-border">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setWizardStep(1)}>Back</Button>
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => {
+                  if (listingType === "property" && propertySubType) {
+                    setPropertySubType("" as any);
+                  } else {
+                    setWizardStep(1);
+                  }
+                }}>Back</Button>
                 {listingType === "restaurant" ? (
                   <div className="flex-1 flex gap-2">
                     <Button
@@ -2571,14 +2609,14 @@ const ProfileDashboard = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button className="flex-1 rounded-xl font-bold" onClick={getSubmitHandler()} disabled={isSubmitting}>
+                  <Button className="flex-1 rounded-xl font-bold" onClick={getSubmitHandler()} disabled={isSubmitting || (listingType === "property" && !propertySubType)}>
                     {isSubmitting ? (
                       <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving...</span>
                     ) : (
                       listingType === "product" ? "Post Product to Marketplace" :
                       listingType === "event" ? "Publish Event" :
                       listingType === "business" ? "Register Business" :
-                      listingType === "property" ? "List Property" :
+                      listingType === "property" ? (propertySubType ? "List Property" : "Select Property Type") :
                       "Create Listing"
                     )}
                   </Button>

@@ -85,11 +85,30 @@ const DetailPage = () => {
       setLoading(true);
       try {
         let snap = await getDoc(doc(db, "businesses", id));
-        let source: "businesses" | "house_listings" = "businesses";
+        let source: "businesses" | "house_listings" | "property" | "product" | "restaurant" | "event" = "businesses";
+        let inspectionData: any = null;
+        let inspectionBusinessId: string | null = null;
 
         if (!snap.exists()) {
           snap = await getDoc(doc(db, "house_listings", id));
           source = "house_listings";
+        }
+        // Try business subcollections via collectionGroup if still not found (inspection routes)
+        if (!snap.exists()) {
+          for (const g of ["properties", "products", "restaurants", "events"] as const) {
+            try {
+              const groupSnap = await getDocs(collectionGroup(db, g));
+              const found = groupSnap.docs.find((d) => d.id === id);
+              if (found) {
+                snap = found as any;
+                inspectionData = found.data();
+                // Extract businessId from document path: businesses/{bid}/{collection}/{id}
+                inspectionBusinessId = found.ref.parent.parent?.id || null;
+                source = g === "properties" ? "property" : g === "products" ? "product" : g as any;
+                break;
+              }
+            } catch {}
+          }
         }
 
         if (snap.exists()) {
@@ -389,7 +408,7 @@ const DetailPage = () => {
                   {childProducts.map((product: any) => (
                     <button
                       key={product.id}
-                      onClick={() => navigate(`/marketplace/${product.id}`)}
+                      onClick={() => navigate(`/listing/product/${product.id}`)}
                       className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
                     >
                       <div className="aspect-[4/3] overflow-hidden bg-muted">
@@ -441,7 +460,7 @@ const DetailPage = () => {
                     return (
                       <button
                         key={prop.id}
-                        onClick={() => navigate(`/property/${prop.id}`)}
+                        onClick={() => navigate(`/listing/property/${prop.id}`)}
                         className="bg-white rounded-2xl overflow-hidden border border-black/5 hover:shadow-lg transition-all text-left group"
                       >
                         <div className="aspect-[4/3] overflow-hidden bg-muted">
