@@ -27,6 +27,11 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
 
       // ── Properties (shortlet/rent/land/commercial) - MUST be under business ──
+      // Supported subTypes:
+      // - rent: billingPeriod (1 Year|2 Years|1.5 Years|6 Months|Monthly), bedrooms, bathrooms, hasStore/hasKitchenStore, furnishing, serviceCharge, cautionFee, legalFee, agencyFee, availableFrom, totalPackage
+      // - shortlet_hotel: via /mini-site-wizard, creates property + rooms subcollection
+      // - land: plotSize, sizeUnit, titleDocument/titleType, landUseType, topography, accessRoad, fenced/isFenced, surveyPlan/hasSurveyPlan, price
+      // - commercial: commercialType (Hall|Office|Shop|Warehouse etc), spaceSizeSqm, capacity/seatingCapacity, hasParking, hasSecurity, billingPeriod, usages, serviceCharge, cautionFee, legalFee, agencyFee
       match /properties/{propertyId} {
         allow read: if true;
         allow create: if request.auth != null && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;

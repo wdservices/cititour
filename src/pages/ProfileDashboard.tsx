@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useMyListings, useBusinessChildren, useCreateDoc, useUpdateDoc, useDeleteDoc, useMyEventOrders, useMyTicketOrders, useMyAttendedEvents, fmt } from "@/lib/useFirestore";
 import ImageUpload from "@/components/ImageUpload";
 import MultiImageUpload from "@/components/MultiImageUpload";
@@ -175,11 +175,15 @@ const ProfileDashboard = () => {
   const [uploadedImagePublicIds, setUploadedImagePublicIds] = useState<string[]>([]);
   // Rent fields
   const [rentBillingPeriod, setRentBillingPeriod] = useState("");
-  const [rentBedrooms, setRentBedrooms] = useState(1);
-  const [rentBathrooms, setRentBathrooms] = useState(1);
+  const [rentBedrooms, setRentBedrooms] = useState(2);
+  const [rentBathrooms, setRentBathrooms] = useState(2);
+  const [rentHasStore, setRentHasStore] = useState(false);
   const [rentFurnishing, setRentFurnishing] = useState("");
   const [rentServiceCharge, setRentServiceCharge] = useState("");
-  const [rentDeposit, setRentDeposit] = useState("");
+  const [rentCautionFee, setRentCautionFee] = useState("");
+  const [rentLegalFee, setRentLegalFee] = useState("");
+  const [rentAgencyFee, setRentAgencyFee] = useState("");
+  const [rentDeposit, setRentDeposit] = useState(""); // legacy alias for caution
   const [rentAvailableFrom, setRentAvailableFrom] = useState("");
   // Shortlet fields
   const [shortletMinNights, setShortletMinNights] = useState(1);
@@ -197,10 +201,23 @@ const ProfileDashboard = () => {
   const [landPlotSize, setLandPlotSize] = useState("");
   const [landSizeUnit, setLandSizeUnit] = useState("plots");
   const [landTitleType, setLandTitleType] = useState("");
+  const [landUseType, setLandUseType] = useState("");
+  const [landTopography, setLandTopography] = useState("");
+  const [landAccessRoad, setLandAccessRoad] = useState("");
+  const [landFenced, setLandFenced] = useState(false);
+  const [landSurveyPlan, setLandSurveyPlan] = useState(false);
   // Commercial fields
+  const [commercialType, setCommercialType] = useState("");
   const [commercialSpaceSize, setCommercialSpaceSize] = useState("");
+  const [commercialCapacity, setCommercialCapacity] = useState("");
   const [commercialBillingPeriod, setCommercialBillingPeriod] = useState("");
   const [commercialUsages, setCommercialUsages] = useState<string[]>([]);
+  const [commercialHasParking, setCommercialHasParking] = useState(false);
+  const [commercialHasSecurity, setCommercialHasSecurity] = useState(false);
+  const [commercialServiceCharge, setCommercialServiceCharge] = useState("");
+  const [commercialCautionFee, setCommercialCautionFee] = useState("");
+  const [commercialLegalFee, setCommercialLegalFee] = useState("");
+  const [commercialAgencyFee, setCommercialAgencyFee] = useState("");
 
   // ── Event-specific ──
   const [eventStartDate, setEventStartDate] = useState("");
@@ -582,14 +599,21 @@ const ProfileDashboard = () => {
       const details: Record<string, any> = {};
       if (propertySubType === "rent") {
         details.billingPeriod = rentBillingPeriod;
+        details.paymentPlan = rentBillingPeriod;
         details.bedrooms = rentBedrooms;
         details.bathrooms = rentBathrooms;
+        details.hasStore = rentHasStore;
+        details.hasKitchenStore = rentHasStore;
         details.furnishing = rentFurnishing;
         details.serviceCharge = rentServiceCharge ? parseFloat(rentServiceCharge) : 0;
-        details.cautionDeposit = rentDeposit ? parseFloat(rentDeposit) : 0;
+        details.cautionFee = (rentCautionFee || rentDeposit) ? parseFloat(rentCautionFee || rentDeposit) : 0;
+        details.cautionDeposit = details.cautionFee;
+        details.legalFee = rentLegalFee ? parseFloat(rentLegalFee) : 0;
+        details.agencyFee = rentAgencyFee ? parseFloat(rentAgencyFee) : 0;
         details.availableFrom = rentAvailableFrom;
         details.price = parseFloat(propertyPrice) || 0;
         details.billingLabel = rentBillingPeriod ? `/${rentBillingPeriod.toLowerCase()}` : "";
+        details.totalPackage = details.price + details.cautionFee + details.legalFee + details.agencyFee + details.serviceCharge;
       } else if (propertySubType === "shortlet_hotel") {
         // Redirected to wizard — this path is a fallback
         details.pricePerNight = parseFloat(propertyPrice) || 0;
@@ -598,13 +622,32 @@ const ProfileDashboard = () => {
         details.plotSize = landPlotSize;
         details.sizeUnit = landSizeUnit;
         details.titleType = landTitleType;
+        details.titleDocument = landTitleType;
+        details.landUseType = landUseType;
+        details.topography = landTopography;
+        details.accessRoad = landAccessRoad;
+        details.fenced = landFenced;
+        details.surveyPlan = landSurveyPlan;
+        details.hasSurveyPlan = landSurveyPlan;
+        details.isFenced = landFenced;
         details.price = parseFloat(propertyPrice) || 0;
       } else if (propertySubType === "commercial") {
+        details.commercialType = commercialType;
         details.spaceSize = commercialSpaceSize;
+        details.spaceSizeSqm = parseFloat(commercialSpaceSize) || 0;
+        details.capacity = commercialCapacity ? parseInt(commercialCapacity) : 0;
+        details.seatingCapacity = details.capacity;
         details.billingPeriod = commercialBillingPeriod;
         details.usages = commercialUsages;
+        details.hasParking = commercialHasParking;
+        details.hasSecurity = commercialHasSecurity;
+        details.serviceCharge = commercialServiceCharge ? parseFloat(commercialServiceCharge) : 0;
+        details.cautionFee = commercialCautionFee ? parseFloat(commercialCautionFee) : 0;
+        details.legalFee = commercialLegalFee ? parseFloat(commercialLegalFee) : 0;
+        details.agencyFee = commercialAgencyFee ? parseFloat(commercialAgencyFee) : 0;
         details.price = parseFloat(propertyPrice) || 0;
         details.billingLabel = commercialBillingPeriod ? `/${commercialBillingPeriod.toLowerCase()}` : "";
+        details.totalPackage = details.price + details.cautionFee + details.legalFee + details.agencyFee + details.serviceCharge;
       }
 
       const priceNum = parseFloat(propertyPrice) || 0;
@@ -618,9 +661,10 @@ const ProfileDashboard = () => {
               ? (priceNum ? `₦${priceNum.toLocaleString()}${details.billingLabel || ""}` : "")
               : (priceNum ? `₦${priceNum.toLocaleString()}/night` : "");
 
-      await createProperty.mutateAsync({
-        title,
-        description,
+      // Business-first: primary write to businesses/{businessId}/properties subcollection
+      const propertyPayload: any = {
+        title: title.trim(),
+        description: description.trim(),
         propertySubType,
         type: propertySubType === "rent" ? "Apartment" : propertySubType === "shortlet_hotel" ? "Shortlet & Hotel" : propertySubType === "land" ? "Land" : "Commercial",
         ...details,
@@ -629,7 +673,9 @@ const ProfileDashboard = () => {
         location: fullLocation,
         state,
         city,
+        streetAddress,
         businessId: propListAsBizId,
+        businessName: selectedPropBiz?.title || selectedPropBiz?.businessName || "",
         sellerType: "business",
         image: primaryImage,
         images: uploadedImageUrls.length > 0 ? uploadedImageUrls : [primaryImage],
@@ -642,8 +688,17 @@ const ProfileDashboard = () => {
         status: "Pending",
         rating: 0,
         reviews: 0,
-        createdAt: new Date(),
-      });
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      // Primary: subcollection under business
+      await addDoc(collection(db, "businesses", propListAsBizId, "properties"), propertyPayload);
+      // Legacy top-level for backward compat (until all clients migrate)
+      try {
+        await createProperty.mutateAsync(propertyPayload);
+      } catch (e) {
+        console.warn("Legacy house_listings write failed (expected during transition)", e);
+      }
       logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "property", targetName: title, details: `Created ${propertySubType} property: ${title}` });
       toast({ title: "Property listed!" });
       resetWizard();
@@ -1364,19 +1419,27 @@ const ProfileDashboard = () => {
 
               {/* ── RENT FIELDS ── */}
               {propertySubType === "rent" && (
-                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rental Details</p>
+                <div className="space-y-4 p-4 rounded-xl border border-border bg-card">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <Home className="w-4 h-4 text-primary" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-foreground">House / Apartment for Rent</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Rent Amount (₦) *</Label>
-                      <Input className="mt-1" type="number" placeholder="e.g. 500000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                      <Label className="text-xs font-semibold">Annual Rent (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 1500000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Base rent before fees</p>
                     </div>
                     <div>
-                      <Label className="text-xs font-semibold">Billing Period *</Label>
+                      <Label className="text-xs font-semibold">Payment Plan *</Label>
                       <Select value={rentBillingPeriod} onValueChange={setRentBillingPeriod}>
-                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select plan" /></SelectTrigger>
                         <SelectContent>
-                          {RENT_BILLING_PERIODS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          <SelectItem value="1 Year">1 Year (Annual)</SelectItem>
+                          <SelectItem value="2 Years">2 Years</SelectItem>
+                          <SelectItem value="1.5 Years">1.5 Years (1 Year + 6 Months)</SelectItem>
+                          <SelectItem value="6 Months">6 Months</SelectItem>
+                          <SelectItem value="Monthly">Monthly</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1399,27 +1462,64 @@ const ProfileDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-xs font-semibold">Furnishing</Label>
-                    <Select value={rentFurnishing} onValueChange={setRentFurnishing}>
-                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {FURNISHING_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                      <div>
+                        <Label className="text-xs font-semibold">Kitchen with Store?</Label>
+                        <p className="text-[10px] text-muted-foreground">Store room attached</p>
+                      </div>
+                      <button type="button" onClick={() => setRentHasStore(!rentHasStore)} className={`w-10 h-6 rounded-full relative transition-colors ${rentHasStore ? "bg-primary" : "bg-muted-foreground/30"}`}>
+                        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${rentHasStore ? "left-4.5" : "left-0.5"}`} style={{ left: rentHasStore ? "18px" : "2px" }} />
+                      </button>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Furnishing</Label>
+                      <Select value={rentFurnishing} onValueChange={setRentFurnishing}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {FURNISHING_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Service Charge (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
-                      <Input className="mt-1" type="number" placeholder="e.g. 100000" value={rentServiceCharge} onChange={(e) => setRentServiceCharge(e.target.value)} />
+                      <Label className="text-xs font-semibold">Service Charge (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 150000" value={rentServiceCharge} onChange={(e) => setRentServiceCharge(e.target.value)} />
                     </div>
                     <div>
-                      <Label className="text-xs font-semibold">Caution Deposit (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
-                      <Input className="mt-1" type="number" placeholder="e.g. 200000" value={rentDeposit} onChange={(e) => setRentDeposit(e.target.value)} />
+                      <Label className="text-xs font-semibold">Caution Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 200000" value={rentCautionFee} onChange={(e) => setRentCautionFee(e.target.value)} />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Legal Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 75000" value={rentLegalFee} onChange={(e) => setRentLegalFee(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Agency Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 150000 (10%)" value={rentAgencyFee} onChange={(e) => setRentAgencyFee(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Typically 10% of rent</p>
+                    </div>
+                  </div>
+                  {(propertyPrice || rentCautionFee || rentLegalFee || rentAgencyFee || rentServiceCharge) && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs">
+                      <p className="font-bold text-primary mb-1">Total Move-in Cost Preview</p>
+                      <p className="font-mono font-bold">
+                        ₦{(
+                          (Number(propertyPrice) || 0) +
+                          (Number(rentCautionFee || rentDeposit) || 0) +
+                          (Number(rentLegalFee) || 0) +
+                          (Number(rentAgencyFee) || 0) +
+                          (Number(rentServiceCharge) || 0)
+                        ).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Rent + Caution + Legal + Agency + Service</p>
+                    </div>
+                  )}
                   <div>
-                    <Label className="text-xs font-semibold">Available From</Label>
+                    <Label className="text-xs font-semibold">Available From *</Label>
                     <Input className="mt-1" type="date" value={rentAvailableFrom} onChange={(e) => setRentAvailableFrom(e.target.value)} />
                   </div>
                 </div>
@@ -1440,11 +1540,29 @@ const ProfileDashboard = () => {
 
               {/* ── LAND FIELDS ── */}
               {propertySubType === "land" && (
-                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Land Details</p>
-                  <div>
-                    <Label className="text-xs font-semibold">Price (₦) *</Label>
-                    <Input className="mt-1" type="number" placeholder="e.g. 25000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                <div className="space-y-4 p-4 rounded-xl border border-border bg-card">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <span className="text-lg">📐</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-foreground">Land Details</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Price (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 25000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Land Use Type</Label>
+                      <Select value={landUseType} onValueChange={setLandUseType}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select use" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Residential">Residential</SelectItem>
+                          <SelectItem value="Commercial">Commercial</SelectItem>
+                          <SelectItem value="Agricultural">Agricultural / Farm</SelectItem>
+                          <SelectItem value="Industrial">Industrial</SelectItem>
+                          <SelectItem value="Mixed-Use">Mixed-Use</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -1462,39 +1580,150 @@ const ProfileDashboard = () => {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold">Title Document Type</Label>
+                    <Label className="text-xs font-semibold">Title Document *</Label>
                     <Select value={landTitleType} onValueChange={setLandTitleType}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select title type" /></SelectTrigger>
                       <SelectContent>
                         {LAND_TITLE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">C of O, Governor&apos;s Consent, Survey, Deed, etc.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Topography</Label>
+                      <Select value={landTopography} onValueChange={setLandTopography}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Dry Flat">Dry & Flat</SelectItem>
+                          <SelectItem value="Dry Sloped">Dry & Sloped</SelectItem>
+                          <SelectItem value="Wetland">Wetland / Waterlogged</SelectItem>
+                          <SelectItem value="Rocky">Rocky / Hilly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Access Road</Label>
+                      <Select value={landAccessRoad} onValueChange={setLandAccessRoad}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Tarred">Tarred Road</SelectItem>
+                          <SelectItem value="Untarred Graded">Graded / Untarred</SelectItem>
+                          <SelectItem value="Bush Path">Bush Path</SelectItem>
+                          <SelectItem value="No Road">No Road Access</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                      <div>
+                        <Label className="text-xs font-semibold">Fenced?</Label>
+                        <p className="text-[10px] text-muted-foreground">Perimeter fenced</p>
+                      </div>
+                      <button type="button" onClick={() => setLandFenced(!landFenced)} className={`w-10 h-6 rounded-full relative transition-colors ${landFenced ? "bg-primary" : "bg-muted-foreground/30"}`}>
+                        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all`} style={{ left: landFenced ? "18px" : "2px" }} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                      <div>
+                        <Label className="text-xs font-semibold">Survey Plan?</Label>
+                        <p className="text-[10px] text-muted-foreground">Available & verified</p>
+                      </div>
+                      <button type="button" onClick={() => setLandSurveyPlan(!landSurveyPlan)} className={`w-10 h-6 rounded-full relative transition-colors ${landSurveyPlan ? "bg-primary" : "bg-muted-foreground/30"}`}>
+                        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all`} style={{ left: landSurveyPlan ? "18px" : "2px" }} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* ── COMMERCIAL FIELDS ── */}
               {propertySubType === "commercial" && (
-                <div className="space-y-3 p-3 rounded-xl border border-border bg-muted/20">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Commercial Details</p>
+                <div className="space-y-4 p-4 rounded-xl border border-border bg-card">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <span className="text-lg">🏢</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-foreground">Commercial — Halls, Offices, Shops, Warehouses</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Commercial Type *</Label>
+                    <Select value={commercialType} onValueChange={setCommercialType}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Hall/Event Center">Hall / Event Center</SelectItem>
+                        <SelectItem value="Office Space">Office Space</SelectItem>
+                        <SelectItem value="Shop/Retail">Shop / Retail Store</SelectItem>
+                        <SelectItem value="Warehouse">Warehouse / Storage</SelectItem>
+                        <SelectItem value="Plaza/Complex">Plaza / Shopping Complex Unit</SelectItem>
+                        <SelectItem value="Co-working Space">Co-working Space</SelectItem>
+                        <SelectItem value="Restaurant Space">Restaurant / Eatery Space</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-semibold">Rent Amount (₦) *</Label>
-                      <Input className="mt-1" type="number" placeholder="e.g. 2000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
+                      <Label className="text-xs font-semibold">Rent (₦) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 5000000" value={propertyPrice} onChange={(e) => setPropertyPrice(e.target.value)} />
                     </div>
                     <div>
                       <Label className="text-xs font-semibold">Billing Period *</Label>
                       <Select value={commercialBillingPeriod} onValueChange={setCommercialBillingPeriod}>
                         <SelectTrigger className="mt-1"><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
-                          {RENT_BILLING_PERIODS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          <SelectItem value="Per Annum">Per Annum (1 Year)</SelectItem>
+                          <SelectItem value="Per 2 Years">Per 2 Years</SelectItem>
+                          <SelectItem value="Per 6 Months">Per 6 Months</SelectItem>
+                          <SelectItem value="Per Month">Per Month</SelectItem>
+                          <SelectItem value="Per Event">Per Event / Day (Hall)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-xs font-semibold">Space Size (sqm)</Label>
-                    <Input className="mt-1" type="number" placeholder="e.g. 200" value={commercialSpaceSize} onChange={(e) => setCommercialSpaceSize(e.target.value)} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Space Size (sqm) *</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 250" value={commercialSpaceSize} onChange={(e) => setCommercialSpaceSize(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Capacity (people)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 300 for hall" value={commercialCapacity} onChange={(e) => setCommercialCapacity(e.target.value)} />
+                      <p className="text-[10px] text-muted-foreground mt-1">Seats / occupancy for halls</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                      <Label className="text-xs font-semibold">Parking Available?</Label>
+                      <button type="button" onClick={() => setCommercialHasParking(!commercialHasParking)} className={`w-10 h-6 rounded-full relative transition-colors ${commercialHasParking ? "bg-primary" : "bg-muted-foreground/30"}`}>
+                        <span className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow" style={{ left: commercialHasParking ? "18px" : "2px" }} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                      <Label className="text-xs font-semibold">Security?</Label>
+                      <button type="button" onClick={() => setCommercialHasSecurity(!commercialHasSecurity)} className={`w-10 h-6 rounded-full relative transition-colors ${commercialHasSecurity ? "bg-primary" : "bg-muted-foreground/30"}`}>
+                        <span className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow" style={{ left: commercialHasSecurity ? "18px" : "2px" }} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Service Charge (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 300000" value={commercialServiceCharge} onChange={(e) => setCommercialServiceCharge(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Caution Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 500000" value={commercialCautionFee} onChange={(e) => setCommercialCautionFee(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Legal Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 100000" value={commercialLegalFee} onChange={(e) => setCommercialLegalFee(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Agency Fee (₦)</Label>
+                      <Input className="mt-1" type="number" placeholder="e.g. 500000 (10%)" value={commercialAgencyFee} onChange={(e) => setCommercialAgencyFee(e.target.value)} />
+                    </div>
                   </div>
                   <div>
                     <Label className="text-xs font-semibold mb-2 block">Suitable For</Label>
