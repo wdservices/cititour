@@ -6,6 +6,7 @@ import {
   Loader2, Star,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { useMarketplaceItems, fmt } from "@/lib/useFirestore";
 import { getMockImage } from "@/lib/mockImages";
@@ -161,10 +162,10 @@ const MarketplacePage = () => {
             </div>
 
             <button
-              onClick={() => navigate("/profile/dashboard?tab=listings&action=create")}
-              className="w-full py-3.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-transform"
+              onClick={() => navigate("/profile/dashboard?tab=listings&action=create&type=product")}
+              className="w-full py-3.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
-              Create a Listing
+              <Plus className="w-4 h-4" /> Post a Product
             </button>
           </div>
         </aside>
@@ -178,13 +179,20 @@ const MarketplacePage = () => {
                 Discover exclusive listings and find exactly what you need.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="lg:hidden p-2 bg-card/60 rounded-lg border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+              <Button
+                onClick={() => navigate("/profile/dashboard?tab=listings&action=create&type=product")}
+                className="rounded-xl font-bold gap-1.5 shadow-sm"
               >
-                <SlidersHorizontal className="w-5 h-5" />
-              </button>
+                <Plus className="w-4 h-4" /> Post a Product
+              </Button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className="lg:hidden p-2 bg-card/60 rounded-lg border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <SlidersHorizontal className="w-5 h-5" />
+                </button>
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg border border-border/50 transition-colors ${
@@ -203,6 +211,7 @@ const MarketplacePage = () => {
               </button>
             </div>
           </div>
+        </div>
 
           <div className="lg:hidden mb-5">
             <div className="relative">

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, Users, Ticket, Heart, Share2, Star, ArrowLeft, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, Ticket, Heart, Share2, Star, ArrowLeft, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,6 +135,21 @@ const EventsPage = () => {
                 <p className="text-white/80 mt-1">Discover amazing events happening around you</p>
               </div>
             </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 rounded-xl font-bold"
+                onClick={() => navigate('/host-an-event')}
+              >
+                Host an Event
+              </Button>
+              <Button
+                className="bg-white text-primary hover:bg-white/90 rounded-xl font-bold shadow-md"
+                onClick={() => navigate('/profile/dashboard?tab=events&action=create&type=event')}
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Create Event
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -159,7 +174,17 @@ const EventsPage = () => {
         {isLoading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
         ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-20"><p className="text-muted-foreground text-lg">No events found.</p></div>
+          <div className="text-center py-16 bg-card/40 rounded-3xl border border-dashed border-border/70 max-w-lg mx-auto p-8">
+            <Calendar className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+            <p className="text-foreground font-bold text-lg mb-1">No events found</p>
+            <p className="text-muted-foreground text-sm mb-4">Be the first to create and publish an event in your area!</p>
+            <Button
+              onClick={() => navigate('/profile/dashboard?tab=events&action=create&type=event')}
+              className="rounded-xl font-bold"
+            >
+              <Plus className="w-4 h-4 mr-1.5" /> Create an Event
+            </Button>
+          </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event, index) => (

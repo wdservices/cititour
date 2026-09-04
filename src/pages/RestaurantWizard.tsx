@@ -18,8 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
+  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -349,7 +351,7 @@ export default function RestaurantWizard() {
       } else {
         await createBusiness.mutateAsync({
           ...payload,
-          ownerId: user.id,
+          ownerId: user?.id || "",
           status: "Pending",
           rating: 0,
           reviewCount: 0,
@@ -1171,14 +1173,54 @@ export default function RestaurantWizard() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-4 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#ea580c] flex items-center justify-center mx-auto">
+            <UtensilsCrossed className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Sign in to Access Restaurant Wizard</h2>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            You need to be signed in with a Citivas account to create and manage restaurant storefronts, digital menus, and table reservations.
+          </p>
+          <div className="flex gap-3 justify-center pt-2">
+            <button
+              onClick={() => navigate("/profile/dashboard?tab=listings")}
+              className="px-5 py-2.5 rounded-full border border-gray-300 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={() => navigate("/auth?redirect=/restaurant-wizard")}
+              className="px-5 py-2.5 rounded-full bg-[#ea580c] text-white text-xs font-bold hover:bg-[#c2410c]"
+            >
+              Sign In / Register
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col">
       <header className="bg-white border-b border-gray-200 px-6 h-12 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-[#ea580c] rounded-md flex items-center justify-center text-white">
-            <UtensilsCrossed className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/profile/dashboard?tab=listings")}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </button>
+          <div className="h-4 w-px bg-gray-200" />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#ea580c] rounded-md flex items-center justify-center text-white">
+              <UtensilsCrossed className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-[13px] font-semibold text-gray-800">{title || "Restaurant Wizard"}</span>
           </div>
-          <span className="text-[13px] font-semibold text-gray-800">{title || "Restaurant Wizard"}</span>
         </div>
         <span className="text-[11px] text-gray-400">Powered by Citivas Dining</span>
       </header>

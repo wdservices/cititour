@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Building2, ShoppingBag, Home, Calendar, Megaphone,
   Plus, LayoutDashboard, MapPin, Trash2, Edit3, Ticket, Store,
-  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon, Hotel, UtensilsCrossed
+  ChevronRight, Loader2, Download, FileText, BarChart2, Info, CalendarClock, Image as ImageIcon, Hotel, UtensilsCrossed, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +50,7 @@ const ProfileDashboard = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const qc = useQueryClient();
 
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -60,6 +62,40 @@ const ProfileDashboard = () => {
   const [wizardStep, setWizardStep] = useState(1);
   const [listingType, setListingType] = useState<"business" | "product" | "property" | "event" | "restaurant">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const action = searchParams.get("action");
+    const type = searchParams.get("type");
+    const tab = searchParams.get("tab");
+
+    if (tab) {
+      setActiveTab(tab);
+    }
+
+    if (type === "restaurant") {
+      navigate("/restaurant-wizard", { replace: true });
+      return;
+    }
+
+    if (action === "create") {
+      setCreateOpen(true);
+      if (type === "product") {
+        setListingType("product");
+        setWizardStep(2);
+      } else if (type === "event" || tab === "events") {
+        setListingType("event");
+        setWizardStep(2);
+      } else if (type === "property") {
+        setListingType("property");
+        setWizardStep(2);
+      } else if (type === "business") {
+        setListingType("business");
+        setWizardStep(2);
+      } else {
+        setWizardStep(1);
+      }
+    }
+  }, [searchParams, navigate]);
 
   // ── Delete confirmation ──
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; title: string } | null>(null);
@@ -118,12 +154,14 @@ const ProfileDashboard = () => {
 
   // ── Restaurant-specific ──
   const [cuisineType, setCuisineType] = useState("");
+  const [priceRange, setPriceRange] = useState("₦₦ (Casual Dining)");
 
   // ── Product-specific ──
   const [listAsBizId, setListAsBizId] = useState("individual");
   const [productPrice, setProductPrice] = useState("");
   const [promoPrice, setPromoPrice] = useState("");
   const [productCategory, setProductCategory] = useState("");
+  const [itemCondition, setItemCondition] = useState("Brand New");
   const [productImages, setProductImages] = useState<string[]>([]);
   const [productImagePublicIds, setProductImagePublicIds] = useState<string[]>([]);
 
@@ -298,10 +336,15 @@ const ProfileDashboard = () => {
     setUploadedImageUrl("");
     setUploadedImagePublicId("");
     setBizCategory("");
+    setCuisineType("");
+    setPriceRange("₦₦ (Casual Dining)");
     setListAsBizId("individual");
     setProductPrice("");
     setPromoPrice("");
     setProductCategory("");
+    setItemCondition("Brand New");
+    setProductImages([]);
+    setProductImagePublicIds([]);
     setPropListAsBizId("individual");
     setPropertyType("");
     setPropertyPrice("");
@@ -363,48 +406,137 @@ const ProfileDashboard = () => {
     }
   };
 
-  const handleCreateProduct = async () => {
+  const handleCreateRestaurant = async () => {
     if (!user?.id) { navigate("/auth"); return; }
-    if (!title || !listAsBizId || listAsBizId === "individual") {
-      toast({ title: "Please select a parent business", variant: "destructive" });
-      return;
-    }
-    if (!selectedBiz) {
-      toast({ title: "Selected business not found", variant: "destructive" });
+    if (!title || !selectedState) {
+      toast({ title: "Please provide restaurant name and state", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const bizState = selectedBiz.location?.split(", ").pop() || "";
-      const state = bizState;
-      const city = selectedBiz.location?.split(", ").shift() || "";
-      const fullLocation = [city, state].filter(Boolean).join(", ");
-
-      const primaryImage = productImages[0] || uploadedImageUrl || getMockImage(productCategory);
-      await createProduct.mutateAsync({
-        title,
-        description,
-        category: productCategory || "Other",
-        price: productPrice ? `₦${productPrice}` : "",
-        promoPrice: promoPrice ? `₦${promoPrice}` : "",
-        regularPrice: productPrice,
+      const fullLocation = [selectedCity, selectedState, "Nigeria"].filter(Boolean).join(", ");
+      const primaryImage = bizImages[0] || uploadedImageUrl || getMockImage("Restaurant");
+      const newDoc = await createBusiness.mutateAsync({
+        title: title.trim(),
+        description: description.trim(),
+        category: "Restaurant",
+        type: "Restaurant",
+        cuisine: cuisineType || "Nigerian / Local Delicacies",
+        priceTier: priceRange.split(" ")[0] || "₦₦",
+        phone: phone.trim(),
+        streetAddress: streetAddress.trim(),
         location: fullLocation,
-        state,
-        city,
-        businessId: listAsBizId,
-        sellerType: "business",
+        state: selectedState,
+        city: selectedCity,
+        image: primaryImage,
+        images: bizImages.length > 0 ? bizImages : [primaryImage],
+        imagePublicIds: bizImagePublicIds,
+        ownerId: user.id,
+        isOpen: true,
+        rating: 0,
+        reviewCount: 0,
+        lat: mapLat || null,
+        lon: mapLon || null,
+        miniSiteActive: true,
+      });
+      logActivity({
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        action: "create_listing",
+        targetType: "business",
+        targetName: title,
+        details: `Created restaurant: ${title}`,
+      });
+      toast({
+        title: "Restaurant registered!",
+        description: "Launching Restaurant Wizard to customize your digital menu & dining options...",
+      });
+      resetWizard();
+      if (newDoc?.id) {
+        navigate(`/restaurant-wizard?businessId=${newDoc.id}`);
+      } else {
+        navigate("/restaurant-wizard");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Failed to create restaurant", description: err?.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    if (!user?.id) { navigate("/auth"); return; }
+    if (!title.trim()) {
+      toast({ title: "Please enter a product title", variant: "destructive" });
+      return;
+    }
+    if (!productPrice) {
+      toast({ title: "Please enter product price", variant: "destructive" });
+      return;
+    }
+
+    const isBiz = listAsBizId && listAsBizId !== "individual";
+    const chosenState = (isBiz && selectedBiz && inheritState ? inheritState : selectedState) || selectedBiz?.state || selectedState;
+    const chosenCity = (isBiz && selectedBiz && inheritState ? (selectedBiz.location?.split(", ").shift() || selectedBiz.city || "") : selectedCity) || selectedCity;
+
+    if (!chosenState) {
+      toast({ title: "Please select a state for your product listing", variant: "destructive" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const fullLocation = [streetAddress, chosenCity, chosenState].filter(Boolean).join(", ") || (selectedBiz?.location) || `${chosenState}, Nigeria`;
+      const primaryImage = productImages[0] || uploadedImageUrl || getMockImage(productCategory || "Product");
+      const cleanNumPrice = Number(productPrice.toString().replace(/[^0-9.]/g, '')) || 0;
+      const cleanPromoPrice = promoPrice ? Number(promoPrice.toString().replace(/[^0-9.]/g, '')) : null;
+
+      await createProduct.mutateAsync({
+        title: title.trim(),
+        description: description.trim(),
+        category: productCategory || "Other",
+        price: `₦${cleanNumPrice.toLocaleString()}`,
+        rawPrice: cleanNumPrice,
+        promoPrice: cleanPromoPrice ? `₦${cleanPromoPrice.toLocaleString()}` : "",
+        rawPromoPrice: cleanPromoPrice,
+        regularPrice: cleanNumPrice,
+        location: fullLocation,
+        streetAddress: streetAddress.trim(),
+        state: chosenState,
+        city: chosenCity,
+        businessId: isBiz ? listAsBizId : "individual",
+        businessName: isBiz && selectedBiz ? selectedBiz.title : (user.name || "Independent Seller"),
+        sellerType: isBiz ? "business" : "individual",
         image: primaryImage,
         images: productImages.length > 0 ? productImages : [primaryImage],
         imagePublicIds: productImagePublicIds,
         ownerId: user.id,
-        condition: "new",
+        condition: itemCondition || "Brand New",
+        phone: phone.trim() || user.phone || "",
+        rating: 5.0,
+        status: "Active",
       });
-      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "product", targetName: title, details: `Created product: ${title}` });
-      toast({ title: "Product listed!" });
+
+      qc.invalidateQueries({ queryKey: ["myListings"] });
+      qc.invalidateQueries({ queryKey: ["marketplace"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+
+      logActivity({
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        action: "create_listing",
+        targetType: "product",
+        targetName: title,
+        details: `Created product: ${title}`,
+      });
+      toast({ title: "Product listed on Marketplace!" });
       resetWizard();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: "Failed to list product", variant: "destructive" });
+      toast({ title: "Failed to list product", description: err?.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -506,81 +638,77 @@ const ProfileDashboard = () => {
 
   const handleCreateEvent = async () => {
     if (!user?.id) { navigate("/auth"); return; }
-    if (!title || !selectedState || !eventStartDate) {
-      toast({ title: "Please fill all required fields", variant: "destructive" });
+    if (!title.trim()) {
+      toast({ title: "Please enter an event title", variant: "destructive" });
+      return;
+    }
+    if (!selectedState) {
+      toast({ title: "Please select an event location / state", variant: "destructive" });
+      return;
+    }
+    if (!eventStartDate) {
+      toast({ title: "Please provide an event start date", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const fullLocation = [eventVenue, eventLocation, selectedCity, selectedState].filter(Boolean).join(", ");
-      const validTickets = ticketTypes.filter((t) => t.name.trim());
+      const fullLocation = [eventVenue, eventLocation || streetAddress, selectedCity, selectedState].filter(Boolean).join(", ");
+      const validTickets = ticketTypes
+        .filter((t) => t.name.trim())
+        .map((t) => ({
+          name: t.name.trim(),
+          price: Number(t.price) || 0,
+          quantity: Number(t.quantity) || 100,
+        }));
+
+      const primaryImage = uploadedImageUrl || getMockImage(eventCategory || "Event");
+
       await createEvent.mutateAsync({
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
+        category: eventCategory || "General",
         tags: [eventCategory || "General"],
         location: fullLocation,
+        venue: eventVenue.trim(),
+        eventLocation: eventLocation || streetAddress,
+        streetAddress: streetAddress || eventLocation,
         state: selectedState,
-        city: selectedCity,
-        venue: eventVenue,
-        eventLocation,
+        city: selectedCity || "",
         lat: mapLat || null,
         lon: mapLon || null,
         startDate: eventStartDate,
         endDate: eventEndDate || eventStartDate,
-        startTime: eventStartTime,
-        endTime: eventEndTime,
-        ticketTypes: validTickets,
-        image: uploadedImageUrl || getMockImage("Event"),
+        startTime: eventStartTime || "",
+        endTime: eventEndTime || "",
+        ticketTypes: validTickets.length > 0 ? validTickets : [{ name: "General Admission", price: 0, quantity: 100 }],
+        image: primaryImage,
+        imageUrl: primaryImage,
+        imagePublicId: uploadedImagePublicId || "",
         ownerId: user.id,
+        organizerId: user.id,
+        organizerName: user.name || "Event Organizer",
         isActive: true,
         rating: 0,
       });
-      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_event", targetType: "event", targetName: title, details: `Created event: ${title}` });
-      toast({ title: "Event created!" });
-      resetWizard();
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Failed to create event", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  const handleCreateRestaurant = async () => {
-    if (!user?.id) { navigate("/auth"); return; }
-    if (!title || !selectedState) {
-      toast({ title: "Please fill restaurant name and state", variant: "destructive" });
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const fullLocation = [selectedCity, selectedState].filter(Boolean).join(", ");
-      const primaryImage = bizImages[0] || uploadedImageUrl || getMockImage("Restaurant");
-      await createBusiness.mutateAsync({
-        title,
-        description: description || `Restaurant: ${title} - ${cuisineType || "Nigerian cuisine"}`,
-        category: "Restaurant",
-        cuisineType: cuisineType || "Nigerian / Local Delicacies",
-        location: fullLocation,
-        state: selectedState,
-        city: selectedCity,
-        streetAddress,
-        phone,
-        image: primaryImage,
-        images: bizImages.length > 0 ? bizImages : [primaryImage],
-        imagePublicIds: bizImagePublicIds,
-        ownerId: user.id,
-        isOpen: true,
-        rating: 0,
-        lat: mapLat || null,
-        lon: mapLon || null,
+      qc.invalidateQueries({ queryKey: ["myListings"] });
+      qc.invalidateQueries({ queryKey: ["events_all"] });
+      qc.invalidateQueries({ queryKey: ["events"] });
+
+      logActivity({
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        action: "create_event",
+        targetType: "event",
+        targetName: title,
+        details: `Created event: ${title}`,
       });
-      logActivity({ userId: user.id, userEmail: user.email, userName: user.name, action: "create_listing", targetType: "business", targetName: title, details: `Created restaurant: ${title}` });
-      toast({ title: "Restaurant registered! Add your menu next." });
+      toast({ title: "Event published successfully!" });
       resetWizard();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: "Failed to create restaurant", variant: "destructive" });
+      toast({ title: "Failed to create event", description: err?.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -592,7 +720,8 @@ const ProfileDashboard = () => {
 
   const getCollectionForType = (type: string) => {
     switch (type) {
-      case "business": return "businesses";
+      case "business":
+      case "restaurant": return "businesses";
       case "event": return "events";
       case "product": return "marketplace";
       case "property": return "house_listings";
@@ -854,101 +983,288 @@ const ProfileDashboard = () => {
 
   const renderProductForm = () => (
     <div className="space-y-4 py-2">
-      {myBusinesses.length === 0 ? (
-        <div className="text-center py-10 bg-muted/30 rounded-xl border border-dashed border-border">
-          <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm font-semibold text-foreground mb-1">No business registered</p>
-          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before posting products.</p>
-          <Button size="sm" variant="outline" onClick={() => { setWizardStep(1); setListingType("business"); }}>
-            <Plus className="w-4 h-4 mr-1" /> Register Business First
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parent Business *</Label>
-            <Select value={listAsBizId} onValueChange={setListAsBizId}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select business" /></SelectTrigger>
-              <SelectContent>
-                {myBusinesses.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Seller Profile / Storefront Link */}
+      {myBusinesses.length > 0 ? (
+        <div className="rounded-xl border border-border bg-card p-4 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seller Profile / Storefront</Label>
+            <span className="text-[11px] text-muted-foreground">Optional Store Link</span>
           </div>
-
-          {listAsBizId && inheritState && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
-              Location inherited from {selectedBiz?.title}: {selectedBiz?.location}
+          <Select value={listAsBizId} onValueChange={setListAsBizId}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select Seller Profile" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="individual">Independent Citizen Seller (Direct Listing)</SelectItem>
+              {myBusinesses.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.title} (Registered Business)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedBiz && listAsBizId !== "individual" && (
+            <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs text-primary font-medium">
+              <Store className="w-4 h-4 shrink-0" />
+              <span>Item will be linked to <strong>{selectedBiz.title}</strong> and featured on the Marketplace.</span>
             </div>
           )}
-
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product / Service Title *</Label>
-            <Input className="mt-1.5" placeholder="e.g. Brand New iPhone 15 Pro" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border/70 bg-card/60 p-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <ShoppingBag className="w-5 h-5" />
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-foreground">Listing as Citizen Seller</p>
+            <p className="text-[11px] text-muted-foreground">Your item will be directly published to Citivas Marketplace for buyers to discover.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Product Photos */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</Label>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product Photos</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Upload clear photos of your product. First photo will be the main cover.</p>
+          </div>
+          {productImages.length > 0 && (
+            <Badge variant="secondary" className="font-semibold text-xs">
+              {productImages.length} photo{productImages.length > 1 ? "s" : ""}
+            </Badge>
+          )}
+        </div>
+        <MultiImageUpload
+          onUploadSuccess={(r) => {
+            setProductImages((prev) => [...prev, r.secureUrl]);
+            setProductImagePublicIds((prev) => [...prev, r.publicId]);
+            if (!uploadedImageUrl) setUploadedImageUrl(r.secureUrl);
+          }}
+          onRemove={(idx) => {
+            setProductImages((prev) => prev.filter((_, i) => i !== idx));
+            setProductImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
+          }}
+          folder={CLOUDINARY_FOLDERS.MARKETPLACE}
+          currentImages={productImages}
+          buttonText="Upload Product Photos"
+          maxImages={8}
+        />
+      </div>
+
+      {/* Product Details */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+          <Info className="w-4 h-4 text-primary" />
+          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Product Information</h4>
+        </div>
+
+        <div>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product Title *</Label>
+          <Input
+            className="mt-1.5"
+            placeholder="e.g. Brand New iPhone 15 Pro Max 256GB Natural Titanium"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category *</Label>
             <Select value={productCategory} onValueChange={setProductCategory}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
               <SelectContent>
-                {["Electronics", "Fashion", "Home", "Vehicles", "Property", "Beauty", "Sports", "Other"].map((c) => (
+                {[
+                  "Phones & Tablets",
+                  "Electronics & Gadgets",
+                  "Fashion & Apparel",
+                  "Home, Kitchen & Furniture",
+                  "Beauty & Personal Care",
+                  "Vehicles & Automotive",
+                  "Sports, Fitness & Outdoor",
+                  "Food & Provisions",
+                  "Services & Freelance",
+                  "Baby & Kids",
+                  "Health & Wellness",
+                  "Other"
+                ].map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Regular Price (₦) *</Label>
-              <Input className="mt-1.5" placeholder="e.g. 150000" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo Price (₦) <span className="text-muted-foreground/60 normal-case">(optional)</span></Label>
-              <Input className="mt-1.5" placeholder="e.g. 120000" value={promoPrice} onChange={(e) => setPromoPrice(e.target.value)} />
-            </div>
-          </div>
-          {promoPrice && productPrice && (
-            <p className="text-xs text-muted-foreground">
-              UI will show: <span className="line-through text-destructive">₦{productPrice}</span> <span className="font-bold text-primary">₦{promoPrice}</span>
-            </p>
-          )}
+
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
-            <Textarea className="mt-1.5" placeholder="Describe your product..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Condition</Label>
+            <Select value={itemCondition} onValueChange={setItemCondition}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Select condition" />
+              </SelectTrigger>
+              <SelectContent>
+                {[
+                  "Brand New",
+                  "Like New / Open Box",
+                  "Refurbished",
+                  "Used - Excellent",
+                  "Used - Good",
+                  "Used - Fair"
+                ].map((cond) => (
+                  <SelectItem key={cond} value={cond}>{cond}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        </div>
+
+        <div>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description *</Label>
+          <Textarea
+            className="mt-1.5"
+            rows={3}
+            placeholder="Describe your item, key specifications, warranty, what's included in the package, etc..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+          <BarChart2 className="w-4 h-4 text-primary" />
+          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Pricing & Offers</h4>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
-            <MultiImageUpload
-              onUploadSuccess={(r) => {
-                setProductImages((prev) => [...prev, r.secureUrl]);
-                setProductImagePublicIds((prev) => [...prev, r.publicId]);
-              }}
-              onRemove={(idx) => {
-                setProductImages((prev) => prev.filter((_, i) => i !== idx));
-                setProductImagePublicIds((prev) => prev.filter((_, i) => i !== idx));
-              }}
-              folder={CLOUDINARY_FOLDERS.MARKETPLACE}
-              currentImages={productImages}
-              buttonText="Add Image"
-              maxImages={10}
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Regular Price (₦) *</Label>
+            <Input
+              type="number"
+              className="mt-1.5"
+              placeholder="e.g. 150000"
+              value={productPrice}
+              onChange={(e) => setProductPrice(e.target.value)}
             />
           </div>
-        </>
-      )}
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Promo Price (₦) <span className="text-muted-foreground/60 normal-case font-normal">(Optional)</span>
+            </Label>
+            <Input
+              type="number"
+              className="mt-1.5"
+              placeholder="e.g. 120000"
+              value={promoPrice}
+              onChange={(e) => setPromoPrice(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {promoPrice && productPrice && Number(productPrice) > Number(promoPrice) && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg px-3 py-2 text-xs font-medium flex items-center justify-between">
+            <span>Special promo discount active</span>
+            <span className="font-bold">
+              Save ₦{(Number(productPrice) - Number(promoPrice)).toLocaleString()} ({Math.round(((Number(productPrice) - Number(promoPrice)) / Number(productPrice)) * 100)}% off)
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Location & Contact */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+          <MapPin className="w-4 h-4 text-primary" />
+          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Location & Contact</h4>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
+            <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Select state" />
+              </SelectTrigger>
+              <SelectContent>
+                {NIGERIAN_STATES.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area *</Label>
+            <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder={selectedState ? "Select area" : "Choose state first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {(STATE_CITIES[selectedState] || []).map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pickup Location / Landmark</Label>
+            <Input
+              className="mt-1.5"
+              placeholder="e.g. Lekki Phase 1, Admiralty Way"
+              value={streetAddress}
+              onChange={(e) => setStreetAddress(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone / WhatsApp Number</Label>
+            <Input
+              className="mt-1.5"
+              placeholder="e.g. 08012345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   const renderPropertyForm = () => (
     <div className="space-y-4 py-2">
       {myBusinesses.length === 0 ? (
-        <div className="text-center py-10 bg-muted/30 rounded-xl border border-dashed border-border">
-          <Building2 className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm font-semibold text-foreground mb-1">No business registered</p>
-          <p className="text-xs text-muted-foreground mb-4">You need to create a business listing before adding properties.</p>
-          <Button size="sm" variant="outline" onClick={() => { setWizardStep(1); setListingType("business"); }}>
-            <Plus className="w-4 h-4 mr-1" /> Register Business First
-          </Button>
+        <div className="space-y-3">
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center space-y-2">
+            <Hotel className="w-8 h-8 text-primary mx-auto" />
+            <h4 className="font-bold text-sm text-foreground">Shortlet, Hotel & Villa Mini-Site</h4>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              Looking to list a vacation rental, serviced apartment, hotel, or guest house? Use the Mini-Site Wizard for full booking rooms, amenities & live preview.
+            </p>
+            <Button
+              size="sm"
+              className="rounded-xl font-bold gap-1 mt-1"
+              onClick={() => {
+                setCreateOpen(false);
+                navigate("/mini-site-wizard");
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Open Mini-Site Wizard
+            </Button>
+          </div>
+
+          <div className="text-center py-6 bg-muted/30 rounded-xl border border-dashed border-border">
+            <Building2 className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+            <p className="text-xs font-semibold text-foreground mb-0.5">Standard Rental / Sale Agency</p>
+            <p className="text-[11px] text-muted-foreground mb-3">To attach standard real-estate listings, register your agency first.</p>
+            <Button size="sm" variant="outline" onClick={() => { setListingType("business"); setWizardStep(2); }}>
+              <Plus className="w-4 h-4 mr-1" /> Register Business First
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -1335,7 +1651,7 @@ const ProfileDashboard = () => {
             </div>
             <ImageUpload
               onUploadSuccess={(r) => { setUploadedImageUrl(r.secureUrl); setUploadedImagePublicId(r.publicId); }}
-              folder={CLOUDINARY_FOLDERS.BUSINESSES}
+              folder={CLOUDINARY_FOLDERS.EVENTS}
               currentImage={uploadedImageUrl}
               buttonText="Upload Banner"
             />
@@ -1359,34 +1675,78 @@ const ProfileDashboard = () => {
 
   const renderRestaurantForm = () => (
     <div className="space-y-4 py-2">
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 text-xs text-amber-700">
-        This will create a <strong>Restaurant business</strong>. After creation you can add your full menu in the <strong>Restaurant Wizard</strong>.
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-transparent border border-orange-500/20 space-y-2.5">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#ea580c] text-white flex items-center justify-center shrink-0 shadow-sm">
+            <UtensilsCrossed className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-bold text-sm text-foreground">Interactive Restaurant & Menu Wizard</h4>
+              <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-800 font-bold border-0">Recommended</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Build a complete restaurant mini-site with digital menus, dish prices, dietary tags, photos, dining amenities, opening hours, and table reservation booking.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end pt-1">
+          <Button
+            size="sm"
+            className="rounded-xl font-bold bg-[#ea580c] hover:bg-[#c2410c] text-white gap-1.5 shadow-sm"
+            onClick={() => {
+              setCreateOpen(false);
+              navigate("/restaurant-wizard");
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Launch Full Restaurant Wizard
+          </Button>
+        </div>
       </div>
+
+      <div className="relative flex items-center justify-center my-2">
+        <div className="border-t border-border w-full" />
+        <span className="bg-card px-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider absolute">
+          Or Quick Register Profile
+        </span>
+      </div>
+
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Restaurant Name *</Label>
-        <Input className="mt-1.5" placeholder="e.g. Terra Kulture Restaurant" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Restaurant / Eatery Name *</Label>
+        <Input className="mt-1.5" placeholder="e.g. Yellow Chilli Restaurant & Bar" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
-      <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cuisine Type</Label>
-        <Select value={cuisineType} onValueChange={setCuisineType}>
-          <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select cuisine" /></SelectTrigger>
-          <SelectContent>
-            {[
-              "Nigerian / Local Delicacies",
-              "Afro-Fusion",
-              "Continental & Grills",
-              "Seafood & Grill",
-              "Italian & Pizza",
-              "Fast Food & Burgers",
-              "Asian, Chinese & Sushi",
-              "Bakery, Pastries & Cafe",
-              "BBQ, Suya & Shawarma",
-              "Lounge, Drinks & Cocktails",
-              "Fine Dining",
-            ].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Primary Cuisine *</Label>
+          <Select value={cuisineType} onValueChange={setCuisineType}>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select cuisine" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Nigerian / Local Delicacies">Nigerian / Local Delicacies</SelectItem>
+              <SelectItem value="Continental & European">Continental & European</SelectItem>
+              <SelectItem value="Fast Food & Shawarma">Fast Food & Shawarma</SelectItem>
+              <SelectItem value="Afro-fusion & Grills">Afro-fusion & Grills</SelectItem>
+              <SelectItem value="Seafood Specialist">Seafood Specialist</SelectItem>
+              <SelectItem value="Cafe, Pastry & Bakery">Cafe, Pastry & Bakery</SelectItem>
+              <SelectItem value="Asian / Chinese / Pan-Asian">Asian / Chinese / Pan-Asian</SelectItem>
+              <SelectItem value="Drinks, Lounge & Cocktails">Drinks, Lounge & Cocktails</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price Tier</Label>
+          <Select value={priceRange} onValueChange={setPriceRange}>
+            <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select tier" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="₦ (Budget Friendly)">₦ (Budget Friendly)</SelectItem>
+              <SelectItem value="₦₦ (Casual Dining)">₦₦ (Casual Dining)</SelectItem>
+              <SelectItem value="₦₦₦ (Upscale)">₦₦₦ (Upscale)</SelectItem>
+              <SelectItem value="₦₦₦₦ (Fine Dining / Luxury)">₦₦₦₦ (Fine Dining / Luxury)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
       <div>
         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">State *</Label>
         <Select value={selectedState} onValueChange={(v) => { setSelectedState(v as NigerianState); setSelectedCity(""); }}>
@@ -1396,6 +1756,7 @@ const ProfileDashboard = () => {
           </SelectContent>
         </Select>
       </div>
+
       {selectedState && (
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City / Area</Label>
@@ -1407,8 +1768,10 @@ const ProfileDashboard = () => {
           </Select>
         </div>
       )}
+
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Street Address</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location on Map</Label>
+        <p className="text-xs text-muted-foreground mt-1 mb-2">Pinpoint restaurant location for map discovery and driving directions</p>
         <AddressPicker
           onLocationConfirmed={(data) => { setStreetAddress(data.address); setMapLat(data.lat); setMapLon(data.lon); }}
           initialAddress={streetAddress}
@@ -1416,16 +1779,19 @@ const ProfileDashboard = () => {
           initialLon={mapLon}
         />
       </div>
+
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number *</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reservation / Contact Phone *</Label>
         <Input className="mt-1.5" placeholder="+234 801 234 5678" value={phone} onChange={(e) => setPhone(e.target.value)} />
       </div>
+
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">About / Description *</Label>
-        <Textarea className="mt-1.5" placeholder="Describe your restaurant, ambiance, specialties..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">About the Restaurant</Label>
+        <Textarea className="mt-1.5" placeholder="Highlight your chef specialties, ambiance, outdoor terrace, or private dining..." rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
+
       <div>
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Images (first image is cover)</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Restaurant Photos</Label>
         <MultiImageUpload
           onUploadSuccess={(r) => {
             setBizImages((prev) => [...prev, r.secureUrl]);
@@ -1437,23 +1803,20 @@ const ProfileDashboard = () => {
           }}
           folder={CLOUDINARY_FOLDERS.BUSINESSES}
           currentImages={bizImages}
-          buttonText="Add Image"
+          buttonText="Add Restaurant Photo"
           maxImages={10}
         />
-      </div>
-      <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
-        After creating, go to <span className="font-bold">Restaurant Wizard</span> for full menu setup &rarr; <button type="button" onClick={() => navigate("/restaurant-wizard")} className="text-primary underline">Open Wizard</button>
       </div>
     </div>
   );
 
   const getSubmitHandler = () => {
     switch (listingType) {
+      case "restaurant": return handleCreateRestaurant;
       case "business": return handleCreateBusiness;
       case "product": return handleCreateProduct;
       case "property": return handleCreateProperty;
       case "event": return handleCreateEvent;
-      case "restaurant": return handleCreateRestaurant;
       default: return () => {};
     }
   };
@@ -1584,11 +1947,25 @@ const ProfileDashboard = () => {
             <Card className="border-border/50">
               <CardContent className="p-5">
                 <h3 className="font-bold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[{ icon: Building2, label: "Register Business", type: "business" }, { icon: ShoppingBag, label: "Post Product", type: "product" }, { icon: Home, label: "List Property", type: "property" }, { icon: Calendar, label: "Create Event", type: "event" }].map((action) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  {[
+                    { icon: UtensilsCrossed, label: "Add Restaurant", type: "restaurant" },
+                    { icon: Building2, label: "Register Business", type: "business" },
+                    { icon: ShoppingBag, label: "Post Product", type: "product" },
+                    { icon: Home, label: "List Property", type: "property" },
+                    { icon: Calendar, label: "Create Event", type: "event" }
+                  ].map((action) => (
                     <button
                       key={action.type}
-                      onClick={() => { setListingType(action.type as any); setWizardStep(2); setCreateOpen(true); }}
+                      onClick={() => {
+                        if (action.type === "restaurant") {
+                          navigate("/restaurant-wizard");
+                          return;
+                        }
+                        setListingType(action.type);
+                        setWizardStep(2);
+                        setCreateOpen(true);
+                      }}
                       className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all"
                     >
                       <action.icon className="w-6 h-6 text-primary" />
@@ -1688,6 +2065,95 @@ const ProfileDashboard = () => {
                     ))}
                   </div>
                 )}
+
+                {/* My Products Section */}
+                <div className="pt-8 border-t border-border/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold">My Products & Services ({myProducts.length})</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">Products, deals, and items listed on Citivas Marketplace</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="rounded-xl font-bold"
+                      onClick={() => {
+                        setListingType("product");
+                        setWizardStep(2);
+                        setCreateOpen(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> Post a Product
+                    </Button>
+                  </div>
+                  {myProducts.length === 0 ? (
+                    <div className="text-center py-10 bg-card/30 rounded-2xl border border-dashed border-border">
+                      <ShoppingBag className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground mb-3">No products posted yet</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setListingType("product");
+                          setWizardStep(2);
+                          setCreateOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Post Your First Product
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {myProducts.map((item) => (
+                        <ListingCard key={item.id} item={item} type="product" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* My Properties Section */}
+                <div className="pt-8 border-t border-border/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold">My Properties & Stays ({myProperties.length})</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">Shortlets, lands, and commercial spaces</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl font-bold"
+                      onClick={() => {
+                        setListingType("property");
+                        setWizardStep(2);
+                        setCreateOpen(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> List a Property
+                    </Button>
+                  </div>
+                  {myProperties.length === 0 ? (
+                    <div className="text-center py-10 bg-card/30 rounded-2xl border border-dashed border-border">
+                      <Home className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground mb-3">No properties listed yet</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setListingType("property");
+                          setWizardStep(2);
+                          setCreateOpen(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> List Your First Property
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {myProperties.map((item) => (
+                        <ListingCard key={item.id} item={item} type="property" />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -1707,7 +2173,17 @@ const ProfileDashboard = () => {
                     <h3 className="text-lg font-bold">{selectedBusinessTitle}</h3>
                     <p className="text-sm text-muted-foreground mt-0.5">Products & rooms in this business</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl font-bold border-primary/30 text-primary hover:bg-primary/10"
+                      onClick={() => {
+                        navigate(`/restaurant-wizard?businessId=${selectedBusinessId}`);
+                      }}
+                    >
+                      <UtensilsCrossed className="w-4 h-4 mr-1" /> Restaurant Wizard & Menu
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -2014,15 +2490,23 @@ const ProfileDashboard = () => {
               </DialogHeader>
               <div className="grid grid-cols-1 gap-3 py-4">
                 {[
+                  { type: "restaurant" as const, icon: UtensilsCrossed, title: "List a Restaurant / Eatery", desc: "Interactive wizard with digital menus, dining features, opening hours & table bookings" },
                   { type: "business" as const, icon: Store, title: "Register Business", desc: "Register your shop, brand, or service agency" },
                   { type: "product" as const, icon: ShoppingBag, title: "Post a Product/Service", desc: "Sell a physical item, deal, package, or service" },
                   { type: "property" as const, icon: Home, title: "List a Property", desc: "List a shortlet, apartment, land, or house" },
                   { type: "event" as const, icon: Calendar, title: "Create an Event", desc: "Publish a concert, festival, or meetup" },
-                  { type: "restaurant" as const, icon: UtensilsCrossed, title: "Register Restaurant", desc: "Set up your restaurant with a food menu" },
                 ].map((opt) => (
                   <button
                     key={opt.type}
-                    onClick={() => { setListingType(opt.type); setWizardStep(2); }}
+                    onClick={() => {
+                      if (opt.type === "restaurant") {
+                        setCreateOpen(false);
+                        navigate("/restaurant-wizard");
+                        return;
+                      }
+                      setListingType(opt.type);
+                      setWizardStep(2);
+                    }}
                     className="flex items-center gap-4 p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
                   >
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -2045,26 +2529,60 @@ const ProfileDashboard = () => {
                   {listingType === "product" && "Post a Product/Service"}
                   {listingType === "property" && "List a Property"}
                   {listingType === "event" && "Create an Event"}
-                  {listingType === "restaurant" && "Register Restaurant"}
+                  {listingType === "restaurant" && "List a Restaurant / Eatery"}
                 </DialogTitle>
-                <DialogDescription>All fields with * are required</DialogDescription>
+                <DialogDescription>
+                  {listingType === "restaurant"
+                    ? "Configure your restaurant storefront or launch the interactive menu wizard"
+                    : "All fields with * are required"}
+                </DialogDescription>
               </DialogHeader>
 
               {listingType === "business" && renderBusinessForm()}
               {listingType === "product" && renderProductForm()}
               {listingType === "property" && renderPropertyForm()}
-               {listingType === "event" && renderEventForm()}
-               {listingType === "restaurant" && renderRestaurantForm()}
+              {listingType === "event" && renderEventForm()}
+              {listingType === "restaurant" && renderRestaurantForm()}
 
               <div className="flex gap-3 pt-4 border-t border-border">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setWizardStep(1)}>Back</Button>
-                <Button className="flex-1 rounded-xl font-bold" onClick={getSubmitHandler()} disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Creating...</span>
-                  ) : (
-                    "Create Listing"
-                  )}
-                </Button>
+                {listingType === "restaurant" ? (
+                  <div className="flex-1 flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 rounded-xl font-bold"
+                      onClick={getSubmitHandler()}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving...</span>
+                      ) : (
+                        "Quick Save"
+                      )}
+                    </Button>
+                    <Button
+                      className="flex-1 rounded-xl font-bold bg-[#ea580c] hover:bg-[#c2410c] text-white flex items-center justify-center gap-1.5 shadow-sm"
+                      onClick={() => {
+                        setCreateOpen(false);
+                        navigate("/restaurant-wizard");
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4" /> Full Wizard
+                    </Button>
+                  </div>
+                ) : (
+                  <Button className="flex-1 rounded-xl font-bold" onClick={getSubmitHandler()} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving...</span>
+                    ) : (
+                      listingType === "product" ? "Post Product to Marketplace" :
+                      listingType === "event" ? "Publish Event" :
+                      listingType === "business" ? "Register Business" :
+                      listingType === "property" ? "List Property" :
+                      "Create Listing"
+                    )}
+                  </Button>
+                )}
               </div>
             </>
           )}

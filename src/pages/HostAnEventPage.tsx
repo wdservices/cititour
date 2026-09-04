@@ -52,9 +52,14 @@ export default function HostAnEventPage() {
           <p className="text-lg opacity-90 max-w-2xl mx-auto mb-8">
             The easiest way to sell tickets to concerts, brunches, launches and members-only nights across Nigeria.
           </p>
-          <Button asChild size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-14 px-8 text-base font-semibold">
-            <Link to="/event-tickets">Create event <ArrowRight className="ml-2 h-4 w-4" /></Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button asChild size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-14 px-8 text-base font-semibold shadow-lg">
+              <Link to="/profile/dashboard?tab=events&action=create&type=event">Create event <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-full border-foreground/30 text-foreground bg-foreground/10 hover:bg-foreground/20 h-14 px-8 text-base font-semibold">
+              <Link to="/event-tickets">Ticketing Dashboard</Link>
+            </Button>
+          </div>
 
           <div className="mt-14 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
             {stats.map(s => (
@@ -125,9 +130,14 @@ export default function HostAnEventPage() {
           <p className="text-lg opacity-80 mb-8 max-w-2xl mx-auto">
             50,000+ active users across Lagos, Abuja and Port Harcourt open Citivas every week looking for their next night out.
           </p>
-          <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8">
-            <Link to="/event-tickets">Start selling tickets</Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button asChild size="lg" className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8">
+              <Link to="/profile/dashboard?tab=events&action=create&type=event">Start selling tickets</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-full h-14 px-8">
+              <Link to="/event-tickets">View Ticketing Hub</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
