@@ -62,7 +62,23 @@ const stats = {
   wallets: 0,
   transactions: 0,
   admin_users: 0,
-  app_settings: 0
+  app_settings: 0,
+  // Legacy top-level collections (mirror writes so dashboard / listing pages have data)
+  house_listings: 0,
+  marketplace: 0,
+  top_level_events: 0,
+};
+
+// Known Nigerian state → lat/lon for realistic GIS seeds
+const STATE_COORDS = {
+  'Lagos':          { lat: 6.5244,  lon: 3.3792 },
+  'Abuja':          { lat: 9.0579,  lon: 7.4951 },
+  'Port Harcourt':  { lat: 4.8156,  lon: 7.0498 },
+  'Kaduna':         { lat: 10.5105, lon: 7.4166 },
+  'Owerri':         { lat: 5.4832,  lon: 7.0335 },
+  'Kano':           { lat: 12.0022, lon: 8.5911 },
+  'Rivers':         { lat: 4.8156,  lon: 7.0498 },
+  'FCT (Abuja)':    { lat: 9.0579,  lon: 7.4951 },
 };
 
 // High-quality sample stock photos
@@ -764,7 +780,6 @@ async function seedDatabase() {
           createdAt: serverTimestamp()
         };
 
-        // Type specific fields
         if (prop.type === 'shortlet') {
           propDocData.guestsCapacity = prop.guestsCapacity || 2;
           propDocData.bedrooms = prop.bedrooms || 1;
@@ -772,25 +787,168 @@ async function seedDatabase() {
           propDocData.pricePerNight = prop.pricePerNight || prop.price;
           propDocData.minimumStayNights = prop.minimumStayNights || 1;
           propDocData.amenities = prop.amenities || [];
+          propDocData.propertySubType = 'shortlet_hotel';
+          propDocData.miniSiteActive = true;
+          propDocData.sellerType = 'business';
+          propDocData.businessId = businessId;
+          propDocData.businessName = biz.businessName;
+          propDocData.lat = (STATE_COORDS[prop.state] || STATE_COORDS['Lagos']).lat;
+          propDocData.lon = (STATE_COORDS[prop.state] || STATE_COORDS['Lagos']).lon;
+          propDocData.ownerId = ownerId;
+          propDocData.priceNum = prop.price;
+          propDocData.price = `₦${Number(prop.price).toLocaleString()}/night`;
+          propDocData.type = 'Shortlet / Hotel';
         } else if (prop.type === 'rent') {
+          propDocData.propertySubType = 'rent';
           propDocData.rentAmount = prop.rentAmount || prop.price;
           propDocData.paymentFrequency = prop.paymentFrequency || 'Per Annum';
+          propDocData.billingPeriod = prop.billingPeriod || '1 Year';
           propDocData.agencyFee = prop.agencyFee || 0;
           propDocData.cautionFee = prop.cautionFee || 0;
+          propDocData.legalFee = prop.legalFee || Math.round((prop.rentAmount || prop.price) * 0.05);
+          propDocData.serviceCharge = prop.serviceCharge || Math.round((prop.rentAmount || prop.price) * 0.08);
           propDocData.bedrooms = prop.bedrooms || 2;
           propDocData.bathrooms = prop.bathrooms || 2;
           propDocData.furnishingStatus = prop.furnishingStatus || 'Unfurnished';
+          propDocData.furnishing = prop.furnishing || prop.furnishingStatus || 'Unfurnished';
           propDocData.availableFrom = prop.availableFrom || 'Immediately';
+          propDocData.hasStore = prop.hasStore ?? false;
+          propDocData.houseType = prop.houseType || 'Flat / Apartment';
+          propDocData.roadCondition = prop.roadCondition || 'Tarred';
+          propDocData.roadImage = prop.roadImage || SAMPLE_PHOTOS.rent[0];
+          propDocData.roadImagePublicId = prop.roadImagePublicId || 'seeded-road-photo';
+          propDocData.sellerType = 'business';
+          propDocData.businessId = businessId;
+          propDocData.businessName = biz.businessName;
+          propDocData.ownerId = ownerId;
+          propDocData.miniSiteActive = false;
+          propDocData.lat = (STATE_COORDS[prop.state] || STATE_COORDS['Kaduna']).lat;
+          propDocData.lon = (STATE_COORDS[prop.state] || STATE_COORDS['Kaduna']).lon;
+          propDocData.priceNum = prop.price;
+          propDocData.price = `₦${Number(prop.price).toLocaleString()}/${propDocData.billingPeriod.toLowerCase().includes('month') ? 'mo' : 'yr'}`;
+          propDocData.type = prop.houseType || 'Flat / Apartment';
+          propDocData.guests = 0;
+          propDocData.image = (prop.photos && prop.photos[0]) || SAMPLE_PHOTOS.rent[0];
+          propDocData.images = prop.photos || [];
+          propDocData.imagePublicIds = prop.imagePublicIds || [];
+          propDocData.rating = 0;
+          propDocData.reviews = 0;
+          propDocData.status = 'Approved';
+          propDocData.amenities = prop.amenities || [];
         } else if (prop.type === 'land') {
+          propDocData.propertySubType = 'land';
+          propDocData.plotSize = prop.plotSize || prop.sizeInPlots || 1;
           propDocData.sizeInPlots = prop.sizeInPlots || 1;
-          propDocData.titleDocument = prop.titleDocument || 'C of O';
+          propDocData.sizeUnit = prop.sizeUnit || 'plots';
+          propDocData.plotSizeSqm = prop.plotSizeSqm || (prop.sizeInPlots ? prop.sizeInPlots * 648 : 648);
+          propDocData.titleDocument = prop.titleDocument || prop.titleType || 'C of O';
+          propDocData.titleType = prop.titleDocument || prop.titleType || 'C of O';
+          propDocData.landUseType = prop.landUseType || 'Residential';
+          propDocData.topography = prop.topography || 'Dry & Flat';
+          propDocData.accessRoad = prop.accessRoad || 'Tarred';
+          propDocData.fenced = prop.fenced ?? true;
+          propDocData.isFenced = prop.fenced ?? true;
+          propDocData.surveyPlan = prop.surveyPlan ?? true;
+          propDocData.hasSurveyPlan = prop.surveyPlan ?? true;
+          propDocData.landSaleType = prop.landSaleType || 'sale';
+          propDocData.sellerType = 'business';
+          propDocData.businessId = businessId;
+          propDocData.businessName = biz.businessName;
+          propDocData.ownerId = ownerId;
+          propDocData.miniSiteActive = false;
+          const baseCoords = (STATE_COORDS[prop.state] || STATE_COORDS['Kaduna']);
+          propDocData.lat = baseCoords.lat;
+          propDocData.lon = baseCoords.lon;
+          propDocData.priceNum = prop.price;
+          if (prop.landSaleType === 'hire') {
+            propDocData.price = `₦${Number(prop.price).toLocaleString()}/yr (Hire)`;
+          } else if (prop.landSaleType === 'lease') {
+            propDocData.price = `₦${Number(prop.price).toLocaleString()}/lease`;
+          } else {
+            propDocData.price = `₦${Number(prop.price).toLocaleString()}`;
+          }
+          propDocData.type = 'Land';
+          propDocData.bedrooms = 0;
+          propDocData.bathrooms = 0;
+          propDocData.guests = 0;
+          propDocData.image = (prop.photos && prop.photos[0]) || SAMPLE_PHOTOS.land[0];
+          propDocData.images = prop.photos || [];
+          propDocData.imagePublicIds = prop.imagePublicIds || [];
+          propDocData.rating = 0;
+          propDocData.reviews = 0;
+          propDocData.status = 'Approved';
+          propDocData.amenities = [];
         } else if (prop.type === 'commercial') {
+          propDocData.propertySubType = 'commercial';
           propDocData.propertyType = prop.propertyType || 'Office';
+          propDocData.commercialType = prop.propertyType || 'Office';
           propDocData.squareFootage = prop.squareFootage || 1500;
+          propDocData.spaceSizeSqm = prop.spaceSizeSqm || Math.round((prop.squareFootage || 1500) / 10.764);
+          propDocData.capacity = prop.capacity || 20;
+          propDocData.hasParking = prop.hasParking ?? true;
+          propDocData.hasSecurity = prop.hasSecurity ?? true;
+          propDocData.hasWater = prop.hasWater ?? false;
+          propDocData.hasPower = prop.hasPower ?? true;
+          propDocData.hasAC = prop.hasAC ?? true;
+          propDocData.hasInternet = prop.hasInternet ?? true;
+          propDocData.hasElevator = prop.hasElevator ?? (prop.propertyType && prop.propertyType.toLowerCase().includes('office'));
+          propDocData.hasCanteen = prop.hasCanteen ?? false;
+          propDocData.billingPeriod = prop.billingPeriod || 'Per Annum';
+          propDocData.usages = prop.usages || [prop.propertyType || 'Office'];
+          propDocData.serviceCharge = prop.serviceCharge || Math.round(prop.price * 0.08);
+          propDocData.cautionFee = prop.cautionFee || Math.round(prop.price * 0.06);
+          propDocData.legalFee = prop.legalFee || Math.round(prop.price * 0.04);
+          propDocData.agencyFee = prop.agencyFee || Math.round(prop.price * 0.05);
+          propDocData.sellerType = 'business';
+          propDocData.businessId = businessId;
+          propDocData.businessName = biz.businessName;
+          propDocData.ownerId = ownerId;
+          propDocData.miniSiteActive = false;
+          const baseCoords = (STATE_COORDS[prop.state] || STATE_COORDS['Kaduna']);
+          propDocData.lat = baseCoords.lat;
+          propDocData.lon = baseCoords.lon;
+          propDocData.priceNum = prop.price;
+          propDocData.price = `₦${Number(prop.price).toLocaleString()}/yr`;
+          propDocData.type = prop.propertyType || 'Commercial';
+          propDocData.bedrooms = 0;
+          propDocData.bathrooms = 0;
+          propDocData.guests = 0;
+          propDocData.image = (prop.photos && prop.photos[0]) || SAMPLE_PHOTOS.commercial[0];
+          propDocData.images = prop.photos || [];
+          propDocData.imagePublicIds = prop.imagePublicIds || [];
+          propDocData.rating = 0;
+          propDocData.reviews = 0;
+          propDocData.status = 'Approved';
+          // Build amenities string array from boolean switches (matches dashboard form)
+          const am = [];
+          if (propDocData.hasParking) am.push('Parking');
+          if (propDocData.hasSecurity) am.push('Security');
+          if (propDocData.hasWater) am.push('Water Supply');
+          if (propDocData.hasPower) am.push('Power/Electricity');
+          if (propDocData.hasAC) am.push('AC');
+          if (propDocData.hasInternet) am.push('WiFi/Internet');
+          if (propDocData.hasElevator) am.push('Elevator/Lift');
+          if (propDocData.hasCanteen) am.push('Canteen/Kitchen');
+          propDocData.amenities = am;
         }
 
         await propRef.set(propDocData);
         stats.properties++;
+
+        // ── Mirror to legacy top-level `house_listings` for dashboard + listing pages ──
+        {
+          const topPropRef = db.collection('house_listings').doc(propertyId);
+          const locationLabel = [propDocData.city, propDocData.state, 'Nigeria'].filter(Boolean).join(', ');
+          await topPropRef.set({
+            id: propertyId,
+            ...propDocData,
+            location: propDocData.location || locationLabel,
+            streetAddress: prop.address,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          stats.house_listings++;
+        }
 
         // Nested rooms subcollection for shortlets
         if (prop.type === 'shortlet' && prop.rooms && prop.rooms.length > 0) {
@@ -862,9 +1020,48 @@ async function seedDatabase() {
           photos: prod.photos || [],
           state: prod.state,
           city: prod.city,
+          sellerType: 'business',
+          businessId: businessId,
+          businessName: biz.businessName,
+          ownerId: ownerId,
+          image: (prod.photos && prod.photos[0]) || SAMPLE_PHOTOS.electronics[0],
+          images: prod.photos || [],
+          priceNum: prod.price,
+          priceLabel: `₦${Number(prod.price).toLocaleString()}`,
+          status: 'Active',
           createdAt: serverTimestamp()
         });
         stats.products++;
+
+        // ── Mirror to legacy top-level `marketplace` for marketplace search/browse + dashboard
+        {
+          const topProdRef = db.collection('marketplace').doc(productId);
+          const locationLabel = [prod.city, prod.state, 'Nigeria'].filter(Boolean).join(', ');
+          await topProdRef.set({
+            id: productId,
+            title: prod.title,
+            description: prod.description,
+            price: `₦${Number(prod.price).toLocaleString()}`,
+            priceNum: prod.price,
+            category: prod.category,
+            itemCondition: prod.condition,
+            condition: prod.condition,
+            image: (prod.photos && prod.photos[0]) || SAMPLE_PHOTOS.electronics[0],
+            images: prod.photos || [],
+            state: prod.state,
+            city: prod.city,
+            location: locationLabel,
+            streetAddress: prod.address || biz.address || '',
+            ownerId,
+            sellerType: 'business',
+            businessId,
+            businessName: biz.businessName,
+            status: 'Active',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          stats.marketplace++;
+        }
       }
       console.log(`   └─ Added ${biz.products.length} product(s) under business.`);
     }
@@ -875,6 +1072,18 @@ async function seedDatabase() {
         const evRef = bizRef.collection('events').doc();
         const eventId = evRef.id;
 
+        // Compute lowest ticket price FIRST (needed before writes)
+        let lowestTicketPrice = Infinity;
+        if (ev.ticketTypes && ev.ticketTypes.length > 0) {
+          for (const tt of ev.ticketTypes) {
+            if (tt.price < lowestTicketPrice) lowestTicketPrice = tt.price;
+          }
+        }
+        const priceMin = lowestTicketPrice === Infinity ? 0 : lowestTicketPrice;
+        const priceLabel = priceMin === 0 ? 'Free' : `From \u20A6${priceMin.toLocaleString()}`;
+        const locationLabel = [ev.city, ev.state, 'Nigeria'].filter(Boolean).join(', ');
+        const cover = ev.coverImageUrl || SAMPLE_PHOTOS.events[0];
+
         await evRef.set({
           title: ev.title,
           description: ev.description,
@@ -884,22 +1093,32 @@ async function seedDatabase() {
           city: ev.city,
           startDate: ev.startDate,
           endDate: ev.endDate,
-          coverImageUrl: ev.coverImageUrl,
+          startTime: ev.startTime || '09:00',
+          endTime: ev.endTime || '18:00',
+          coverImageUrl: cover,
           isActive: ev.isActive ?? true,
+          isFeatured: false,
+          category: ev.category || 'Festival',
+          location: locationLabel,
+          eventType: ev.eventType || 'Festival',
+          ownerId,
+          organizerId: ownerId,
+          priceNum: priceMin,
+          price: priceLabel,
+          image: cover,
+          images: [cover].filter(Boolean),
+          status: ev.status || 'Active',
+          rating: 0,
+          totalReviews: 0,
           createdAt: serverTimestamp()
         });
         stats.events++;
-
-        let lowestTicketPrice = Infinity;
 
         // Nested ticketTypes subcollection
         if (ev.ticketTypes && ev.ticketTypes.length > 0) {
           for (const tt of ev.ticketTypes) {
             const ticketRef = evRef.collection('ticketTypes').doc();
             const commission = Math.round(tt.price * 0.07);
-            if (tt.price < lowestTicketPrice) {
-              lowestTicketPrice = tt.price;
-            }
 
             await ticketRef.set({
               name: tt.name,
@@ -912,9 +1131,388 @@ async function seedDatabase() {
           }
         }
 
+        // ── Mirror to legacy top-level `events` for the dashboard Events page and useMyListings
+        {
+          const topEventRef = db.collection('events').doc(eventId);
+          const priceMin = lowestTicketPrice === Infinity ? 0 : lowestTicketPrice;
+          const locationLabel = [ev.city, ev.state, 'Nigeria'].filter(Boolean).join(', ');
+          await topEventRef.set({
+            id: eventId,
+            title: ev.title,
+            description: ev.description,
+            venue: ev.venue,
+            address: ev.address,
+            state: ev.state,
+            city: ev.city,
+            location: locationLabel,
+            startDate: ev.startDate,
+            endDate: ev.endDate,
+            startTime: ev.startTime || '09:00',
+            endTime: ev.endTime || '18:00',
+            startDateTime: ev.startDate,
+            endDateTime: ev.endDate,
+            image: ev.coverImageUrl || SAMPLE_PHOTOS.events[0],
+            images: [ev.coverImageUrl || SAMPLE_PHOTOS.events[0]].filter(Boolean),
+            coverImage: ev.coverImageUrl || SAMPLE_PHOTOS.events[0],
+            category: ev.category || 'Festival',
+            eventCategory: ev.category || 'Festival',
+            eventType: ev.eventType || 'Festival',
+            isFeatured: ev.isFeatured || false,
+            isActive: ev.isActive ?? true,
+            status: ev.status || 'Active',
+            ownerId,
+            organizerId: ownerId,
+            sellerType: 'business',
+            businessId,
+            businessName: biz.businessName,
+            price: priceMin === 0 ? 'Free' : `From ₦${priceMin.toLocaleString()}`,
+            priceNum: priceMin,
+            minPrice: priceMin,
+            ticketTypes: (ev.ticketTypes || []).map(tt => ({ ...tt })),
+            ticketsAvailable: (ev.ticketTypes || []).reduce((a, tt) => a + (Number(tt.quantity) || 0), 0),
+            ticketsSold: (ev.ticketTypes || []).reduce((a, tt) => a + (Number(tt.sold) || 0), 0),
+            rating: 0,
+            totalReviews: 0,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          stats.top_level_events++;
+        }
       }
       console.log(`   └─ Added ${biz.events.length} event(s) with tickets under business.`);
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // E. INDIVIDUAL LISTINGS (no parent business, sellerType = "individual")
+  //    Writes directly to legacy top-level collections to exercise the
+  //    non-business flow supported by the dashboard and firestore.rules.
+  // ══════════════════════════════════════════════════════════════════
+  const individualOwnerId = createdUserIds[0] || null;
+
+  // E.1 Individual Rent Property → top-level house_listings
+  {
+    const id = db.collection('house_listings').doc().id;
+    const state = 'Lagos';
+    const coords = STATE_COORDS[state] || { lat: 6.5244, lon: 3.3792 };
+    const price = 2400000;
+    const legalFee = Math.round(price * 0.05);
+    const agencyFee = Math.round(price * 0.10);
+    const cautionFee = Math.round(price * 0.10);
+    await db.collection('house_listings').doc(id).set({
+      id,
+      title: 'Luxury 4-Bed Duplex with Boys Quarters',
+      propertyName: 'Luxury 4-Bed Duplex with Boys Quarters',
+      description: 'Fully detached duplex in a serene, secured estate. All rooms ensuite with fitted kitchen and spacious compound.',
+      listingType: 'property',
+      propertySubType: 'rent',
+      propertyType: 'rent',
+      type: 'rent',
+      typeLabel: 'For Rent',
+      sellerType: 'individual',
+      businessId: null,
+      ownerId: individualOwnerId,
+      miniSiteActive: false,
+      status: 'Approved',
+      isActive: true,
+      isFeatured: true,
+      bedrooms: 4,
+      bathrooms: 5,
+      toilets: 5,
+      parkingSpaces: 4,
+      totalPrice: price,
+      price,
+      priceNum: price,
+      priceLabel: `₦${price.toLocaleString()} / year`,
+      currency: 'NGN',
+      billingPeriod: 'yearly',
+      legalFee,
+      agencyFee,
+      cautionFee,
+      rentHouseType: 'duplex_detached',
+      houseType: 'duplex_detached',
+      rentRoadCondition: 'tarred',
+      roadCondition: 'tarred',
+      roadImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80',
+      roadImagePublicId: null,
+      storeRoom: true,
+      furnished: false,
+      serviced: true,
+      images: SAMPLE_PHOTOS.rent.slice(0, 4),
+      coverImage: SAMPLE_PHOTOS.rent[0],
+      thumbnail: SAMPLE_PHOTOS.rent[0],
+      gallery: SAMPLE_PHOTOS.rent.slice(0, 4),
+      state,
+      city: 'Lekki',
+      locationName: 'Lekki, Lagos',
+      address: 'Plot 14A, Admiralty Way, Lekki Phase 1',
+      streetAddress: 'Plot 14A, Admiralty Way, Lekki Phase 1',
+      location: 'Lekki Phase 1, Lagos, Nigeria',
+      lat: coords.lat,
+      lon: coords.lon,
+      latitude: coords.lat,
+      longitude: coords.lon,
+      mapLat: coords.lat,
+      mapLon: coords.lon,
+      amenities: ['24/7 Power', 'Security', 'Water Supply', 'Parking', 'Estate Road'],
+      rating: 0,
+      totalReviews: 0,
+      slug: slugify('4-bed-duplex-lekki-individual'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    stats.house_listings++;
+    console.log(`   └─ Added INDIVIDUAL Rent listing → house_listings/${id}`);
+  }
+
+  // E.2 Individual Land Property → top-level house_listings
+  {
+    const id = db.collection('house_listings').doc().id;
+    const state = 'Owerri';
+    const coords = STATE_COORDS[state] || { lat: 5.4832, lon: 7.0335 };
+    const plotSizeSqm = 1200;
+    const price = 8500000;
+    await db.collection('house_listings').doc(id).set({
+      id,
+      title: '1,200sqm Commercial Land on Port Harcourt Road, Owerri',
+      propertyName: '1,200sqm Commercial Land on Port Harcourt Road, Owerri',
+      description: 'Flat, well-drained commercial plot directly facing the dual carriage Port Harcourt Road. Perfect for filling station, mall, or office complex.',
+      listingType: 'property',
+      propertySubType: 'land',
+      propertyType: 'land',
+      type: 'land',
+      typeLabel: 'Land for Lease',
+      sellerType: 'individual',
+      businessId: null,
+      ownerId: individualOwnerId,
+      miniSiteActive: false,
+      status: 'Approved',
+      isActive: true,
+      isFeatured: false,
+      landSaleType: 'lease',
+      saleType: 'lease',
+      plotSizeSqm,
+      sizeUnit: 'sqm',
+      landUseType: 'commercial',
+      titleType: 'C-of-O',
+      topography: 'flat',
+      accessRoad: 'major_highway',
+      fenced: true,
+      isFenced: true,
+      hasSurveyPlan: true,
+      surveyPlan: true,
+      totalPrice: price,
+      price,
+      priceNum: price,
+      priceLabel: `₦${price.toLocaleString()} / 5-year lease`,
+      currency: 'NGN',
+      billingPeriod: 'outright-sale',
+      images: SAMPLE_PHOTOS.land.slice(0, 3),
+      coverImage: SAMPLE_PHOTOS.land[0],
+      thumbnail: SAMPLE_PHOTOS.land[0],
+      gallery: SAMPLE_PHOTOS.land.slice(0, 3),
+      state,
+      city: 'Owerri',
+      locationName: 'Owerri, Imo',
+      address: 'Port Harcourt Road, By Egbu Junction',
+      streetAddress: 'Port Harcourt Road, By Egbu Junction',
+      location: 'Owerri, Imo State, Nigeria',
+      lat: coords.lat,
+      lon: coords.lon,
+      latitude: coords.lat,
+      longitude: coords.lon,
+      mapLat: coords.lat,
+      mapLon: coords.lon,
+      amenities: [],
+      rating: 0,
+      totalReviews: 0,
+      slug: slugify('1200sqm-land-owerri-lease-individual'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    stats.house_listings++;
+    console.log(`   └─ Added INDIVIDUAL Land (Lease) listing → house_listings/${id}`);
+  }
+
+  // E.3 Individual Commercial Property → top-level house_listings (Filling Station)
+  {
+    const id = db.collection('house_listings').doc().id;
+    const state = 'Rivers';
+    const coords = STATE_COORDS[state] || { lat: 4.8156, lon: 7.0498 };
+    const price = 450000000;
+    const hasPower = true, hasWater = true, hasSecurity = true, hasParking = true;
+    const hasWarehouse = false, hasLoadingBay = true, hasOfficeSpace = true, hasInternet = false;
+    const amenitiesList = [];
+    if (hasPower) amenitiesList.push('Power Supply');
+    if (hasWater) amenitiesList.push('Water Supply');
+    if (hasSecurity) amenitiesList.push('Security');
+    if (hasParking) amenitiesList.push('Parking');
+    if (hasWarehouse) amenitiesList.push('Warehouse');
+    if (hasLoadingBay) amenitiesList.push('Loading Bay');
+    if (hasOfficeSpace) amenitiesList.push('Office Space');
+    if (hasInternet) amenitiesList.push('Internet');
+    await db.collection('house_listings').doc(id).set({
+      id,
+      title: 'Functional Filling Station with 6 Pumps + BQ on Aba Expressway',
+      propertyName: 'Functional Filling Station with 6 Pumps + BQ on Aba Expressway',
+      description: 'Turn-key filling station on 1.8 hectares along Aba-Port Harcourt express. DPR certified, 6-nozzle digital pump island, 2nos 45,000L PMS tanks + 1no 33,000L diesel tank.',
+      listingType: 'property',
+      propertySubType: 'commercial',
+      propertyType: 'commercial',
+      type: 'commercial',
+      typeLabel: 'Commercial Outright Sale',
+      commercialType: 'filling_station',
+      spaceSizeSqm: 18000,
+      capacity: 6,
+      sellerType: 'individual',
+      businessId: null,
+      ownerId: individualOwnerId,
+      miniSiteActive: false,
+      status: 'Approved',
+      isActive: true,
+      isFeatured: true,
+      hasPower, hasWater, hasSecurity, hasParking,
+      hasWarehouse, hasLoadingBay, hasOfficeSpace, hasInternet,
+      amenities: amenitiesList,
+      totalPrice: price,
+      price,
+      priceNum: price,
+      priceLabel: `₦${(price / 1000000).toFixed(1)}M outright`,
+      currency: 'NGN',
+      billingPeriod: 'outright-sale',
+      images: SAMPLE_PHOTOS.commercial.slice(0, 4),
+      coverImage: SAMPLE_PHOTOS.commercial[0],
+      thumbnail: SAMPLE_PHOTOS.commercial[0],
+      gallery: SAMPLE_PHOTOS.commercial.slice(0, 4),
+      state,
+      city: 'Port Harcourt',
+      locationName: 'Port Harcourt, Rivers',
+      address: 'Aba Expressway, By Eliozu Flyover',
+      streetAddress: 'Aba Expressway, By Eliozu Flyover',
+      location: 'Port Harcourt, Rivers State, Nigeria',
+      lat: coords.lat,
+      lon: coords.lon,
+      latitude: coords.lat,
+      longitude: coords.lon,
+      mapLat: coords.lat,
+      mapLon: coords.lon,
+      rating: 0,
+      totalReviews: 0,
+      slug: slugify('filling-station-aba-expressway-individual'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    stats.house_listings++;
+    console.log(`   └─ Added INDIVIDUAL Commercial (Filling Station) → house_listings/${id}`);
+  }
+
+  // E.4 Individual Marketplace Product → top-level marketplace
+  {
+    const id = db.collection('marketplace').doc().id;
+    const state = 'Lagos';
+    const coords = STATE_COORDS[state] || { lat: 6.5244, lon: 3.3792 };
+    const price = 185000;
+    await db.collection('marketplace').doc(id).set({
+      id,
+      title: 'UK-Used Samsung Galaxy S24 Ultra 512GB (Factory Unlocked)',
+      name: 'UK-Used Samsung Galaxy S24 Ultra 512GB (Factory Unlocked)',
+      description: 'Barely-used 3 months, 98% battery health, comes with original 45W charger and S-Pen. Factory unlocked for all networks. Physical and eSIM support.',
+      listingType: 'product',
+      productCategory: 'Electronics',
+      category: 'Mobile Phones',
+      condition: 'fairly_used',
+      price,
+      priceNum: price,
+      originalPrice: 220000,
+      priceLabel: `₦${price.toLocaleString()}`,
+      currency: 'NGN',
+      stock: 1,
+      status: 'Active',
+      isActive: true,
+      isFeatured: false,
+      sellerType: 'individual',
+      businessId: null,
+      ownerId: individualOwnerId,
+      tags: ['samsung', 's24', 'ultra', 'phone'],
+      images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80'],
+      coverImage: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80',
+      thumbnail: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80',
+      gallery: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80'],
+      state,
+      city: 'Surulere',
+      locationName: 'Surulere, Lagos',
+      location: 'Surulere, Lagos, Nigeria',
+      address: '18 Ogunlana Drive, Surulere',
+      lat: coords.lat,
+      lon: coords.lon,
+      rating: 0,
+      totalReviews: 0,
+      slug: slugify('samsung-s24-ultra-individual'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    stats.marketplace++;
+    console.log(`   └─ Added INDIVIDUAL Marketplace Product → marketplace/${id}`);
+  }
+
+  // E.5 Individual Event → top-level events
+  {
+    const id = db.collection('events').doc().id;
+    const state = 'FCT (Abuja)';
+    const coords = STATE_COORDS[state] || { lat: 9.0579, lon: 7.4951 };
+    const ticketTypes = [
+      { name: 'Early Bird', price: 5000, quantity: 200, sold: 42 },
+      { name: 'Regular', price: 10000, quantity: 500, sold: 110 },
+      { name: 'VIP (Canapé Included)', price: 35000, quantity: 100, sold: 27 },
+    ];
+    const priceMin = ticketTypes.reduce((m, t) => Math.min(m, t.price), Infinity);
+    const priceLabel = priceMin === 0 ? 'Free' : `From ₦${priceMin.toLocaleString()}`;
+    const ticketsAvailable = ticketTypes.reduce((a, t) => a + Number(t.quantity || 0), 0);
+    const ticketsSold = ticketTypes.reduce((a, t) => a + Number(t.sold || 0), 0);
+    await db.collection('events').doc(id).set({
+      id,
+      title: 'WIT & WHISKEY — Abuja Singles Mixer (Ages 28–40)',
+      description: 'An exclusive, curated evening of cocktails, canapés, live jazz and icebreaker games for 200 professional singles in Abuja. Strictly by RSVP.',
+      venue: 'The Art Hotel, Wuse II',
+      address: '115 Adetokunbo Ademola Crescent, Wuse 2',
+      state,
+      city: 'Abuja',
+      location: 'Wuse II, Abuja, Nigeria',
+      startDate: '2026-10-08T17:00:00Z',
+      endDate: '2026-10-08T23:00:00Z',
+      startTime: '18:00',
+      endTime: '23:00',
+      startDateTime: '2026-10-08T17:00:00Z',
+      endDateTime: '2026-10-08T23:00:00Z',
+      coverImage: SAMPLE_PHOTOS.events[0],
+      images: [SAMPLE_PHOTOS.events[0]],
+      image: SAMPLE_PHOTOS.events[0],
+      category: 'Social',
+      eventCategory: 'Social',
+      eventType: 'Networking',
+      isFeatured: true,
+      isActive: true,
+      status: 'Active',
+      ownerId: individualOwnerId,
+      organizerId: individualOwnerId,
+      sellerType: 'individual',
+      businessId: null,
+      price: priceLabel,
+      priceNum: priceMin,
+      minPrice: priceMin,
+      ticketTypes,
+      ticketsAvailable,
+      ticketsSold,
+      lat: coords.lat,
+      lon: coords.lon,
+      rating: 0,
+      totalReviews: 0,
+      slug: slugify('wit-whiskey-abuja-mixer-individual'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    stats.top_level_events++;
+    console.log(`   └─ Added INDIVIDUAL Event → events/${id}`);
   }
 
   console.log('\n====================================================');

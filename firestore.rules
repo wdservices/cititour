@@ -19,19 +19,44 @@ service cloud.firestore {
     }
 
     // ── Businesses (also used for Events with category="Event") ──
-    // All listings (properties, products, events, restaurants) MUST live under a business
+    // All listings (properties, products, events, restaurants) OPTIONALLY live under a business.
+    // Individual sellers can list without a business — those writes go directly to the
+    // top-level legacy collections (house_listings / marketplace / events) below.
     match /businesses/{businessId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
 
-      // ── Properties (shortlet/rent/land/commercial) - MUST be under business ──
-      // Supported subTypes:
-      // - rent: billingPeriod (1 Year|2 Years|1.5 Years|6 Months|Monthly), bedrooms, bathrooms, hasStore/hasKitchenStore, furnishing, serviceCharge, cautionFee, legalFee, agencyFee, availableFrom, totalPackage
-      // - shortlet_hotel: via /mini-site-wizard, creates property + rooms subcollection
-      // - land: plotSize, sizeUnit, titleDocument/titleType, landUseType, topography, accessRoad, fenced/isFenced, surveyPlan/hasSurveyPlan, price
-      // - commercial: commercialType (Hall|Office|Shop|Warehouse etc), spaceSizeSqm, capacity/seatingCapacity, hasParking, hasSecurity, billingPeriod, usages, serviceCharge, cautionFee, legalFee, agencyFee
+      // ── Properties (shortlet/rent/land/commercial) - OPTIONAL under business ──
+      // Supported subTypes + fields (each subType stores additional subtype-specific fields):
+      // - rent:
+      //     billingPeriod (1 Year | 2 Years | 1.5 Years | 6 Months | Monthly),
+      //     bedrooms, bathrooms, hasStore/hasKitchenStore, furnishing, serviceCharge,
+      //     cautionFee, legalFee, agencyFee, availableFrom, totalPackage,
+      //     houseType (Duplex/Bungalow/Flat/etc), roadCondition (Tarred/Motorable/Bad/Gated),
+      //     roadImage, roadImagePublicId, rentServiceCharge
+      // - shortlet_hotel:
+      //     via /mini-site-wizard; creates property (miniSiteActive=true) + rooms subcollection.
+      //     Also discoverable in marketplace as any other listing.
+      // - land:
+      //     plotSize, sizeUnit (sqm/acres/plots/hectares), titleDocument/titleType,
+      //     landUseType, topography, accessRoad, fenced/isFenced, surveyPlan/hasSurveyPlan,
+      //     landSaleType (sale/hire/lease), lat, lon
+      // - commercial:
+      //     commercialType (Hall/Office/Shop/Warehouse/Plaza/Co-working/Restaurant/
+      //                     Filling Station/Church-Mosque/Other),
+      //     spaceSizeSqm, capacity/seatingCapacity, hasParking, hasSecurity, hasWater,
+      //     hasPower/hasElectricity, hasAC, hasInternet/hasWifi, hasElevator, hasCanteen,
+      //     billingPeriod (year/2yr/6mo/month/event-day / outright-sale),
+      //     usages, serviceCharge, cautionFee, legalFee, agencyFee, amenities (array),
+      //     miniSiteActive (false for rent/land/commercial, true for shortlet_hotel)
+      // Common fields across all subTypes:
+      //     sellerType ("individual" | "business"), businessId (null | bid),
+      //     businessName, ownerId, state, city, streetAddress, lat, lon, location,
+      //     title, description, propertySubType, type, price, priceNum, image, images,
+      //     imagePublicIds, bedrooms (0 for land/commercial), bathrooms, guests,
+      //     amenities, status, rating, reviews, createdAt, updatedAt
       match /properties/{propertyId} {
         allow read: if true;
         allow create: if request.auth != null && get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
@@ -143,6 +168,15 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update, delete: if false;
+    }
+
+    // ── Users ──
+    // Clients list a small subset of basic fields (name email createdAt ) is required for the
+    // diagnostic Database Explorer card in the profile dashboard.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // ── Marketplace / House Listings / Events (LEGACY top-level - TRANSITION) ──
